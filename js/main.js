@@ -41,8 +41,15 @@ function setupBoosterPack(available) {
   pack.addEventListener("animationend", () => pack.classList.remove("shake"));
 }
 
+// Safari sur iPhone ignore « user-scalable=no » pour le pincement à deux doigts :
+// on bloque donc ce geste directement (événement propre à Safari).
+function blockPinchZoom() {
+  document.addEventListener("gesturestart", (e) => e.preventDefault());
+}
+
 async function start() {
   document.getElementById("debug-badge").hidden = !DEBUG;
+  blockPinchZoom();
 
   window.addEventListener("hashchange", () => showScreen(currentScreenFromHash()));
   showScreen(currentScreenFromHash());
