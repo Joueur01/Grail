@@ -1,8 +1,12 @@
 // main.js — point d'entrée : navigation entre écrans et initialisation.
+//
+// ?v=… sur les imports : même numéro que dans index.html, et le même partout
+// (un module importé sous deux adresses différentes serait chargé deux fois).
 
-import { loadCatalogue } from "./data.js";
-import { loadSave, canOpenFreeBooster, totalCards, uniqueCards } from "./inventory.js";
-import { initAvatar } from "./avatar.js";
+import { loadCatalogue } from "./data.js?v=9";
+import { loadSave, totalCards, uniqueCards } from "./inventory.js?v=9";
+import { initAvatar } from "./avatar.js?v=9";
+import { setupBooster } from "./booster.js?v=9";
 
 // ?debug=1 dans l'URL : boosters illimités pendant les tests.
 export const DEBUG = new URLSearchParams(location.search).get("debug") === "1";
@@ -27,24 +31,16 @@ function currentScreenFromHash() {
   return location.hash.replace("#", "");
 }
 
-// Le paquet de booster est le bouton d'ouverture.
-// Pour l'instant il se secoue seulement : le tirage et la révélation
-// des cartes seront branchés à la prochaine tâche (booster.js).
-function setupBoosterPack(available) {
-  const pack = document.getElementById("btn-open-booster");
-  pack.disabled = !available;
-  pack.addEventListener("click", () => {
-    pack.classList.remove("shake");
-    void pack.offsetWidth; // force le navigateur à rejouer l'animation
-    pack.classList.add("shake");
-  });
-  pack.addEventListener("animationend", () => pack.classList.remove("shake"));
-}
-
 // Safari sur iPhone ignore « user-scalable=no » pour le pincement à deux doigts :
 // on bloque donc ce geste directement (événement propre à Safari).
 function blockPinchZoom() {
   document.addEventListener("gesturestart", (e) => e.preventDefault());
+}
+
+/** Met à jour le résumé en haut de l'écran Collection. */
+function refreshCollectionSummary() {
+  document.getElementById("collection-summary").textContent =
+    `${uniqueCards()} cartes différentes · ${totalCards()} au total`;
 }
 
 async function start() {
@@ -56,24 +52,17 @@ async function start() {
 
   loadSave();
   initAvatar(document.getElementById("avatar-canvas"));
+  refreshCollectionSummary();
 
-  const status = document.getElementById("booster-status");
   try {
-    await loadCatalogue(); // en cas d'échec, on passe dans le catch
-    const free = DEBUG || canOpenFreeBooster();
-    status.textContent = free
-      ? "Touche le booster pour l'ouvrir."
-      : "Reviens demain pour un nouveau booster.";
-    setupBoosterPack(free);
+    const catalogue = await loadCatalogue();
+    setupBooster({ catalogue, debug: DEBUG, onOpened: refreshCollectionSummary });
   } catch (err) {
     // Arrive surtout si on ouvre index.html en double-cliquant (file://) :
     // fetch() a besoin d'un serveur (GitHub Pages, ou python3 -m http.server).
     console.error(err);
-    status.textContent = "Impossible de charger le catalogue.";
+    document.getElementById("booster-status").textContent = "Impossible de charger le catalogue.";
   }
-
-  document.getElementById("collection-summary").textContent =
-    `${uniqueCards()} cartes différentes · ${totalCards()} au total`;
 }
 
 start();
