@@ -3,7 +3,8 @@
    Parti pris : une interface moderne et nette, façon boutique
    de drop (fond sombre, typo grotesque grasse, beaucoup d'air),
    qui contraste avec les vêtements et l'avatar en pixel art.
-   Mobile d'abord : tout est pensé pour ~375 px de large.
+   Mobile d'abord : tout est pensé pour ~375 px de large ;
+   sur tablette et PC, le contenu reste centré dans une colonne.
    ========================================================= */
 
 :root {
@@ -23,23 +24,36 @@
 
   --radius: 16px;
   --tabbar-h: 64px;
+  /* Largeur max de la colonne de contenu (en-tête, écrans, onglets alignés) */
+  --col: 480px;
+  /* Marge latérale : 20 px sur téléphone, plus sur grand écran pour centrer */
+  --gutter: max(20px, calc((100% - var(--col)) / 2 + 20px));
   --font: "Archivo", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
 * { box-sizing: border-box; }
 
-html, body { margin: 0; }
+/* La page ne défile jamais (comme une appli) : seule la zone <main>
+   peut défiler si son contenu dépasse. overscroll-behavior: none
+   supprime l'effet « élastique » d'iOS quand on tire la page. */
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
 
 body {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh; /* hauteur réelle visible, barres de Safari comprises */
   background: var(--bg);
   color: var(--text);
   font-family: var(--font);
   font-size: 16px;
   line-height: 1.45;
-  min-height: 100dvh;
-  /* Place pour la barre d'onglets fixe + zone « home » des iPhone */
-  padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
   -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%; /* empêche iOS de grossir le texte tout seul */
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -48,7 +62,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: calc(14px + env(safe-area-inset-top)) 20px 14px;
+  flex: none;
+  padding: calc(14px + env(safe-area-inset-top)) var(--gutter) 14px;
 }
 
 /* Logo : grotesque très grasse et étirée (axe « wdth » de la police) */
@@ -73,9 +88,11 @@ body {
 
 /* --- Écrans --- */
 main {
-  max-width: 480px;
-  margin: 0 auto;
-  padding: 8px 20px 24px;
+  flex: 1;               /* prend toute la hauteur entre en-tête et onglets */
+  min-height: 0;
+  overflow-y: auto;      /* seul endroit qui peut défiler */
+  overscroll-behavior: contain;
+  padding: 8px var(--gutter) 24px;
 }
 
 .screen {
@@ -83,6 +100,12 @@ main {
   flex-direction: column;
   align-items: stretch;
   gap: 16px;
+}
+
+/* L'écran Booster est centré verticalement dans l'espace disponible */
+#screen-booster {
+  min-height: 100%;
+  justify-content: center;
 }
 
 /* L'attribut hidden doit gagner sur display:flex */
@@ -110,9 +133,14 @@ main {
 }
 
 /* --- Écran Booster : le paquet sert de bouton --- */
-.booster-eyebrow { text-align: center; margin-top: 16px; }
+.booster-eyebrow { text-align: center; }
+
+/* Agrandissement du paquet : toujours un facteur ENTIER (×6 sur téléphone).
+   Il grandit sur tablette / PC (voir les @media plus bas). */
+.booster-pack { --pack-scale: 6; }
 
 .booster-pack {
+  position: relative;
   align-self: center;
   padding: 0;
   border: 0;
@@ -124,20 +152,47 @@ main {
 
 .booster-pack img {
   display: block;
-  width: 192px;   /* 32 × 6 : facteur entier */
-  height: 288px;  /* 48 × 6 */
-  /* Ombre portée sombre pour détacher le paquet du fond */
-  filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.6));
+  width: calc(32px * var(--pack-scale));
+  height: calc(48px * var(--pack-scale));
+  /* Pas de filter ni de scale sur l'image : Safari la rendrait floue */
 }
 
-.booster-pack:active img { transform: scale(0.96); }
+/* Ombre au sol, dessinée à part pour ne pas toucher aux pixels du paquet */
+.booster-pack::after {
+  content: "";
+  position: absolute;
+  left: 15%;
+  right: 15%;
+  bottom: -20px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.7);
+  filter: blur(8px);
+  z-index: -1;
+}
+
+.booster-pack:active { opacity: 0.8; }
 
 /* Pas de booster disponible : paquet éteint, plus d'animation */
 .booster-pack:disabled {
   cursor: not-allowed;
   animation: none;
   opacity: 0.35;
-  filter: grayscale(1);
+}
+
+/* Tablette et PC assez hauts : ×8 (256 × 384 px) */
+@media (min-width: 600px) and (min-height: 700px) {
+  .booster-pack { --pack-scale: 8; }
+}
+
+/* Tablette en portrait (iPad) : ×10 (320 × 480 px) */
+@media (min-width: 700px) and (min-height: 1000px) {
+  .booster-pack { --pack-scale: 10; }
+}
+
+/* Écran peu haut (téléphone à l'horizontale) : ×4 pour tout voir */
+@media (max-height: 520px) {
+  .booster-pack { --pack-scale: 4; }
 }
 
 /* Secousse jouée quand on touche le paquet */
@@ -190,8 +245,10 @@ main {
 
 /* --- Pixel art : jamais de flou (réservé aux vêtements et à l'avatar) --- */
 .pixel {
+  /* L'ordre compte : la dernière valeur comprise par le navigateur gagne.
+     crisp-edges sert de repli (anciens Firefox), pixelated doit rester en dernier. */
+  image-rendering: crisp-edges;
   image-rendering: pixelated;
-  image-rendering: crisp-edges; /* repli pour anciens Firefox */
 }
 
 /* « Vitrine » qui met l'avatar en valeur */
@@ -239,18 +296,13 @@ main {
 .card[data-rarity="epique"]     { --rarity-color: var(--rarity-epique); }
 .card[data-rarity="legendaire"] { --rarity-color: var(--rarity-legendaire); }
 
-/* --- Barre d'onglets (fond translucide flouté, façon appli) --- */
+/* --- Barre d'onglets, toujours en bas (dernier élément de la colonne) --- */
 .tabbar {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  flex: none;
   display: flex;
   height: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
-  padding-bottom: env(safe-area-inset-bottom);
-  background: rgba(15, 15, 17, 0.85);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
+  padding: 0 var(--gutter) env(safe-area-inset-bottom);
+  background: var(--bg);
   border-top: 1px solid var(--border);
 }
 
