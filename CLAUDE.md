@@ -182,6 +182,7 @@ Pièces à retoucher plus tard (ne pas bloquer la bêta) : Manteau « Atelier »
 
 - Un booster = **3 cartes**.
 - Bêta : **1 booster gratuit par jour** (remise à zéro à minuit, heure locale), plus un bouton de test caché ou un paramètre d'URL (`?debug=1`) pour en ouvrir autant que voulu pendant les tests.
+- Ouverture (en place) : on touche le paquet → il tremble et s'ouvre → 3 cartes face cachée se retournent seules une par une → bouton « Continuer ». Les cartes sont sauvegardées **dès le tirage** (recharger la page ne permet pas de retirer).
 - Pas de monnaie, pas d'achat dans la bêta.
 
 ## 7. Avatar (point encore ouvert)
@@ -222,7 +223,7 @@ Le développeur n'est pas juriste ; ces règles sont prudentes en attendant un a
 - En cas de doute sur un choix de jeu (taux, règles, avatar), **demander** plutôt que d'inventer ; pour un détail technique, prendre l'option la plus simple et le dire.
 - Ne jamais ajouter de dépendance, de service externe ou de fonctionnalité hors périmètre (section 3) sans le signaler.
 - Garder ce fichier à jour quand une règle change.
-- **Cache** : à chaque changement de CSS ou de JS, augmenter le numéro `?v=…` de `style.css` et `js/main.js` dans `index.html`, sinon les téléphones gardent l'ancienne version jusqu'à 10 minutes.
+- **Cache** : à chaque changement de CSS ou de JS, augmenter le numéro `?v=…` **partout** (dans `index.html` pour `style.css` et `js/main.js`, et dans **tous les `import`** des fichiers `js/`), sinon les téléphones gardent l'ancienne version jusqu'à 10 minutes. Toujours le même numéro pour un même fichier : un module importé sous deux adresses serait chargé deux fois (deux sauvegardes séparées).
 - **Fusion automatique** : après chaque changement vérifié, Claude ouvre la pull request et la **fusionne lui-même dans `main`** (mise en ligne directe sur GitHub Pages), sans attendre de validation.
 
 ## 11. Après la bêta (pour information seulement)

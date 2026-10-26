@@ -268,11 +268,31 @@ main {
   height: 256px;
 }
 
-/* --- Cartes (structure prête pour booster et collection) --- */
-.card-row {
+/* --- Écran Booster : les deux vues (paquet fermé / cartes) --- */
+.booster-view {
   display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+}
+.booster-view[hidden] { display: none; }
+
+/* Ouverture : le paquet tremble puis s'envole */
+.booster-pack.opening { animation: booster-open 0.65s ease-in forwards; }
+
+@keyframes booster-open {
+  0%   { transform: rotate(0); }
+  15%  { transform: rotate(-5deg); }
+  30%  { transform: rotate(5deg); }
+  45%  { transform: rotate(-3deg); opacity: 1; }
+  100% { transform: translateY(-40px); opacity: 0; }
+}
+
+/* --- Cartes --- */
+.card-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 8px;
-  justify-content: center;
 }
 
 .card-grid {
@@ -281,15 +301,108 @@ main {
   gap: 8px;
 }
 
+/* Taille du sprite dans une carte : facteur ENTIER (×2 petit téléphone, ×3, ×5 tablette) */
+.card { --sprite-scale: 2; }
+@media (min-width: 360px) { .card { --sprite-scale: 3; } }
+@media (min-width: 600px) { .card { --sprite-scale: 5; } }
+
 .card {
+  position: relative;
+  border-radius: 12px;
+}
+
+/* Carte qui se retourne : le dos et la face sont superposés dans la même
+   case de grille, donc la carte prend la hauteur de son contenu. */
+.flip-card {
+  display: grid;
+  perspective: 600px;
+}
+
+.card-back,
+.card-face {
+  grid-area: 1 / 1;
+  border-radius: 12px;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transition: transform 0.45s ease;
+}
+
+.card-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-2);
+  border: 2px solid var(--border);
+  font-size: 40px;
+  font-weight: 900;
+  color: var(--muted);
+}
+
+.card-face {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 10px;
+  gap: 2px;
+  padding: 6px 4px 8px;
+  text-align: center;
   background: var(--surface);
   border: 2px solid var(--rarity-color, var(--border));
-  border-radius: 12px;
+  transform: rotateY(180deg);
+}
+
+.flip-card.revealed .card-back { transform: rotateY(-180deg); }
+.flip-card.revealed .card-face { transform: rotateY(0); }
+
+/* Case claire derrière le sprite : les contours noirs restent visibles */
+.sprite-tile {
+  display: flex;
+  padding: 2px;
+  margin-bottom: 4px;
+  background: #cccac4;
+  border-radius: 6px;
+}
+
+.sprite-tile img {
+  display: block;
+  width: calc(32px * var(--sprite-scale));
+  height: calc(32px * var(--sprite-scale));
+}
+
+/* Couleur d'accent de chaque marque (section 5 du CLAUDE.md) */
+.card[data-brand="signal9"]            { --brand-color: #ff6a13; }
+.card[data-brand="halvane"]            { --brand-color: #d4a72c; }
+.card[data-brand="pigeon_social_club"] { --brand-color: #4f9a68; }
+
+.card-brand {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--brand-color, var(--muted));
+}
+
+.card-name {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.card-colorway {
+  font-size: 11px;
+  line-height: 1.2;
+  color: var(--muted);
+}
+
+.rarity-tag {
+  margin-top: auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #0f0f11;
+  background: var(--rarity-color);
 }
 
 /* Chaque rareté fixe sa couleur ; bordure et étiquette la réutilisent */
@@ -297,6 +410,25 @@ main {
 .card[data-rarity="rare"]       { --rarity-color: var(--rarity-rare); }
 .card[data-rarity="epique"]     { --rarity-color: var(--rarity-epique); }
 .card[data-rarity="legendaire"] { --rarity-color: var(--rarity-legendaire); }
+
+/* Révélation marquée pour Épique et Légendaire : lueur qui pulse */
+.flip-card.revealed[data-rarity="epique"] .card-face,
+.flip-card.revealed[data-rarity="legendaire"] .card-face {
+  animation: rarity-glow 1.6s ease-in-out 0.45s infinite;
+}
+
+.flip-card.revealed[data-rarity="legendaire"] { animation: legendary-pop 0.5s ease-out 0.4s; }
+
+@keyframes rarity-glow {
+  0%, 100% { box-shadow: 0 0 8px 0 var(--rarity-color); }
+  50%      { box-shadow: 0 0 22px 4px var(--rarity-color); }
+}
+
+/* Petit saut (pas de scale : le sprite resterait à un facteur non entier) */
+@keyframes legendary-pop {
+  0%, 100% { transform: translateY(0); }
+  40%      { transform: translateY(-10px); }
+}
 
 /* --- Barre d'onglets, toujours en bas (dernier élément de la colonne) --- */
 .tabbar {

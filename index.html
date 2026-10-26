@@ -17,7 +17,7 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=8">
+  <link rel="stylesheet" href="style.css?v=9">
 </head>
 <body>
   <header class="topbar">
@@ -29,15 +29,23 @@
   <main>
     <!-- Chaque écran est une <section data-screen="…">. main.js n'en affiche qu'un à la fois. -->
     <section class="screen" data-screen="booster" id="screen-booster">
-      <span class="eyebrow booster-eyebrow">Drop du jour · 3 pièces</span>
-      <!-- Le booster lui-même sert de bouton : on le touche pour l'ouvrir.
-           Image native 32×48, affichée ×6 (192×288 px) pour rester nette. -->
-      <button class="booster-pack" id="btn-open-booster" aria-label="Ouvrir le booster" disabled>
-        <img class="pixel" src="assets/ui/booster.png" width="32" height="48" alt="">
-      </button>
-      <p class="muted booster-status" id="booster-status">Chargement…</p>
-      <!-- Les 3 cartes tirées viendront s'afficher ici -->
-      <div class="card-row" id="booster-result"></div>
+      <!-- Vue 1 : le paquet fermé -->
+      <div class="booster-view" id="booster-closed">
+        <span class="eyebrow booster-eyebrow">Drop du jour · 3 pièces</span>
+        <!-- Le booster lui-même sert de bouton : on le touche pour l'ouvrir.
+             Image native 32×48, agrandie d'un facteur entier pour rester nette. -->
+        <button class="booster-pack" id="btn-open-booster" aria-label="Ouvrir le booster" disabled>
+          <img class="pixel" src="assets/ui/booster.png" width="32" height="48" alt="">
+        </button>
+        <p class="muted booster-status" id="booster-status">Chargement…</p>
+      </div>
+
+      <!-- Vue 2 : les 3 cartes tirées, révélées une par une (booster.js) -->
+      <div class="booster-view" id="booster-opened" hidden>
+        <span class="eyebrow booster-eyebrow">Ton drop</span>
+        <div class="card-row" id="booster-result"></div>
+        <button class="btn btn-primary" id="btn-booster-done" hidden>Continuer</button>
+      </div>
     </section>
 
     <section class="screen" data-screen="collection" id="screen-collection" hidden>
@@ -64,6 +72,6 @@
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=8"></script>
+  <script type="module" src="js/main.js?v=9"></script>
 </body>
 </html>
