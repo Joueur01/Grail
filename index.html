@@ -2,8 +2,10 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <!-- viewport-fit=cover : permet d'utiliser les zones « encoche » des iPhone -->
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!-- viewport-fit=cover : permet d'utiliser les zones « encoche » des iPhone.
+       maximum-scale=1 / user-scalable=no : la page s'ouvre toujours à 100 %
+       et ne zoome pas (comme une appli). -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#0f0f11">
   <meta name="description" content="Ouvre des boosters de vêtements en pixel art, collectionne, habille ton avatar et partage ta tenue.">
   <title>Grail</title>
@@ -15,7 +17,7 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=7">
+  <link rel="stylesheet" href="style.css?v=8">
 </head>
 <body>
   <header class="topbar">
@@ -62,6 +64,6 @@
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=7"></script>
+  <script type="module" src="js/main.js?v=8"></script>
 </body>
 </html>

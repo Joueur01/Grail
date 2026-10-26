@@ -41,6 +41,8 @@ html, body {
   height: 100%;
   overflow: hidden;
   overscroll-behavior: none;
+  /* Supprime le zoom au double-tap (taper vite deux fois sur le paquet) */
+  touch-action: manipulation;
 }
 
 body {
