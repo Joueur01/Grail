@@ -258,19 +258,182 @@ main {
   image-rendering: pixelated;
 }
 
-/* « Vitrine » qui met l'avatar en valeur */
-.stage {
+/* --- Écran « Ma tenue » : fiche de tenue --- */
+
+/* 3 colonnes : cases à gauche | silhouette | cases à droite */
+.outfit {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+}
+
+.outfit-col {
   display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Silhouette : facteur entier ×3 (96×144) → ×4 → ×6 selon l'écran */
+.outfit-body {
+  --avatar-scale: 3;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: 8px;
   background: var(--surface);
   border-radius: var(--radius);
 }
+@media (min-width: 360px) { .outfit-body { --avatar-scale: 4; } }
+@media (min-width: 700px) { .outfit-body { --avatar-scale: 6; } }
 
-/* 32 px × 8 = 256 px : facteur entier, tient sur un écran de 375 px */
 .avatar-canvas {
-  width: 256px;
-  height: 256px;
+  width: calc(32px * var(--avatar-scale));
+  height: calc(48px * var(--avatar-scale));
+}
+
+/* Une case de la fiche. Taille de l'icône selon la largeur RÉELLE de la case :
+   largeur nécessaire = 32 × facteur + 8 px (bordure 4 + marge 4). Max ×4. */
+.slot {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-family: var(--font);
+  cursor: pointer;
+}
+
+.slot-tile { --slot-scale: 2; }
+@container (min-width: 104px) { .slot-tile { --slot-scale: 3; } }
+@container (min-width: 136px) { .slot-tile { --slot-scale: 4; } }
+
+.slot-tile {
+  display: grid;
+  place-items: center;
+  width: calc(32px * var(--slot-scale) + 8px);
+  height: calc(32px * var(--slot-scale) + 8px);
+  padding: 2px;
+  border: 2px solid var(--rarity-color, transparent);
+  border-radius: 10px;
+  background: #cccac4; /* case claire : les contours noirs restent visibles */
+}
+
+.slot-tile img {
+  display: block;
+  width: calc(32px * var(--slot-scale));
+  height: calc(32px * var(--slot-scale));
+}
+
+/* Case vide : pointillés et « + » */
+.slot:not([data-rarity]) .slot-tile {
+  border: 2px dashed var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 28px;
+  font-weight: 400;
+}
+
+.slot:active .slot-tile { opacity: 0.8; }
+
+.slot-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* --- Panneau de choix d'une pièce (monte depuis le bas) --- */
+.picker {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: flex-end;
+  background: rgba(0, 0, 0, 0.6);
+}
+.picker[hidden] { display: none; }
+
+.picker-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: var(--col);
+  max-height: 85dvh;
+  margin: 0 auto;
+  padding: 16px 20px calc(20px + env(safe-area-inset-bottom));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-bottom: 0;
+  border-radius: 20px 20px 0 0;
+  animation: sheet-up 0.25s ease-out;
+}
+
+@keyframes sheet-up {
+  from { transform: translateY(40px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+.picker-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.picker-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 900;
+  font-stretch: 112%;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+.picker-close {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.picker-empty { text-align: center; padding: 24px 0; }
+
+/* Chaque carte du panneau est un bouton. En grille + hauteur 100 % : la carte
+   remplit le bouton (un bouton centre sinon son contenu, et les cartes d'une
+   même ligne ne seraient plus alignées). */
+.picker-choice {
+  display: grid;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-family: var(--font);
+  cursor: pointer;
+}
+
+.picker-choice > .card,
+.card.owned {
+  display: grid;   /* la face remplit toute la hauteur de la carte */
+  height: 100%;
+}
+
+/* Carte déjà portée : contour blanc */
+.card.equipped .card-face {
+  outline: 3px solid var(--text);
+  outline-offset: 2px;
 }
 
 /* --- Écran Booster : les deux vues (paquet fermé / cartes) --- */
@@ -441,11 +604,12 @@ main {
   .rarity-tag { font-size: 12px; padding: 3px 10px; }
 }
 
-/* Chaque rareté fixe sa couleur ; bordure et étiquette la réutilisent */
-.card[data-rarity="commun"]     { --rarity-color: var(--rarity-commun); }
-.card[data-rarity="rare"]       { --rarity-color: var(--rarity-rare); }
-.card[data-rarity="epique"]     { --rarity-color: var(--rarity-epique); }
-.card[data-rarity="legendaire"] { --rarity-color: var(--rarity-legendaire); }
+/* Chaque rareté fixe sa couleur (cartes et cases de la tenue) ;
+   bordure et étiquette la réutilisent */
+[data-rarity="commun"]     { --rarity-color: var(--rarity-commun); }
+[data-rarity="rare"]       { --rarity-color: var(--rarity-rare); }
+[data-rarity="epique"]     { --rarity-color: var(--rarity-epique); }
+[data-rarity="legendaire"] { --rarity-color: var(--rarity-legendaire); }
 
 /* Révélation marquée pour Épique et Légendaire : lueur qui pulse */
 .flip-card.revealed[data-rarity="epique"] .card-face,
