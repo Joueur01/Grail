@@ -1,7 +1,7 @@
 // booster.js — tirage des cartes, ouverture du paquet et révélation carte par carte.
 
-import { RARITIES, CARDS_PER_BOOSTER, getRarity } from "./data.js?v=9";
-import { addCards, canOpenFreeBooster, markFreeBoosterUsed } from "./inventory.js?v=9";
+import { RARITIES, CARDS_PER_BOOSTER, getRarity } from "./data.js?v=10";
+import { addCards, canOpenFreeBooster, markFreeBoosterUsed } from "./inventory.js?v=10";
 
 // Délais de l'animation (en millisecondes), faciles à ajuster.
 const OPEN_DELAY = 650;    // secousse + ouverture du paquet
