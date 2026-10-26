@@ -31,6 +31,11 @@
   --font: "Archivo", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
+/* Tablette et PC : colonne plus large, donc des cartes plus grandes */
+@media (min-width: 700px) {
+  :root { --col: 720px; }
+}
+
 * { box-sizing: border-box; }
 
 /* La page ne défile jamais (comme une appli) : seule la zone <main>
@@ -305,15 +310,21 @@ main {
   gap: 8px;
 }
 
-/* Taille du sprite dans une carte : facteur ENTIER (×2 petit téléphone, ×3, ×5 tablette) */
-.card { --sprite-scale: 2; }
-@media (min-width: 360px) { .card { --sprite-scale: 3; } }
-@media (min-width: 600px) { .card { --sprite-scale: 5; } }
-
+/* Taille du sprite dans une carte : facteur ENTIER choisi selon la largeur
+   RÉELLE de la carte (container query), pas celle de l'écran : le sprite
+   ne peut donc jamais dépasser de la carte, quel que soit l'appareil.
+   Largeur nécessaire = 32 × facteur + 10 px (bordure 4 + case 2 + marges 4). */
 .card {
   position: relative;
   border-radius: 12px;
+  container-type: inline-size;
 }
+
+.card-face { --sprite-scale: 2; }
+@container (min-width: 106px) { .card-face { --sprite-scale: 3; } }
+@container (min-width: 138px) { .card-face { --sprite-scale: 4; } }
+@container (min-width: 170px) { .card-face { --sprite-scale: 5; } }
+@container (min-width: 202px) { .card-face { --sprite-scale: 6; } }
 
 /* Carte qui se retourne : le dos et la face sont superposés dans la même
    case de grille, donc la carte prend la hauteur de son contenu. */
@@ -347,7 +358,7 @@ main {
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  padding: 6px 4px 8px;
+  padding: 6px 2px 8px;
   text-align: center;
   background: var(--surface);
   border: 2px solid var(--rarity-color, var(--border));
@@ -362,7 +373,7 @@ main {
 /* Case claire derrière le sprite : les contours noirs restent visibles */
 .sprite-tile {
   display: flex;
-  padding: 2px;
+  padding: 1px;
   margin-bottom: 4px;
   background: #cccac4;
   border-radius: 6px;
@@ -418,8 +429,16 @@ main {
 /* Petits écrans (iPhone SE) : étiquette plus compacte
    (placé APRÈS .rarity-tag pour passer devant) */
 @media (max-width: 359px) {
-  .card-face { padding-left: 2px; padding-right: 2px; }
   .rarity-tag { padding: 2px 4px; font-size: 9px; letter-spacing: 0; text-transform: none; }
+}
+
+/* Cartes larges (tablette, PC) : textes plus grands, à l'échelle du sprite */
+@container (min-width: 170px) {
+  .card-face { gap: 4px; padding: 8px 6px 12px; }
+  .card-brand { font-size: 12px; }
+  .card-name { font-size: 15px; }
+  .card-colorway { font-size: 13px; }
+  .rarity-tag { font-size: 12px; padding: 3px 10px; }
 }
 
 /* Chaque rareté fixe sa couleur ; bordure et étiquette la réutilisent */
