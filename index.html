@@ -17,7 +17,7 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=13">
+  <link rel="stylesheet" href="style.css?v=14">
 </head>
 <body>
   <header class="topbar">
@@ -65,12 +65,12 @@
     <section class="screen" data-screen="avatar" id="screen-avatar" hidden>
       <h2 class="screen-title">Ma tenue</h2>
       <p class="muted" id="outfit-summary">—</p>
-      <!-- Fiche de tenue : silhouette au centre, une case par emplacement autour (avatar.js) -->
+      <!-- Fiche de tenue : bonhomme habillé au centre, une case par emplacement autour (avatar.js) -->
       <div class="outfit">
         <div class="outfit-col" id="outfit-left"></div>
         <div class="outfit-body">
-          <!-- Canvas 32×48 « logique », agrandi d'un facteur entier en CSS -->
-          <canvas id="avatar-canvas" class="pixel avatar-canvas" width="32" height="48"></canvas>
+          <!-- Bonhomme habillé : canvas 64×96 « logique », agrandi d'un facteur entier en CSS -->
+          <canvas id="avatar-canvas" class="pixel avatar-canvas" width="64" height="96"></canvas>
         </div>
         <div class="outfit-col" id="outfit-right"></div>
       </div>
@@ -98,6 +98,6 @@
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=13"></script>
+  <script type="module" src="js/main.js?v=14"></script>
 </body>
 </html>
