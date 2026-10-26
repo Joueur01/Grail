@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <!-- viewport-fit=cover : permet d'utiliser les zones « encoche » des iPhone -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0e0e10">
+  <meta name="description" content="Ouvre des boosters de vêtements en pixel art, collectionne, habille ton avatar et partage ta tenue.">
+  <title>Le Pull</title>
+  <!-- Seule dépendance externe autorisée : une police pixel pour les titres -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Silkscreen&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1 class="logo">LE PULL</h1>
+    <!-- Visible seulement avec ?debug=1 -->
+    <span class="debug-badge" id="debug-badge" hidden>DEBUG</span>
+  </header>
+
+  <main>
+    <!-- Chaque écran est une <section data-screen="…">. main.js n'en affiche qu'un à la fois. -->
+    <section class="screen" data-screen="booster" id="screen-booster">
+      <h2 class="screen-title">Booster du jour</h2>
+      <p class="muted" id="booster-status">Chargement…</p>
+      <button class="btn btn-primary" id="btn-open-booster" disabled>Ouvrir un booster</button>
+      <!-- Les 3 cartes tirées viendront s'afficher ici -->
+      <div class="card-row" id="booster-result"></div>
+    </section>
+
+    <section class="screen" data-screen="collection" id="screen-collection" hidden>
+      <h2 class="screen-title">Collection</h2>
+      <p class="muted" id="collection-summary">—</p>
+      <!-- Filtres et grille des cartes : à venir (inventory.js) -->
+      <div class="card-grid" id="collection-grid"></div>
+    </section>
+
+    <section class="screen" data-screen="avatar" id="screen-avatar" hidden>
+      <h2 class="screen-title">Ma tenue</h2>
+      <!-- Le canvas est en 32×32 « logique » agrandi ×8 en CSS (facteur entier) -->
+      <canvas id="avatar-canvas" class="pixel avatar-canvas" width="32" height="32"></canvas>
+      <button class="btn" id="btn-share" disabled>Partager ma tenue</button>
+    </section>
+  </main>
+
+  <!-- Barre d'onglets en bas : à portée de pouce -->
+  <nav class="tabbar" aria-label="Navigation">
+    <a class="tab" href="#booster" data-tab="booster">Booster</a>
+    <a class="tab" href="#collection" data-tab="collection">Collection</a>
+    <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
+  </nav>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
