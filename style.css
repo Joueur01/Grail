@@ -1,25 +1,25 @@
 /* =========================================================
    Grail — feuille de style
    Parti pris : une interface moderne et nette, façon boutique
-   de drop (fond clair, typo grotesque grasse, beaucoup d'air),
+   de drop (fond sombre, typo grotesque grasse, beaucoup d'air),
    qui contraste avec les vêtements et l'avatar en pixel art.
    Mobile d'abord : tout est pensé pour ~375 px de large.
    ========================================================= */
 
 :root {
-  /* Fond neutre « papier », encre presque noire */
-  --bg: #f2f1ee;
-  --surface: #ffffff;
-  --surface-2: #e8e7e3;
-  --border: #dcdad5;
-  --text: #111111;
-  --muted: #6e6c67;
+  /* Fond sombre presque noir, texte blanc cassé */
+  --bg: #0f0f11;
+  --surface: #1a1a1e;
+  --surface-2: #242429;
+  --border: #2c2c33;
+  --text: #f2f1ee;
+  --muted: #8f8d88;
 
-  /* Couleurs des raretés (section 6 du CLAUDE.md), lisibles sur fond clair */
-  --rarity-commun: #8b8b93;
-  --rarity-rare: #2f6fff;
-  --rarity-epique: #8a3ffc;
-  --rarity-legendaire: #d9a400;
+  /* Couleurs des raretés (section 6 du CLAUDE.md), lisibles sur fond sombre */
+  --rarity-commun: #9a9aa4;
+  --rarity-rare: #4d8dff;
+  --rarity-epique: #a56bff;
+  --rarity-legendaire: #f2c230;
 
   --radius: 16px;
   --tabbar-h: 64px;
@@ -115,12 +115,10 @@ main {
   flex-direction: column;
   gap: 6px;
   padding: 24px 20px;
-  background: var(--text);
-  color: var(--bg);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
 }
-
-.drop .eyebrow { color: #a5a39d; }
 
 .drop-title {
   margin: 0;
@@ -132,7 +130,7 @@ main {
   text-transform: uppercase;
 }
 
-.drop-meta { margin: 0; color: #a5a39d; font-size: 15px; }
+.drop-meta { margin: 0; color: var(--muted); font-size: 15px; }
 
 /* --- Boutons : larges, faciles au pouce (min. 48 px de haut) --- */
 .btn {
@@ -170,7 +168,7 @@ main {
   image-rendering: crisp-edges; /* repli pour anciens Firefox */
 }
 
-/* « Vitrine » blanche qui met l'avatar en valeur */
+/* « Vitrine » qui met l'avatar en valeur */
 .stage {
   display: flex;
   justify-content: center;
@@ -224,7 +222,7 @@ main {
   display: flex;
   height: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
-  background: rgba(242, 241, 238, 0.85);
+  background: rgba(15, 15, 17, 0.85);
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
   border-top: 1px solid var(--border);

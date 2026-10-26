@@ -17,7 +17,7 @@ export function initAvatar(canvas) {
 // Silhouette provisoire en attendant le vrai corps de base (assets/avatar/).
 function drawPlaceholder(ctx, w, h) {
   ctx.clearRect(0, 0, w, h);
-  ctx.fillStyle = "#3a3a44";
+  ctx.fillStyle = "#4a4a55";
   ctx.fillRect(13, 3, 6, 6);   // tête
   ctx.fillRect(11, 10, 10, 10); // torse
   ctx.fillRect(8, 10, 2, 9);    // bras gauche
