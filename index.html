@@ -4,26 +4,31 @@
   <meta charset="utf-8">
   <!-- viewport-fit=cover : permet d'utiliser les zones « encoche » des iPhone -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0e0e10">
+  <meta name="theme-color" content="#f2f1ee">
   <meta name="description" content="Ouvre des boosters de vêtements en pixel art, collectionne, habille ton avatar et partage ta tenue.">
   <title>Le Pull</title>
-  <!-- Seule dépendance externe autorisée : une police pixel pour les titres -->
+  <!-- Seule dépendance externe : la police Archivo (texte normal + titres « étirés »).
+       L'interface est moderne et nette ; seuls les vêtements et l'avatar sont en pixel art. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Silkscreen&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="topbar">
     <h1 class="logo">LE PULL</h1>
     <!-- Visible seulement avec ?debug=1 -->
-    <span class="debug-badge" id="debug-badge" hidden>DEBUG</span>
+    <span class="debug-badge" id="debug-badge" hidden>Debug</span>
   </header>
 
   <main>
     <!-- Chaque écran est une <section data-screen="…">. main.js n'en affiche qu'un à la fois. -->
     <section class="screen" data-screen="booster" id="screen-booster">
-      <h2 class="screen-title">Booster du jour</h2>
+      <div class="drop">
+        <span class="eyebrow">Drop du jour</span>
+        <h2 class="drop-title">Booster</h2>
+        <p class="drop-meta">3 pièces · 4 raretés</p>
+      </div>
       <p class="muted" id="booster-status">Chargement…</p>
       <button class="btn btn-primary" id="btn-open-booster" disabled>Ouvrir un booster</button>
       <!-- Les 3 cartes tirées viendront s'afficher ici -->
@@ -40,7 +45,9 @@
     <section class="screen" data-screen="avatar" id="screen-avatar" hidden>
       <h2 class="screen-title">Ma tenue</h2>
       <!-- Le canvas est en 32×32 « logique » agrandi ×8 en CSS (facteur entier) -->
-      <canvas id="avatar-canvas" class="pixel avatar-canvas" width="32" height="32"></canvas>
+      <div class="stage">
+        <canvas id="avatar-canvas" class="pixel avatar-canvas" width="32" height="32"></canvas>
+      </div>
       <button class="btn" id="btn-share" disabled>Partager ma tenue</button>
     </section>
   </main>
