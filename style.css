@@ -109,28 +109,54 @@ main {
   color: var(--muted);
 }
 
-/* --- Bloc « drop » de l'écran Booster --- */
-.drop {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 24px 20px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+/* --- Écran Booster : le paquet sert de bouton --- */
+.booster-eyebrow { text-align: center; margin-top: 16px; }
+
+.booster-pack {
+  align-self: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  /* Légère flottaison au repos pour inviter à toucher */
+  animation: booster-float 3s ease-in-out infinite;
 }
 
-.drop-title {
-  margin: 0;
-  font-size: clamp(32px, 12vw, 44px); /* rétrécit sur les petits écrans */
-  font-weight: 900;
-  font-stretch: 112%;
-  line-height: 0.95;
-  letter-spacing: -0.04em;
-  text-transform: uppercase;
+.booster-pack img {
+  display: block;
+  width: 192px;   /* 32 × 6 : facteur entier */
+  height: 288px;  /* 48 × 6 */
+  /* Ombre portée sombre pour détacher le paquet du fond */
+  filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.6));
 }
 
-.drop-meta { margin: 0; color: var(--muted); font-size: 15px; }
+.booster-pack:active img { transform: scale(0.96); }
+
+/* Pas de booster disponible : paquet éteint, plus d'animation */
+.booster-pack:disabled {
+  cursor: not-allowed;
+  animation: none;
+  opacity: 0.35;
+  filter: grayscale(1);
+}
+
+/* Secousse jouée quand on touche le paquet */
+.booster-pack.shake { animation: booster-shake 0.4s ease-in-out; }
+
+@keyframes booster-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-8px); }
+}
+
+@keyframes booster-shake {
+  0%, 100% { transform: rotate(0); }
+  20% { transform: rotate(-4deg); }
+  40% { transform: rotate(4deg); }
+  60% { transform: rotate(-3deg); }
+  80% { transform: rotate(3deg); }
+}
+
+.booster-status { text-align: center; }
 
 /* --- Boutons : larges, faciles au pouce (min. 48 px de haut) --- */
 .btn {

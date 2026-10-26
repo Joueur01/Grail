@@ -27,6 +27,20 @@ function currentScreenFromHash() {
   return location.hash.replace("#", "");
 }
 
+// Le paquet de booster est le bouton d'ouverture.
+// Pour l'instant il se secoue seulement : le tirage et la révélation
+// des cartes seront branchés à la prochaine tâche (booster.js).
+function setupBoosterPack(available) {
+  const pack = document.getElementById("btn-open-booster");
+  pack.disabled = !available;
+  pack.addEventListener("click", () => {
+    pack.classList.remove("shake");
+    void pack.offsetWidth; // force le navigateur à rejouer l'animation
+    pack.classList.add("shake");
+  });
+  pack.addEventListener("animationend", () => pack.classList.remove("shake"));
+}
+
 async function start() {
   document.getElementById("debug-badge").hidden = !DEBUG;
 
@@ -38,11 +52,12 @@ async function start() {
 
   const status = document.getElementById("booster-status");
   try {
-    const catalogue = await loadCatalogue();
+    await loadCatalogue(); // en cas d'échec, on passe dans le catch
     const free = DEBUG || canOpenFreeBooster();
-    status.textContent =
-      `${catalogue.colorways.length} coloris à collectionner. ` +
-      (free ? "Ton booster gratuit est prêt." : "Reviens demain pour un nouveau booster.");
+    status.textContent = free
+      ? "Touche le booster pour l'ouvrir."
+      : "Reviens demain pour un nouveau booster.";
+    setupBoosterPack(free);
   } catch (err) {
     // Arrive surtout si on ouvre index.html en double-cliquant (file://) :
     // fetch() a besoin d'un serveur (GitHub Pages, ou python3 -m http.server).
