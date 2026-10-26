@@ -1,4 +1,5 @@
-// inventory.js — collection du joueur, sauvegarde localStorage et écran Collection.
+// inventory.js — collection du joueur, sauvegarde localStorage, écran Collection
+// et tenue équipée.
 //
 // Format de sauvegarde (version 1) :
 // {
@@ -9,8 +10,8 @@
 // }
 // Si le format change un jour, on crée "grail_save_v2" et on migre depuis v1.
 
-import { RARITIES } from "./data.js?v=12";
-import { createCardFace, createCardShell } from "./cards.js?v=12";
+import { RARITIES } from "./data.js?v=13";
+import { createCardFace, createCardShell } from "./cards.js?v=13";
 
 const SAVE_KEY = "grail_save_v1";
 
@@ -60,6 +61,24 @@ export function addCards(cards) {
     const key = cardKey(colorwayId, rarity);
     save.cards[key] = (save.cards[key] || 0) + 1;
   }
+  persist();
+}
+
+// --- Tenue équipée (une carte par emplacement) ---
+
+/** Carte équipée sur un emplacement ("tete", "haut"…) : { colorwayId, rarity } ou null. */
+export function getEquipped(slot) {
+  const key = save.equipped[slot];
+  // On ne garde que les cartes réellement possédées (sauvegarde abîmée, etc.).
+  if (!key || !save.cards[key]) return null;
+  const [colorwayId, rarity] = key.split("|");
+  return { colorwayId, rarity };
+}
+
+/** Équipe une carte sur un emplacement, ou vide l'emplacement si card = null. */
+export function equip(slot, card) {
+  if (card) save.equipped[slot] = cardKey(card.colorwayId, card.rarity);
+  else delete save.equipped[slot];
   persist();
 }
 

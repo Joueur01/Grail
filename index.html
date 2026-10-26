@@ -17,7 +17,7 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=12">
+  <link rel="stylesheet" href="style.css?v=13">
 </head>
 <body>
   <header class="topbar">
@@ -64,13 +64,32 @@
 
     <section class="screen" data-screen="avatar" id="screen-avatar" hidden>
       <h2 class="screen-title">Ma tenue</h2>
-      <!-- Le canvas est en 32×32 « logique » agrandi ×8 en CSS (facteur entier) -->
-      <div class="stage">
-        <canvas id="avatar-canvas" class="pixel avatar-canvas" width="32" height="32"></canvas>
+      <p class="muted" id="outfit-summary">—</p>
+      <!-- Fiche de tenue : silhouette au centre, une case par emplacement autour (avatar.js) -->
+      <div class="outfit">
+        <div class="outfit-col" id="outfit-left"></div>
+        <div class="outfit-body">
+          <!-- Canvas 32×48 « logique », agrandi d'un facteur entier en CSS -->
+          <canvas id="avatar-canvas" class="pixel avatar-canvas" width="32" height="48"></canvas>
+        </div>
+        <div class="outfit-col" id="outfit-right"></div>
       </div>
       <button class="btn" id="btn-share" disabled>Partager ma tenue</button>
     </section>
   </main>
+
+  <!-- Panneau de choix d'une pièce (s'ouvre par le bas, au-dessus de tout) -->
+  <div class="picker" id="picker" hidden>
+    <div class="picker-sheet" role="dialog" aria-modal="true" aria-labelledby="picker-title">
+      <div class="picker-head">
+        <h3 class="picker-title" id="picker-title"></h3>
+        <button class="picker-close" id="picker-close" aria-label="Fermer">✕</button>
+      </div>
+      <p class="muted picker-empty" id="picker-empty" hidden>Tu n'as pas encore de pièce pour cet emplacement. Ouvre des boosters !</p>
+      <div class="card-grid" id="picker-grid"></div>
+      <button class="btn" id="picker-remove" hidden>Retirer la pièce</button>
+    </div>
+  </div>
 
   <!-- Barre d'onglets en bas : à portée de pouce -->
   <nav class="tabbar" aria-label="Navigation">
@@ -79,6 +98,6 @@
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=12"></script>
+  <script type="module" src="js/main.js?v=13"></script>
 </body>
 </html>

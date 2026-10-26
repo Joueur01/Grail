@@ -32,7 +32,7 @@ Contraintes de la bêta :
 
 1. **Booster** : un bouton « Ouvrir un booster » qui tire 3 pièces selon les taux de rareté (section 6), avec une petite animation de révélation carte par carte. ✅ Fait.
 2. **Inventaire** : la collection du joueur, sauvegardée en `localStorage`, avec filtres simples (marque, catégorie, rareté) et le nombre d'exemplaires de chaque carte. ✅ Fait : progression « X / 300 », filtres Marque / Type / Rareté (menus natifs, collés en haut), grille triée de la plus rare à la plus commune, badge « ×N » pour les doublons.
-3. **Avatar** : un personnage en pixel art sur lequel on équipe une pièce par emplacement (section 7).
+3. **Avatar** : un personnage en pixel art sur lequel on équipe une pièce par emplacement (section 7). ✅ Fait (fiche de tenue).
 4. **Partager ma tenue** : exporter l'avatar habillé en **image PNG** (canvas → PNG), avec le nom des pièces et leur rareté, puis partage natif (`navigator.share` avec fichier si disponible, sinon téléchargement).
 5. **Mise en ligne** sur GitHub Pages et test sur iPhone/Android.
 
@@ -188,9 +188,11 @@ Pièces à retoucher plus tard (ne pas bloquer la bêta) : Manteau « Atelier »
 - Ouverture (en place) : on touche le paquet → il tremble et s'ouvre → 3 cartes face cachée se retournent seules une par une → bouton « Continuer ». Les cartes sont sauvegardées **dès le tirage** (recharger la page ne permet pas de retirer).
 - Pas de monnaie, pas d'achat dans la bêta.
 
-## 7. Avatar (point encore ouvert)
+## 7. Avatar — fiche de tenue (option validée)
 
-Le gabarit d'avatar **n'est pas encore fixé**. Les sprites des pièces sont des **icônes 32 × 32 « catalogue »**, pas des calques dessinés pour être portés.
+✅ **Choix validé : la « fiche de tenue »**. Silhouette neutre au centre (canvas 32 × 48, facteur entier), 7 cases autour (gauche : Tête, Cou, Haut, Veste ; droite : Sac, Bas, Chaussures). Toucher une case ouvre un panneau par le bas avec les cartes possédées pour cet emplacement (plus rare d'abord) ; toucher une carte l'équipe, « Retirer la pièce » vide la case. La case prend la couleur de rareté de la carte portée. Sauvegarde dans `equipped` (`emplacement → colorwayId|rareté`). Les versions « portées » des sprites restent une idée pour après la bêta.
+
+Contexte d'origine : le gabarit d'avatar n'était pas fixé. Les sprites des pièces sont des **icônes 32 × 32 « catalogue »**, pas des calques dessinés pour être portés.
 
 Approche par défaut pour la bêta, sauf consigne contraire :
 - Un **corps de base unique** en pixel art, neutre et non genré, sur une grille fixe.
