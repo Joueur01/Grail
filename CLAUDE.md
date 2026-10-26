@@ -192,9 +192,10 @@ Ne pas passer plus de 30 minutes bloqué sur l'avatar : simplifier plutôt que p
 
 ## 8. Direction artistique de l'interface
 
-- Pixel art 32 × 32 pour tous les vêtements. Interface sobre, sombre ou neutre, qui met les sprites en valeur.
+- Pixel art 32 × 32 pour tous les vêtements **et l'avatar uniquement**. L'interface, elle, n'est **pas rétro** : moderne et nette, pour créer un **contraste** avec les sprites pixelisés.
 - Ambiance **streetwear / drop / resell** : sobre, un peu « hype », pas mignon. Penser vitrine de sneakers plutôt que jeu d'habillage.
-- Typographie lisible, contrastée ; une police pixel possible pour les titres, pas pour les textes longs.
+- Fond neutre clair (« papier »), encre presque noire, beaucoup d'air, coins arrondis, boutons en pilule.
+- Typographie : **Archivo** (Google Fonts), grotesque grasse et étirée pour les titres, normale pour le texte. **Pas de police pixel** dans l'interface.
 - Chaque marque garde ses couleurs (section 5) dans les cartes.
 - Boutons larges, adaptés au pouce.
 
