@@ -1,7 +1,8 @@
 // booster.js — tirage des cartes, ouverture du paquet et révélation carte par carte.
 
-import { RARITIES, CARDS_PER_BOOSTER, getRarity } from "./data.js?v=10";
-import { addCards, canOpenFreeBooster, markFreeBoosterUsed } from "./inventory.js?v=10";
+import { RARITIES, CARDS_PER_BOOSTER } from "./data.js?v=11";
+import { addCards, canOpenFreeBooster, markFreeBoosterUsed } from "./inventory.js?v=11";
+import { createCardFace, createCardShell } from "./cards.js?v=11";
 
 // Délais de l'animation (en millisecondes), faciles à ajuster.
 const OPEN_DELAY = 650;    // secousse + ouverture du paquet
@@ -104,57 +105,15 @@ export function setupBooster({ catalogue, debug, onOpened }) {
   refreshPack();
 }
 
-/**
- * Crée l'élément HTML d'une carte (dos + face).
- * La face montre le sprite sur une case claire, la marque, le nom,
- * le coloris et l'étiquette de rareté.
- */
+/** Carte qui se retourne : un dos « ? » puis la face (voir cards.js). */
 function createCard(colorway, rarityId) {
-  const card = document.createElement("div");
-  card.className = "card flip-card";
-  card.dataset.rarity = rarityId;
-  card.dataset.brand = colorway.brand.id;
+  const card = createCardShell(colorway, rarityId);
+  card.classList.add("flip-card");
 
-  // Dos de la carte (visible avant la révélation)
   const back = document.createElement("div");
   back.className = "card-back";
   back.textContent = "?";
 
-  // Face de la carte
-  const face = document.createElement("div");
-  face.className = "card-face";
-
-  const tile = document.createElement("div");
-  tile.className = "sprite-tile";
-  const img = document.createElement("img");
-  img.className = "pixel";
-  img.src = colorway.sprite;
-  img.width = 32;
-  img.height = 32;
-  img.alt = "";
-  tile.append(img);
-
-  face.append(
-    tile,
-    textEl("card-brand", colorway.brand.name),
-    textEl("card-name", keepQuotesTogether(colorway.piece.name)),
-    textEl("card-colorway", colorway.name),
-    textEl("rarity-tag", getRarity(rarityId).name),
-  );
-
-  card.append(back, face);
+  card.append(back, createCardFace(colorway, rarityId));
   return card;
-}
-
-// Espaces insécables autour des guillemets : « Atelier » ne se coupe jamais
-// en laissant un » tout seul sur une ligne.
-function keepQuotesTogether(text) {
-  return text.replace(/« /g, "«\u00a0").replace(/ »/g, "\u00a0»");
-}
-
-function textEl(className, text) {
-  const el = document.createElement("span");
-  el.className = className;
-  el.textContent = text;
-  return el;
 }

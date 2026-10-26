@@ -3,10 +3,10 @@
 // ?v=… sur les imports : même numéro que dans index.html, et le même partout
 // (un module importé sous deux adresses différentes serait chargé deux fois).
 
-import { loadCatalogue } from "./data.js?v=10";
-import { loadSave, totalCards, uniqueCards } from "./inventory.js?v=10";
-import { initAvatar } from "./avatar.js?v=10";
-import { setupBooster } from "./booster.js?v=10";
+import { loadCatalogue } from "./data.js?v=11";
+import { loadSave, setupCollection } from "./inventory.js?v=11";
+import { initAvatar } from "./avatar.js?v=11";
+import { setupBooster } from "./booster.js?v=11";
 
 // ?debug=1 dans l'URL : boosters illimités pendant les tests.
 export const DEBUG = new URLSearchParams(location.search).get("debug") === "1";
@@ -41,12 +41,6 @@ function blockPinchZoom() {
   document.addEventListener("gesturestart", (e) => e.preventDefault());
 }
 
-/** Met à jour le résumé en haut de l'écran Collection. */
-function refreshCollectionSummary() {
-  document.getElementById("collection-summary").textContent =
-    `${uniqueCards()} cartes différentes · ${totalCards()} au total`;
-}
-
 async function start() {
   document.getElementById("debug-badge").hidden = !DEBUG;
   blockPinchZoom();
@@ -56,11 +50,12 @@ async function start() {
 
   loadSave();
   initAvatar(document.getElementById("avatar-canvas"));
-  refreshCollectionSummary();
 
   try {
     const catalogue = await loadCatalogue();
-    setupBooster({ catalogue, debug: DEBUG || BOOSTERS_ILLIMITES, onOpened: refreshCollectionSummary });
+    // La collection est redessinée après chaque ouverture de booster.
+    const refreshCollection = setupCollection({ catalogue });
+    setupBooster({ catalogue, debug: DEBUG || BOOSTERS_ILLIMITES, onOpened: refreshCollection });
   } catch (err) {
     // Arrive surtout si on ouvre index.html en double-cliquant (file://) :
     // fetch() a besoin d'un serveur (GitHub Pages, ou python3 -m http.server).
