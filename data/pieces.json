@@ -1,0 +1,617 @@
+{
+  "version": 1,
+  "brands": [
+    {
+      "id": "signal9",
+      "name": "SIGNAL/9",
+      "style": "Techwear utilitaire"
+    },
+    {
+      "id": "halvane",
+      "name": "Halvane",
+      "style": "Luxe minimaliste"
+    },
+    {
+      "id": "pigeon_social_club",
+      "name": "Pigeon Social Club",
+      "style": "Skate / DIY"
+    }
+  ],
+  "pieces": [
+    {
+      "id": "signal9_shell_relais",
+      "brand": "signal9",
+      "name": "Shell « Relais »",
+      "category": "haut",
+      "slot": "veste",
+      "flagship": true,
+      "description": "Coupe-vent oversize à capuche, bande réfléchissante.",
+      "colorways": [
+        {
+          "id": "signal9_shell_relais_noir_orange_signal",
+          "name": "Noir / Orange signal",
+          "sprite": "assets/pieces/signal9_shell_relais_noir_orange_signal.png"
+        },
+        {
+          "id": "signal9_shell_relais_olive_orange_signal",
+          "name": "Olive / Orange signal",
+          "sprite": "assets/pieces/signal9_shell_relais_olive_orange_signal.png"
+        },
+        {
+          "id": "signal9_shell_relais_noir_jaune_balise",
+          "name": "Noir / Jaune balise",
+          "sprite": "assets/pieces/signal9_shell_relais_noir_jaune_balise.png"
+        },
+        {
+          "id": "signal9_shell_relais_gris_beton_orange_signal",
+          "name": "Gris béton / Orange signal",
+          "sprite": "assets/pieces/signal9_shell_relais_gris_beton_orange_signal.png"
+        },
+        {
+          "id": "signal9_shell_relais_marine_nuit_rouge_balise",
+          "name": "Marine nuit / Rouge balise",
+          "sprite": "assets/pieces/signal9_shell_relais_marine_nuit_rouge_balise.png"
+        },
+        {
+          "id": "signal9_shell_relais_glacier_orange_signal",
+          "name": "Glacier / Orange signal",
+          "sprite": "assets/pieces/signal9_shell_relais_glacier_orange_signal.png"
+        }
+      ]
+    },
+    {
+      "id": "signal9_gilet_dossard",
+      "brand": "signal9",
+      "name": "Gilet « Dossard »",
+      "category": "haut",
+      "slot": "veste",
+      "flagship": false,
+      "description": "Gilet sans manches multipoches.",
+      "colorways": [
+        {
+          "id": "signal9_gilet_dossard_noir_orange_signal",
+          "name": "Noir / Orange signal",
+          "sprite": "assets/pieces/signal9_gilet_dossard_noir_orange_signal.png"
+        },
+        {
+          "id": "signal9_gilet_dossard_olive_orange_signal",
+          "name": "Olive / Orange signal",
+          "sprite": "assets/pieces/signal9_gilet_dossard_olive_orange_signal.png"
+        },
+        {
+          "id": "signal9_gilet_dossard_noir_jaune_balise",
+          "name": "Noir / Jaune balise",
+          "sprite": "assets/pieces/signal9_gilet_dossard_noir_jaune_balise.png"
+        }
+      ]
+    },
+    {
+      "id": "signal9_cargo_beton",
+      "brand": "signal9",
+      "name": "Cargo « Béton »",
+      "category": "bas",
+      "slot": "bas",
+      "flagship": false,
+      "description": "Pantalon cargo à poches latérales.",
+      "colorways": [
+        {
+          "id": "signal9_cargo_beton_gris_beton_orange_signal",
+          "name": "Gris béton / Orange signal",
+          "sprite": "assets/pieces/signal9_cargo_beton_gris_beton_orange_signal.png"
+        },
+        {
+          "id": "signal9_cargo_beton_noir_orange_signal",
+          "name": "Noir / Orange signal",
+          "sprite": "assets/pieces/signal9_cargo_beton_noir_orange_signal.png"
+        },
+        {
+          "id": "signal9_cargo_beton_olive_jaune_balise",
+          "name": "Olive / Jaune balise",
+          "sprite": "assets/pieces/signal9_cargo_beton_olive_jaune_balise.png"
+        },
+        {
+          "id": "signal9_cargo_beton_sable_orange_signal",
+          "name": "Sable / Orange signal",
+          "sprite": "assets/pieces/signal9_cargo_beton_sable_orange_signal.png"
+        }
+      ]
+    },
+    {
+      "id": "signal9_short_course",
+      "brand": "signal9",
+      "name": "Short « Course »",
+      "category": "bas",
+      "slot": "bas",
+      "flagship": false,
+      "description": "Short technique léger.",
+      "colorways": [
+        {
+          "id": "signal9_short_course_noir_orange_signal",
+          "name": "Noir / Orange signal",
+          "sprite": "assets/pieces/signal9_short_course_noir_orange_signal.png"
+        },
+        {
+          "id": "signal9_short_course_noir_jaune_balise",
+          "name": "Noir / Jaune balise",
+          "sprite": "assets/pieces/signal9_short_course_noir_jaune_balise.png"
+        }
+      ]
+    },
+    {
+      "id": "signal9_montantes_trame",
+      "brand": "signal9",
+      "name": "Montantes « Trame »",
+      "category": "chaussures",
+      "slot": "chaussures",
+      "flagship": false,
+      "description": "Chaussures montantes à semelle crantée.",
+      "colorways": [
+        {
+          "id": "signal9_montantes_trame_noir_orange_signal",
+          "name": "Noir / Orange signal",
+          "sprite": "assets/pieces/signal9_montantes_trame_noir_orange_signal.png"
+        },
+        {
+          "id": "signal9_montantes_trame_noir_jaune_balise",
+          "name": "Noir / Jaune balise",
+          "sprite": "assets/pieces/signal9_montantes_trame_noir_jaune_balise.png"
+        },
+        {
+          "id": "signal9_montantes_trame_olive_orange_signal",
+          "name": "Olive / Orange signal",
+          "sprite": "assets/pieces/signal9_montantes_trame_olive_orange_signal.png"
+        },
+        {
+          "id": "signal9_montantes_trame_sable_orange_signal",
+          "name": "Sable / Orange signal",
+          "sprite": "assets/pieces/signal9_montantes_trame_sable_orange_signal.png"
+        },
+        {
+          "id": "signal9_montantes_trame_triple_noir",
+          "name": "Triple noir",
+          "sprite": "assets/pieces/signal9_montantes_trame_triple_noir.png"
+        }
+      ]
+    },
+    {
+      "id": "signal9_sacoche_tournee",
+      "brand": "signal9",
+      "name": "Sacoche « Tournée »",
+      "category": "accessoire",
+      "slot": "sac",
+      "flagship": false,
+      "description": "Sacoche bandoulière de coursier.",
+      "colorways": [
+        {
+          "id": "signal9_sacoche_tournee_noir_orange_signal",
+          "name": "Noir / Orange signal",
+          "sprite": "assets/pieces/signal9_sacoche_tournee_noir_orange_signal.png"
+        },
+        {
+          "id": "signal9_sacoche_tournee_noir_jaune_balise",
+          "name": "Noir / Jaune balise",
+          "sprite": "assets/pieces/signal9_sacoche_tournee_noir_jaune_balise.png"
+        },
+        {
+          "id": "signal9_sacoche_tournee_olive_orange_signal",
+          "name": "Olive / Orange signal",
+          "sprite": "assets/pieces/signal9_sacoche_tournee_olive_orange_signal.png"
+        }
+      ]
+    },
+    {
+      "id": "signal9_bonnet_nuit",
+      "brand": "signal9",
+      "name": "Bonnet « Nuit »",
+      "category": "accessoire",
+      "slot": "tete",
+      "flagship": false,
+      "description": "Bonnet côtelé à revers.",
+      "colorways": [
+        {
+          "id": "signal9_bonnet_nuit_noir_orange_signal",
+          "name": "Noir / Orange signal",
+          "sprite": "assets/pieces/signal9_bonnet_nuit_noir_orange_signal.png"
+        },
+        {
+          "id": "signal9_bonnet_nuit_olive_orange_signal",
+          "name": "Olive / Orange signal",
+          "sprite": "assets/pieces/signal9_bonnet_nuit_olive_orange_signal.png"
+        },
+        {
+          "id": "signal9_bonnet_nuit_orange_noir",
+          "name": "Orange / Noir",
+          "sprite": "assets/pieces/signal9_bonnet_nuit_orange_noir.png"
+        }
+      ]
+    },
+    {
+      "id": "halvane_manteau_atelier",
+      "brand": "halvane",
+      "name": "Manteau « Atelier »",
+      "category": "haut",
+      "slot": "veste",
+      "flagship": true,
+      "description": "Manteau droit en laine, liseré doré.",
+      "colorways": [
+        {
+          "id": "halvane_manteau_atelier_camel_or",
+          "name": "Camel / Or",
+          "sprite": "assets/pieces/halvane_manteau_atelier_camel_or.png"
+        },
+        {
+          "id": "halvane_manteau_atelier_noir_creme_or",
+          "name": "Noir / Crème / Or",
+          "sprite": "assets/pieces/halvane_manteau_atelier_noir_creme_or.png"
+        },
+        {
+          "id": "halvane_manteau_atelier_gris_flanelle_argent",
+          "name": "Gris flanelle / Argent",
+          "sprite": "assets/pieces/halvane_manteau_atelier_gris_flanelle_argent.png"
+        },
+        {
+          "id": "halvane_manteau_atelier_marine_or",
+          "name": "Marine / Or",
+          "sprite": "assets/pieces/halvane_manteau_atelier_marine_or.png"
+        },
+        {
+          "id": "halvane_manteau_atelier_chocolat_or",
+          "name": "Chocolat / Or",
+          "sprite": "assets/pieces/halvane_manteau_atelier_chocolat_or.png"
+        },
+        {
+          "id": "halvane_manteau_atelier_creme_or",
+          "name": "Crème / Or",
+          "sprite": "assets/pieces/halvane_manteau_atelier_creme_or.png"
+        }
+      ]
+    },
+    {
+      "id": "halvane_col_roule_fil",
+      "brand": "halvane",
+      "name": "Col roulé « Fil »",
+      "category": "haut",
+      "slot": "haut",
+      "flagship": false,
+      "description": "Pull col roulé en maille fine.",
+      "colorways": [
+        {
+          "id": "halvane_col_roule_fil_creme_or",
+          "name": "Crème / Or",
+          "sprite": "assets/pieces/halvane_col_roule_fil_creme_or.png"
+        },
+        {
+          "id": "halvane_col_roule_fil_noir_or",
+          "name": "Noir / Or",
+          "sprite": "assets/pieces/halvane_col_roule_fil_noir_or.png"
+        },
+        {
+          "id": "halvane_col_roule_fil_gris_flanelle_argent",
+          "name": "Gris flanelle / Argent",
+          "sprite": "assets/pieces/halvane_col_roule_fil_gris_flanelle_argent.png"
+        }
+      ]
+    },
+    {
+      "id": "halvane_chemise_coupe",
+      "brand": "halvane",
+      "name": "Chemise « Coupe »",
+      "category": "haut",
+      "slot": "haut",
+      "flagship": false,
+      "description": "Chemise ajustée, monogramme discret.",
+      "colorways": [
+        {
+          "id": "halvane_chemise_coupe_noir_or",
+          "name": "Noir / Or",
+          "sprite": "assets/pieces/halvane_chemise_coupe_noir_or.png"
+        },
+        {
+          "id": "halvane_chemise_coupe_creme_or",
+          "name": "Crème / Or",
+          "sprite": "assets/pieces/halvane_chemise_coupe_creme_or.png"
+        },
+        {
+          "id": "halvane_chemise_coupe_marine_argent",
+          "name": "Marine / Argent",
+          "sprite": "assets/pieces/halvane_chemise_coupe_marine_argent.png"
+        }
+      ]
+    },
+    {
+      "id": "halvane_pantalon_pli",
+      "brand": "halvane",
+      "name": "Pantalon « Pli »",
+      "category": "bas",
+      "slot": "bas",
+      "flagship": false,
+      "description": "Pantalon de tailleur à pli marqué.",
+      "colorways": [
+        {
+          "id": "halvane_pantalon_pli_creme_or",
+          "name": "Crème / Or",
+          "sprite": "assets/pieces/halvane_pantalon_pli_creme_or.png"
+        },
+        {
+          "id": "halvane_pantalon_pli_gris_flanelle_argent",
+          "name": "Gris flanelle / Argent",
+          "sprite": "assets/pieces/halvane_pantalon_pli_gris_flanelle_argent.png"
+        }
+      ]
+    },
+    {
+      "id": "halvane_mocassins_heritage",
+      "brand": "halvane",
+      "name": "Mocassins « Héritage »",
+      "category": "chaussures",
+      "slot": "chaussures",
+      "flagship": false,
+      "description": "Mocassins en cuir lisse.",
+      "colorways": [
+        {
+          "id": "halvane_mocassins_heritage_noir_or",
+          "name": "Noir / Or",
+          "sprite": "assets/pieces/halvane_mocassins_heritage_noir_or.png"
+        },
+        {
+          "id": "halvane_mocassins_heritage_chocolat_or",
+          "name": "Chocolat / Or",
+          "sprite": "assets/pieces/halvane_mocassins_heritage_chocolat_or.png"
+        },
+        {
+          "id": "halvane_mocassins_heritage_bordeaux_or",
+          "name": "Bordeaux / Or",
+          "sprite": "assets/pieces/halvane_mocassins_heritage_bordeaux_or.png"
+        },
+        {
+          "id": "halvane_mocassins_heritage_noir_argent",
+          "name": "Noir / Argent",
+          "sprite": "assets/pieces/halvane_mocassins_heritage_noir_argent.png"
+        }
+      ]
+    },
+    {
+      "id": "halvane_sac_losange",
+      "brand": "halvane",
+      "name": "Sac « Losange »",
+      "category": "accessoire",
+      "slot": "sac",
+      "flagship": false,
+      "description": "Petit sac rigide au monogramme H.",
+      "colorways": [
+        {
+          "id": "halvane_sac_losange_camel_or",
+          "name": "Camel / Or",
+          "sprite": "assets/pieces/halvane_sac_losange_camel_or.png"
+        },
+        {
+          "id": "halvane_sac_losange_noir_or",
+          "name": "Noir / Or",
+          "sprite": "assets/pieces/halvane_sac_losange_noir_or.png"
+        },
+        {
+          "id": "halvane_sac_losange_chocolat_or",
+          "name": "Chocolat / Or",
+          "sprite": "assets/pieces/halvane_sac_losange_chocolat_or.png"
+        },
+        {
+          "id": "halvane_sac_losange_bordeaux_or",
+          "name": "Bordeaux / Or",
+          "sprite": "assets/pieces/halvane_sac_losange_bordeaux_or.png"
+        },
+        {
+          "id": "halvane_sac_losange_creme_or",
+          "name": "Crème / Or",
+          "sprite": "assets/pieces/halvane_sac_losange_creme_or.png"
+        }
+      ]
+    },
+    {
+      "id": "halvane_echarpe_lisere",
+      "brand": "halvane",
+      "name": "Écharpe « Liseré »",
+      "category": "accessoire",
+      "slot": "cou",
+      "flagship": false,
+      "description": "Écharpe longue bordée d'un liseré.",
+      "colorways": [
+        {
+          "id": "halvane_echarpe_lisere_noir_or",
+          "name": "Noir / Or",
+          "sprite": "assets/pieces/halvane_echarpe_lisere_noir_or.png"
+        },
+        {
+          "id": "halvane_echarpe_lisere_camel_or",
+          "name": "Camel / Or",
+          "sprite": "assets/pieces/halvane_echarpe_lisere_camel_or.png"
+        },
+        {
+          "id": "halvane_echarpe_lisere_bordeaux_or",
+          "name": "Bordeaux / Or",
+          "sprite": "assets/pieces/halvane_echarpe_lisere_bordeaux_or.png"
+        }
+      ]
+    },
+    {
+      "id": "pigeon_social_club_hoodie_dalle",
+      "brand": "pigeon_social_club",
+      "name": "Hoodie « Dalle »",
+      "category": "haut",
+      "slot": "haut",
+      "flagship": true,
+      "description": "Hoodie épais, pigeon brodé.",
+      "colorways": [
+        {
+          "id": "pigeon_social_club_hoodie_dalle_vert_bouteille",
+          "name": "Vert bouteille",
+          "sprite": "assets/pieces/pigeon_social_club_hoodie_dalle_vert_bouteille.png"
+        },
+        {
+          "id": "pigeon_social_club_hoodie_dalle_moutarde",
+          "name": "Moutarde",
+          "sprite": "assets/pieces/pigeon_social_club_hoodie_dalle_moutarde.png"
+        },
+        {
+          "id": "pigeon_social_club_hoodie_dalle_brique",
+          "name": "Brique",
+          "sprite": "assets/pieces/pigeon_social_club_hoodie_dalle_brique.png"
+        },
+        {
+          "id": "pigeon_social_club_hoodie_dalle_bleu_delave",
+          "name": "Bleu délavé",
+          "sprite": "assets/pieces/pigeon_social_club_hoodie_dalle_bleu_delave.png"
+        },
+        {
+          "id": "pigeon_social_club_hoodie_dalle_rose_delave",
+          "name": "Rose délavé",
+          "sprite": "assets/pieces/pigeon_social_club_hoodie_dalle_rose_delave.png"
+        },
+        {
+          "id": "pigeon_social_club_hoodie_dalle_noir_delave",
+          "name": "Noir délavé",
+          "sprite": "assets/pieces/pigeon_social_club_hoodie_dalle_noir_delave.png"
+        }
+      ]
+    },
+    {
+      "id": "pigeon_social_club_t_shirt_roucoule",
+      "brand": "pigeon_social_club",
+      "name": "T-shirt « Roucoule »",
+      "category": "haut",
+      "slot": "haut",
+      "flagship": false,
+      "description": "T-shirt imprimé à la main.",
+      "colorways": [
+        {
+          "id": "pigeon_social_club_t_shirt_roucoule_moutarde",
+          "name": "Moutarde",
+          "sprite": "assets/pieces/pigeon_social_club_t_shirt_roucoule_moutarde.png"
+        },
+        {
+          "id": "pigeon_social_club_t_shirt_roucoule_creme",
+          "name": "Crème",
+          "sprite": "assets/pieces/pigeon_social_club_t_shirt_roucoule_creme.png"
+        },
+        {
+          "id": "pigeon_social_club_t_shirt_roucoule_bleu_delave",
+          "name": "Bleu délavé",
+          "sprite": "assets/pieces/pigeon_social_club_t_shirt_roucoule_bleu_delave.png"
+        }
+      ]
+    },
+    {
+      "id": "pigeon_social_club_short_ollie",
+      "brand": "pigeon_social_club",
+      "name": "Short « Ollie »",
+      "category": "bas",
+      "slot": "bas",
+      "flagship": false,
+      "description": "Short large de skate.",
+      "colorways": [
+        {
+          "id": "pigeon_social_club_short_ollie_brique",
+          "name": "Brique",
+          "sprite": "assets/pieces/pigeon_social_club_short_ollie_brique.png"
+        },
+        {
+          "id": "pigeon_social_club_short_ollie_vert_bouteille",
+          "name": "Vert bouteille",
+          "sprite": "assets/pieces/pigeon_social_club_short_ollie_vert_bouteille.png"
+        },
+        {
+          "id": "pigeon_social_club_short_ollie_noir_delave",
+          "name": "Noir délavé",
+          "sprite": "assets/pieces/pigeon_social_club_short_ollie_noir_delave.png"
+        }
+      ]
+    },
+    {
+      "id": "pigeon_social_club_sneakers_bitume",
+      "brand": "pigeon_social_club",
+      "name": "Sneakers « Bitume »",
+      "category": "chaussures",
+      "slot": "chaussures",
+      "flagship": false,
+      "description": "Baskets basses en toile.",
+      "colorways": [
+        {
+          "id": "pigeon_social_club_sneakers_bitume_creme_brique",
+          "name": "Crème / Brique",
+          "sprite": "assets/pieces/pigeon_social_club_sneakers_bitume_creme_brique.png"
+        },
+        {
+          "id": "pigeon_social_club_sneakers_bitume_creme_vert_bouteille",
+          "name": "Crème / Vert bouteille",
+          "sprite": "assets/pieces/pigeon_social_club_sneakers_bitume_creme_vert_bouteille.png"
+        },
+        {
+          "id": "pigeon_social_club_sneakers_bitume_creme_bleu_delave",
+          "name": "Crème / Bleu délavé",
+          "sprite": "assets/pieces/pigeon_social_club_sneakers_bitume_creme_bleu_delave.png"
+        },
+        {
+          "id": "pigeon_social_club_sneakers_bitume_creme_rose_delave",
+          "name": "Crème / Rose délavé",
+          "sprite": "assets/pieces/pigeon_social_club_sneakers_bitume_creme_rose_delave.png"
+        },
+        {
+          "id": "pigeon_social_club_sneakers_bitume_noir_delave_creme",
+          "name": "Noir délavé / Crème",
+          "sprite": "assets/pieces/pigeon_social_club_sneakers_bitume_noir_delave_creme.png"
+        }
+      ]
+    },
+    {
+      "id": "pigeon_social_club_casquette_perchoir",
+      "brand": "pigeon_social_club",
+      "name": "Casquette « Perchoir »",
+      "category": "accessoire",
+      "slot": "tete",
+      "flagship": false,
+      "description": "Casquette six pans bicolore.",
+      "colorways": [
+        {
+          "id": "pigeon_social_club_casquette_perchoir_vert_bouteille_moutarde",
+          "name": "Vert bouteille / Moutarde",
+          "sprite": "assets/pieces/pigeon_social_club_casquette_perchoir_vert_bouteille_moutarde.png"
+        },
+        {
+          "id": "pigeon_social_club_casquette_perchoir_moutarde_vert_bouteille",
+          "name": "Moutarde / Vert bouteille",
+          "sprite": "assets/pieces/pigeon_social_club_casquette_perchoir_moutarde_vert_bouteille.png"
+        },
+        {
+          "id": "pigeon_social_club_casquette_perchoir_bleu_delave_creme",
+          "name": "Bleu délavé / Crème",
+          "sprite": "assets/pieces/pigeon_social_club_casquette_perchoir_bleu_delave_creme.png"
+        },
+        {
+          "id": "pigeon_social_club_casquette_perchoir_noir_delave_brique",
+          "name": "Noir délavé / Brique",
+          "sprite": "assets/pieces/pigeon_social_club_casquette_perchoir_noir_delave_brique.png"
+        }
+      ]
+    },
+    {
+      "id": "pigeon_social_club_tote_miettes",
+      "brand": "pigeon_social_club",
+      "name": "Tote « Miettes »",
+      "category": "accessoire",
+      "slot": "sac",
+      "flagship": false,
+      "description": "Tote bag en toile.",
+      "colorways": [
+        {
+          "id": "pigeon_social_club_tote_miettes_creme_vert_bouteille",
+          "name": "Crème / Vert bouteille",
+          "sprite": "assets/pieces/pigeon_social_club_tote_miettes_creme_vert_bouteille.png"
+        },
+        {
+          "id": "pigeon_social_club_tote_miettes_noir_delave_moutarde",
+          "name": "Noir délavé / Moutarde",
+          "sprite": "assets/pieces/pigeon_social_club_tote_miettes_noir_delave_moutarde.png"
+        }
+      ]
+    }
+  ]
+}
