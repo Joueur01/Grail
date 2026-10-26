@@ -24,13 +24,13 @@
   <main>
     <!-- Chaque écran est une <section data-screen="…">. main.js n'en affiche qu'un à la fois. -->
     <section class="screen" data-screen="booster" id="screen-booster">
-      <div class="drop">
-        <span class="eyebrow">Drop du jour</span>
-        <h2 class="drop-title">Booster</h2>
-        <p class="drop-meta">3 pièces · 4 raretés</p>
-      </div>
-      <p class="muted" id="booster-status">Chargement…</p>
-      <button class="btn btn-primary" id="btn-open-booster" disabled>Ouvrir un booster</button>
+      <span class="eyebrow booster-eyebrow">Drop du jour · 3 pièces</span>
+      <!-- Le booster lui-même sert de bouton : on le touche pour l'ouvrir.
+           Image native 32×48, affichée ×6 (192×288 px) pour rester nette. -->
+      <button class="booster-pack" id="btn-open-booster" aria-label="Ouvrir le booster" disabled>
+        <img class="pixel" src="assets/ui/booster.png" width="32" height="48" alt="">
+      </button>
+      <p class="muted booster-status" id="booster-status">Chargement…</p>
       <!-- Les 3 cartes tirées viendront s'afficher ici -->
       <div class="card-row" id="booster-result"></div>
     </section>
