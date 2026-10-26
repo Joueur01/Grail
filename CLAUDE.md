@@ -68,7 +68,12 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 ├── assets/
 │   ├── pieces/        # un PNG 32×32 par coloris, fond transparent
 │   └── avatar/        # corps de base et éventuels calques « portés »
-├── visuels/           # planches SVG d'origine (référence, ne pas servir au jeu)
+├── visuels/           # référence, ne pas servir au jeu
+│   ├── sources/       # planches PNG d'origine fournies (une par marque)
+│   ├── pieces/        # un SVG 32×32 par coloris
+│   └── *_coloris_apercu.svg  # planches reconstruites en SVG
+├── tools/
+│   └── extraire_sprites.py   # découpe les planches → PNG + SVG (Python + Pillow)
 └── CLAUDE.md
 ```
 
@@ -82,7 +87,8 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 - Chaque coloris existe dans les **4 raretés**. Une « carte » = un coloris + une rareté.
 - Pas d'état d'usure ni de système d'état.
 - Tous les vêtements sont en **pixel art 32 × 32**, fond transparent, vus de face (chaussures de profil).
-- Les planches de référence sont dans `visuels/` : `signal9_coloris_apercu.svg`, `halvane_coloris_apercu.svg`, `pigeon_social_club_coloris_apercu.svg` (chaque sprite y est dessiné en `<rect>` à l'échelle ×5 dans une case de 160 px). Si les PNG individuels n'existent pas encore dans `assets/pieces/`, il faut les extraire de ces planches (script Python ou JS), en 32 × 32 exactement.
+- Les planches de référence sont dans `visuels/` : `signal9_coloris_apercu.svg`, `halvane_coloris_apercu.svg`, `pigeon_social_club_coloris_apercu.svg` (chaque sprite y est dessiné en `<rect>` à l'échelle ×5 dans une case de 160 px). Les 75 sprites sont **extraits** : `assets/pieces/<colorway_id>.png` (servis au jeu) et `visuels/pieces/<colorway_id>.svg`. Ils viennent des planches PNG de `visuels/sources/` (×5, cases de 160 px, lignes classées de la pièce la plus à la moins demandée) via `python3 tools/extraire_sprites.py`. Pour modifier un sprite : remplacer la planche source, puis relancer le script.
+- Les contours des sprites sont noirs : sur l'interface sombre, toujours poser le sprite sur une case claire (gris chaud type `#cccac4`), jamais directement sur le fond noir.
 
 ### Format de `data/pieces.json`
 
