@@ -30,8 +30,8 @@ Contraintes de la bêta :
 
 ### Fonctionnalités de la bêta, dans l'ordre
 
-1. **Booster** : un bouton « Ouvrir un booster » qui tire 3 pièces selon les taux de rareté (section 6), avec une petite animation de révélation carte par carte.
-2. **Inventaire** : la collection du joueur, sauvegardée en `localStorage`, avec filtres simples (marque, catégorie, rareté) et le nombre d'exemplaires de chaque carte.
+1. **Booster** : un bouton « Ouvrir un booster » qui tire 3 pièces selon les taux de rareté (section 6), avec une petite animation de révélation carte par carte. ✅ Fait.
+2. **Inventaire** : la collection du joueur, sauvegardée en `localStorage`, avec filtres simples (marque, catégorie, rareté) et le nombre d'exemplaires de chaque carte. ✅ Fait : progression « X / 300 », filtres Marque / Type / Rareté (menus natifs, collés en haut), grille triée de la plus rare à la plus commune, badge « ×N » pour les doublons.
 3. **Avatar** : un personnage en pixel art sur lequel on équipe une pièce par emplacement (section 7).
 4. **Partager ma tenue** : exporter l'avatar habillé en **image PNG** (canvas → PNG), avec le nom des pièces et leur rareté, puis partage natif (`navigator.share` avec fichier si disponible, sinon téléchargement).
 5. **Mise en ligne** sur GitHub Pages et test sur iPhone/Android.
@@ -60,7 +60,8 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 │   ├── main.js        # navigation entre écrans
 │   ├── data.js        # chargement du catalogue
 │   ├── booster.js     # tirage et animation
-│   ├── inventory.js   # collection + sauvegarde localStorage
+│   ├── inventory.js   # collection + sauvegarde localStorage + écran Collection
+│   ├── cards.js       # dessin d'une carte (partagé booster / collection)
 │   ├── avatar.js      # rendu de l'avatar en canvas
 │   └── share.js       # export PNG + partage
 ├── data/

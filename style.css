@@ -291,13 +291,17 @@ main {
 /* --- Cartes --- */
 .card-row {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  /* minmax(0, 1fr) : une colonne peut être plus étroite que son contenu
+     (sinon « LÉGENDAIRE » élargit la grille et la fait déborder) */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
 
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  /* minmax(0, 1fr) : une colonne peut être plus étroite que son contenu
+     (sinon « LÉGENDAIRE » élargit la grille et la fait déborder) */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -347,8 +351,10 @@ main {
   text-align: center;
   background: var(--surface);
   border: 2px solid var(--rarity-color, var(--border));
-  transform: rotateY(180deg);
 }
+
+/* Dans le booster, la face commence retournée (dos visible) */
+.flip-card .card-face { transform: rotateY(180deg); }
 
 .flip-card.revealed .card-back { transform: rotateY(-180deg); }
 .flip-card.revealed .card-face { transform: rotateY(0); }
@@ -394,6 +400,10 @@ main {
 }
 
 .rarity-tag {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   margin-top: auto;
   padding: 2px 8px;
   border-radius: 999px;
@@ -403,6 +413,13 @@ main {
   letter-spacing: 0.06em;
   color: #0f0f11;
   background: var(--rarity-color);
+}
+
+/* Petits écrans (iPhone SE) : étiquette plus compacte
+   (placé APRÈS .rarity-tag pour passer devant) */
+@media (max-width: 359px) {
+  .card-face { padding-left: 2px; padding-right: 2px; }
+  .rarity-tag { padding: 2px 4px; font-size: 9px; letter-spacing: 0; text-transform: none; }
 }
 
 /* Chaque rareté fixe sa couleur ; bordure et étiquette la réutilisent */
@@ -428,6 +445,61 @@ main {
 @keyframes legendary-pop {
   0%, 100% { transform: translateY(0); }
   40%      { transform: translateY(-10px); }
+}
+
+/* --- Écran Collection --- */
+
+/* Filtres collés en haut de la zone qui défile */
+.filters {
+  position: sticky;
+  top: -8px;            /* compense le padding-top de <main> */
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 8px 0;
+  background: var(--bg);
+  /* Prolonge le fond sur les côtés : la lueur des cartes ne passe pas à côté */
+  box-shadow: -24px 0 var(--bg), 24px 0 var(--bg);
+}
+
+.filters select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 24px 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  /* Petite flèche dessinée en SVG (pas de fichier externe) */
+  background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238f8d88'/%3E%3C/svg%3E") no-repeat right 10px center;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;      /* pas de zoom au toucher : la page est bloquée à 100 % (viewport) */
+  font-weight: 600;
+  -webkit-appearance: none;
+  appearance: none;
+  text-overflow: ellipsis;
+}
+
+.collection-empty { text-align: center; padding: 32px 0; }
+
+/* Badge « ×2 » des doublons */
+.count-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  z-index: 1;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--bg);
+  background: var(--text);
+}
+
+/* Lueur fixe (sans animation) pour Épique et Légendaire dans la collection */
+.card.owned[data-rarity="epique"] .card-face,
+.card.owned[data-rarity="legendaire"] .card-face {
+  box-shadow: 0 0 12px 0 var(--rarity-color);
 }
 
 /* --- Barre d'onglets, toujours en bas (dernier élément de la colonne) --- */

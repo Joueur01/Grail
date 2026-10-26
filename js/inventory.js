@@ -1,4 +1,4 @@
-// inventory.js — collection du joueur et sauvegarde localStorage.
+// inventory.js — collection du joueur, sauvegarde localStorage et écran Collection.
 //
 // Format de sauvegarde (version 1) :
 // {
@@ -8,6 +8,9 @@
 //   equipped: { tete: "<colorwayId>|<rarete>", haut: ..., ... }
 // }
 // Si le format change un jour, on crée "grail_save_v2" et on migre depuis v1.
+
+import { RARITIES } from "./data.js?v=11";
+import { createCardFace, createCardShell } from "./cards.js?v=11";
 
 const SAVE_KEY = "grail_save_v1";
 
@@ -60,16 +63,6 @@ export function addCards(cards) {
   persist();
 }
 
-/** Nombre total de cartes possédées (exemplaires compris). */
-export function totalCards() {
-  return Object.values(save.cards).reduce((sum, n) => sum + n, 0);
-}
-
-/** Nombre de cartes différentes possédées. */
-export function uniqueCards() {
-  return Object.keys(save.cards).length;
-}
-
 // --- Booster gratuit quotidien (remise à zéro à minuit, heure locale) ---
 
 /** Date du jour au format AAAA-MM-JJ, en heure LOCALE (pas UTC). */
@@ -87,4 +80,98 @@ export function canOpenFreeBooster() {
 export function markFreeBoosterUsed() {
   save.lastFreeBooster = todayLocal();
   persist();
+}
+
+// --- Écran Collection ---
+
+/** Liste des cartes possédées : [{ colorwayId, rarity, count }, ...]. */
+export function getOwnedCards() {
+  return Object.entries(save.cards).map(([key, count]) => {
+    const [colorwayId, rarity] = key.split("|");
+    return { colorwayId, rarity, count };
+  });
+}
+
+// Libellés des catégories (les identifiants viennent de pieces.json).
+const CATEGORIES = [
+  { id: "haut", name: "Haut" },
+  { id: "bas", name: "Bas" },
+  { id: "chaussures", name: "Chaussures" },
+  { id: "accessoire", name: "Accessoire" },
+];
+
+/**
+ * Branche l'écran Collection et renvoie une fonction pour le redessiner
+ * (à appeler après chaque ouverture de booster).
+ */
+export function setupCollection({ catalogue }) {
+  const grid = document.getElementById("collection-grid");
+  const summary = document.getElementById("collection-summary");
+  const empty = document.getElementById("collection-empty");
+  const brandSelect = document.getElementById("filter-brand");
+  const categorySelect = document.getElementById("filter-category");
+  const raritySelect = document.getElementById("filter-rarity");
+
+  // Remplit les menus de filtres (la 1re option « Marque », « Catégorie »… = tout afficher).
+  fillSelect(brandSelect, catalogue.brands);
+  fillSelect(categorySelect, CATEGORIES);
+  fillSelect(raritySelect, [...RARITIES].reverse()); // Légendaire en premier
+
+  // Position de chaque coloris dans le catalogue, pour un tri stable.
+  const catalogueOrder = new Map(catalogue.colorways.map((c, i) => [c.id, i]));
+  const rarityRank = new Map(RARITIES.map((r, i) => [r.id, i]));
+  const totalPossible = catalogue.colorways.length * RARITIES.length; // 75 × 4 = 300
+
+  function render() {
+    // On ignore une carte dont le coloris n'existe plus dans le catalogue.
+    const owned = getOwnedCards().filter((c) => catalogue.colorwayById.has(c.colorwayId));
+    const copies = owned.reduce((sum, c) => sum + c.count, 0);
+    summary.textContent = `${owned.length} / ${totalPossible} cartes · ${copies} au total`;
+
+    const visible = owned
+      .filter((c) => {
+        const colorway = catalogue.colorwayById.get(c.colorwayId);
+        return (!brandSelect.value || colorway.brand.id === brandSelect.value)
+          && (!categorySelect.value || colorway.piece.category === categorySelect.value)
+          && (!raritySelect.value || c.rarity === raritySelect.value);
+      })
+      // Tri : la plus rare d'abord, puis l'ordre du catalogue (marque, pièce, coloris).
+      .sort((a, b) => (rarityRank.get(b.rarity) - rarityRank.get(a.rarity))
+        || (catalogueOrder.get(a.colorwayId) - catalogueOrder.get(b.colorwayId)));
+
+    grid.replaceChildren(...visible.map((c) => {
+      const colorway = catalogue.colorwayById.get(c.colorwayId);
+      const card = createCardShell(colorway, c.rarity);
+      card.classList.add("owned");
+      card.append(createCardFace(colorway, c.rarity));
+      if (c.count > 1) {
+        const badge = document.createElement("span");
+        badge.className = "count-badge";
+        badge.textContent = `×${c.count}`;
+        card.append(badge);
+      }
+      return card;
+    }));
+
+    empty.hidden = visible.length > 0;
+    empty.textContent = owned.length === 0
+      ? "Aucune carte pour l'instant. Ouvre un booster !"
+      : "Aucune carte ne correspond à ces filtres.";
+  }
+
+  for (const select of [brandSelect, categorySelect, raritySelect]) {
+    select.addEventListener("change", render);
+  }
+  render();
+  return render;
+}
+
+/** Ajoute une <option> par élément { id, name } (après l'option « tout »). */
+function fillSelect(select, items) {
+  for (const item of items) {
+    const option = document.createElement("option");
+    option.value = item.id;
+    option.textContent = item.name;
+    select.append(option);
+  }
 }
