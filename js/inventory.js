@@ -7,9 +7,9 @@
 //   lastFreeBooster: "AAAA-MM-JJ" | null,   // date locale du dernier booster gratuit
 //   equipped: { tete: "<colorwayId>|<rarete>", haut: ..., ... }
 // }
-// Si le format change un jour, on crée "lepull_save_v2" et on migre depuis v1.
+// Si le format change un jour, on crée "grail_save_v2" et on migre depuis v1.
 
-const SAVE_KEY = "lepull_save_v1";
+const SAVE_KEY = "grail_save_v1";
 
 function emptySave() {
   return { version: 1, cards: {}, lastFreeBooster: null, equipped: {} };

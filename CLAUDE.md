@@ -1,4 +1,4 @@
-# CLAUDE.md — Le Pull (nom provisoire)
+# CLAUDE.md — Grail
 
 Ce fichier donne à Claude Code tout le contexte du projet. Lis-le en entier avant chaque tâche.
 Réponds et commente en **français**. L'interface du jeu est en français.
@@ -48,7 +48,7 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 - Modules ES (`<script type="module">`) autorisés.
 - Pixel art : toujours afficher les sprites agrandis par un **facteur entier** (×4, ×6, ×8…) avec `image-rendering: pixelated` (canvas : `imageSmoothingEnabled = false`). Jamais de flou ni de redimensionnement non entier.
 - Pas de dépendance externe sauf nécessité réelle ; si besoin, une police Google Fonts au maximum.
-- `localStorage` : toujours encapsuler lecture et écriture dans `try/catch`, et que le site marche même si le stockage est vide ou indisponible. Prévoir un numéro de version du format de sauvegarde (`lepull_save_v1`) pour pouvoir le faire évoluer.
+- `localStorage` : toujours encapsuler lecture et écriture dans `try/catch`, et que le site marche même si le stockage est vide ou indisponible. Prévoir un numéro de version du format de sauvegarde (`grail_save_v1`) pour pouvoir le faire évoluer.
 
 ### Arborescence visée
 
@@ -216,6 +216,7 @@ Le développeur n'est pas juriste ; ces règles sont prudentes en attendant un a
 - En cas de doute sur un choix de jeu (taux, règles, avatar), **demander** plutôt que d'inventer ; pour un détail technique, prendre l'option la plus simple et le dire.
 - Ne jamais ajouter de dépendance, de service externe ou de fonctionnalité hors périmètre (section 3) sans le signaler.
 - Garder ce fichier à jour quand une règle change.
+- **Fusion automatique** : après chaque changement vérifié, Claude ouvre la pull request et la **fusionne lui-même dans `main`** (mise en ligne directe sur GitHub Pages), sans attendre de validation.
 
 ## 11. Après la bêta (pour information seulement)
 
