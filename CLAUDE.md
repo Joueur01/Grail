@@ -216,6 +216,7 @@ Le développeur n'est pas juriste ; ces règles sont prudentes en attendant un a
 - En cas de doute sur un choix de jeu (taux, règles, avatar), **demander** plutôt que d'inventer ; pour un détail technique, prendre l'option la plus simple et le dire.
 - Ne jamais ajouter de dépendance, de service externe ou de fonctionnalité hors périmètre (section 3) sans le signaler.
 - Garder ce fichier à jour quand une règle change.
+- **Fusion automatique** : après chaque changement vérifié, Claude ouvre la pull request et la **fusionne lui-même dans `main`** (mise en ligne directe sur GitHub Pages), sans attendre de validation.
 
 ## 11. Après la bêta (pour information seulement)
 
