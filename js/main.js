@@ -3,10 +3,10 @@
 // ?v=… sur les imports : même numéro que dans index.html, et le même partout
 // (un module importé sous deux adresses différentes serait chargé deux fois).
 
-import { loadCatalogue } from "./data.js?v=11";
-import { loadSave, setupCollection } from "./inventory.js?v=11";
-import { initAvatar } from "./avatar.js?v=11";
-import { setupBooster } from "./booster.js?v=11";
+import { loadCatalogue } from "./data.js?v=12";
+import { loadSave, setupCollection } from "./inventory.js?v=12";
+import { initAvatar } from "./avatar.js?v=12";
+import { setupBooster } from "./booster.js?v=12";
 
 // ?debug=1 dans l'URL : boosters illimités pendant les tests.
 export const DEBUG = new URLSearchParams(location.search).get("debug") === "1";
