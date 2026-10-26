@@ -3,13 +3,17 @@
 // ?v=… sur les imports : même numéro que dans index.html, et le même partout
 // (un module importé sous deux adresses différentes serait chargé deux fois).
 
-import { loadCatalogue } from "./data.js?v=9";
-import { loadSave, totalCards, uniqueCards } from "./inventory.js?v=9";
-import { initAvatar } from "./avatar.js?v=9";
-import { setupBooster } from "./booster.js?v=9";
+import { loadCatalogue } from "./data.js?v=10";
+import { loadSave, totalCards, uniqueCards } from "./inventory.js?v=10";
+import { initAvatar } from "./avatar.js?v=10";
+import { setupBooster } from "./booster.js?v=10";
 
 // ?debug=1 dans l'URL : boosters illimités pendant les tests.
 export const DEBUG = new URLSearchParams(location.search).get("debug") === "1";
+
+// Période de test : boosters illimités pour tout le monde, même sans ?debug=1.
+// ⚠️ À REMETTRE À false AVANT D'ENVOYER LE LIEN AUX AMIS (1 booster par jour).
+const BOOSTERS_ILLIMITES = true;
 
 const SCREENS = ["booster", "collection", "avatar"];
 
@@ -56,7 +60,7 @@ async function start() {
 
   try {
     const catalogue = await loadCatalogue();
-    setupBooster({ catalogue, debug: DEBUG, onOpened: refreshCollectionSummary });
+    setupBooster({ catalogue, debug: DEBUG || BOOSTERS_ILLIMITES, onOpened: refreshCollectionSummary });
   } catch (err) {
     // Arrive surtout si on ouvre index.html en double-cliquant (file://) :
     // fetch() a besoin d'un serveur (GitHub Pages, ou python3 -m http.server).

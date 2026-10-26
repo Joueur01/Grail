@@ -181,6 +181,7 @@ Pièces à retoucher plus tard (ne pas bloquer la bêta) : Manteau « Atelier »
 ### Boosters
 
 - Un booster = **3 cartes**.
+- ⚠️ **Actuellement : boosters illimités pour les tests** (`BOOSTERS_ILLIMITES = true` dans `js/main.js`). **Remettre à `false` avant d'envoyer le lien aux amis.**
 - Bêta : **1 booster gratuit par jour** (remise à zéro à minuit, heure locale), plus un bouton de test caché ou un paramètre d'URL (`?debug=1`) pour en ouvrir autant que voulu pendant les tests.
 - Ouverture (en place) : on touche le paquet → il tremble et s'ouvre → 3 cartes face cachée se retournent seules une par une → bouton « Continuer ». Les cartes sont sauvegardées **dès le tirage** (recharger la page ne permet pas de retirer).
 - Pas de monnaie, pas d'achat dans la bêta.
