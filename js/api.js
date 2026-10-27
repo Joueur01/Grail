@@ -6,7 +6,7 @@
 // amélioration. Ne remettre AUCUNE logique de jeu ici ni ailleurs côté client.
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase-config.js?v=35";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase-config.js?v=36";
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
@@ -26,7 +26,10 @@ function friendlyMessage(error) {
   if (/jwt|not authenticated|invalid refresh token/i.test(msg)) {
     return "Ta session a expiré. Reconnecte-toi.";
   }
-  if (/permission denied|violates|invalid input|syntax|duplicate key|schema cache|could not find/i.test(msg)) {
+  if (/could not find the function|schema cache/i.test(msg)) {
+    return "Cette fonction n'est pas encore activée sur le serveur.";
+  }
+  if (/permission denied|violates|invalid input|syntax|duplicate key|could not find/i.test(msg)) {
     return "Une erreur est survenue. Réessaie dans un instant.";
   }
   return msg || "Une erreur est survenue. Réessaie dans un instant.";
@@ -132,3 +135,17 @@ export const marketCancel = (id) => rpc("market_cancel", { p_id: id });
 export const marketBuy = (id, expectedPrice) => rpc("market_buy", { p_id: id, p_expected_price: expectedPrice });
 /** → [{ id, colorway_id, rarity, price }] : ventes terminées pas encore vues */
 export const marketAckSales = () => rpc("market_ack_sales");
+
+// --- Amis (migration 0005) ---------------------------------------------------------
+
+/** Choisit ou change son pseudo (validé par le serveur : 3 à 16 caractères, unique, mots interdits). */
+export const setPseudo = (pseudo) => rpc("set_pseudo", { p_pseudo: pseudo });
+/** → { pseudo, friends: [{ id, friend_id, pseudo }], incoming: [{ id, pseudo }], outgoing: [{ id, pseudo }] } */
+export const listFriends = () => rpc("list_friends");
+/** Recherche par pseudo EXACT (pas de liste publique). → "pending" ou "accepted" */
+export const friendRequest = (pseudo) => rpc("friend_request", { p_pseudo: pseudo });
+export const friendRespond = (id, accept) => rpc("friend_respond", { p_id: id, p_accept: accept });
+/** Annule une demande envoyée ou retire un ami. */
+export const friendRemove = (id) => rpc("friend_remove", { p_id: id });
+/** → { pseudo, equipped: { emplacement: "coloris|rareté" }, cards_owned, cards_total } (amis seulement) */
+export const getFriendProfile = (friendId) => rpc("get_friend_profile", { p_friend: friendId });

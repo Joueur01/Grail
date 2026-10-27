@@ -7,19 +7,20 @@
 // ?v=… sur les imports : même numéro que dans index.html, et le même partout
 // (un module importé sous deux adresses différentes serait chargé deux fois).
 
-import { loadCatalogue } from "./data.js?v=35";
-import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=35";
-import { initAvatar, setupOutfit } from "./avatar.js?v=35";
-import { setupBooster } from "./booster.js?v=35";
-import { setupShare } from "./share.js?v=35";
-import { setupUpgrade } from "./upgrade.js?v=35";
-import { setupAtelier, setupViewSwitch } from "./atelier.js?v=35";
-import { setupWallet, reportError } from "./wallet.js?v=35";
-import { setupDiscard, createSelection } from "./discard.js?v=35";
-import { setupMarket } from "./market.js?v=35";
-import { getSession, signIn, signUp, signOut, supabase } from "./api.js?v=35";
+import { loadCatalogue } from "./data.js?v=36";
+import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=36";
+import { initAvatar, setupOutfit } from "./avatar.js?v=36";
+import { setupBooster } from "./booster.js?v=36";
+import { setupShare } from "./share.js?v=36";
+import { setupUpgrade } from "./upgrade.js?v=36";
+import { setupAtelier, setupViewSwitch } from "./atelier.js?v=36";
+import { setupWallet, reportError } from "./wallet.js?v=36";
+import { setupDiscard, createSelection } from "./discard.js?v=36";
+import { setupMarket } from "./market.js?v=36";
+import { setupFriends } from "./friends.js?v=36";
+import { getSession, signIn, signUp, signOut, supabase } from "./api.js?v=36";
 
-const SCREENS = ["booster", "collection", "market", "avatar"];
+const SCREENS = ["booster", "collection", "market", "friends", "avatar"];
 
 /** Affiche l'écran demandé et met à jour l'onglet actif. */
 function showScreen(name) {
@@ -144,6 +145,8 @@ async function boot() {
     setupBooster({ catalogue, onOpened: refreshCards });
     // Market entre joueurs (géré par le serveur) : acheter, vendre, mes ventes.
     market = setupMarket({ catalogue, onChange });
+    // Amis : pseudo, demandes, liste, tenue d'un ami (géré par le serveur).
+    setupFriends({ catalogue });
   } catch (err) {
     console.error(err);
     statusEl.textContent = err?.message || "Impossible de charger le jeu. Recharge la page.";

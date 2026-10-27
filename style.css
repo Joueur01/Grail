@@ -934,6 +934,64 @@ main {
   cursor: pointer;
 }
 
+/* Amis (friends.js) */
+.tab { position: relative; }
+.tab-badge {
+  position: absolute;
+  top: 9px;
+  left: calc(50% + 14px);
+  min-width: 18px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: #ff7a6b;
+  color: #1a0705;
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
+}
+.friends-error { margin: 0; padding: 10px 14px; border-radius: 14px; background: var(--surface); color: #ff7a6b; font-size: 14px; font-weight: 600; }
+.friends-box { display: flex; flex-direction: column; gap: 8px; padding: 14px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
+.friends-hint { margin: 0; font-size: 13px; }
+.friends-input-row { display: flex; gap: 8px; }
+.friends-input-row .auth-input { flex: 1; min-width: 0; }
+.friends-input-row .btn { width: auto; min-height: 52px; padding: 0 18px; }
+.friends-me { margin: 0; font-size: 15px; }
+.friends-link {
+  margin-left: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.friends-section { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+#friends-main { display: flex; flex-direction: column; gap: 12px; }
+.friend-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font);
+  text-align: left;
+}
+.friend-link { cursor: pointer; }
+.friend-link:active { opacity: 0.8; }
+.friend-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 16px; font-weight: 800; }
+.friend-chevron { color: var(--muted); font-size: 22px; line-height: 1; }
+.friend-state { color: var(--muted); font-size: 13px; }
+.friend-actions { display: flex; gap: 6px; }
+.friend-actions .btn { width: auto; min-height: 40px; padding: 0 14px; font-size: 13px; }
+.friend-canvas { align-self: center; width: 128px; height: 192px; /* ×2 : facteur entier */ }
+
 /* Pièces qui volent vers le solde (wallet.js) */
 .fly-coin {
   position: fixed;
@@ -1714,6 +1772,12 @@ main {
   text-decoration: none;
   font-size: 14px;
   font-weight: 600;
+}
+
+@media (max-width: 460px) {
+  .tabbar { padding-left: 4px; padding-right: 4px; }
+  .tab { font-size: 12px; }
+  .tab-badge { top: 6px; left: calc(50% + 12px); }
 }
 
 .tab[aria-current="page"] {
