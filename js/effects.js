@@ -66,6 +66,8 @@ export function playSound(kind) {
       [523, 659, 784, 1047, 1319, 1568].forEach((f, i) => note(a, f, t + i * 0.1, 0.7, { volume: 0.09 }));
       [1047, 1319, 1568].forEach((f) => note(a, f, t + 0.7, 1.4, { type: "sine", volume: 0.05 }));
       break;
+    // Pièces qui tombent dans le solde (défausse, bonus)
+    case "coin": [1319, 1760].forEach((f, i) => note(a, f, t + i * 0.07, 0.18, { type: "square", volume: 0.03 })); break;
     // Roue d'amélioration : petit « clic » à chaque secteur, échec = note qui descend.
     case "tick": note(a, 900, t, 0.03, { type: "square", volume: 0.02 }); break;
     case "fail": [330, 262, 196].forEach((f, i) => note(a, f, t + i * 0.12, 0.35, { type: "sine", volume: 0.07 })); break;

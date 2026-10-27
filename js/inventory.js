@@ -18,10 +18,10 @@
 // }
 // Si le format change un jour, on crée "grail_save_v2" et on migre depuis v1.
 
-import { RARITIES, matchesSearch, getRarity } from "./data.js?v=28";
-import { BOOSTER, COINS } from "./economy-config.js?v=28";
-import { refillStock, msUntilNextBooster, isSignatureNext, freeUntilSignature } from "./distribution.js?v=28";
-import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=28";
+import { RARITIES, matchesSearch, getRarity } from "./data.js?v=29";
+import { BOOSTER, COINS, DISCARD_VALUES } from "./economy-config.js?v=29";
+import { refillStock, msUntilNextBooster, isSignatureNext, freeUntilSignature } from "./distribution.js?v=29";
+import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=29";
 
 const SAVE_KEY = "grail_save_v1";
 
@@ -79,11 +79,8 @@ export function addCards(cards) {
   persist();
 }
 
-/**
- * Retire des cartes de la collection (une par élément de la liste).
- * Si le dernier exemplaire d'une carte portée disparaît, elle quitte la tenue.
- */
-export function removeCards(cards) {
+/** Retire des cartes (une par élément) SANS sauvegarder : les fonctions publiques s'en chargent. */
+function takeAway(cards) {
   for (const { colorwayId, rarity } of cards) {
     const key = cardKey(colorwayId, rarity);
     if (!save.cards[key]) continue;
@@ -96,7 +93,36 @@ export function removeCards(cards) {
       }
     }
   }
+}
+
+/**
+ * Retire des cartes de la collection (une par élément de la liste).
+ * Si le dernier exemplaire d'une carte portée disparaît, elle quitte la tenue.
+ */
+export function removeCards(cards) {
+  takeAway(cards);
   persist();
+}
+
+/**
+ * Défausse des cartes [{ colorwayId, rarity }, …] (une par élément) contre des pièces
+ * (DISCARD_VALUES). Tout ou rien : renvoie le nombre de pièces gagnées, ou null si
+ * une carte est verrouillée, absente, ou demandée en trop d'exemplaires.
+ * Cartes et pièces sont enregistrées ensemble, en une seule sauvegarde.
+ */
+export function discardCards(cards) {
+  if (!cards.length) return null;
+  const wanted = {};
+  let coins = 0;
+  for (const { colorwayId, rarity } of cards) {
+    const key = cardKey(colorwayId, rarity);
+    wanted[key] = (wanted[key] || 0) + 1;
+    if (save.locked?.[key] === true || (save.cards[key] || 0) < wanted[key]) return null;
+    coins += DISCARD_VALUES[rarity] || 0;
+  }
+  takeAway(cards);
+  changeCoins(coins); // enregistre les cartes retirées en même temps que le solde
+  return coins;
 }
 
 /** Nombre d'exemplaires possédés d'une carte (0 si aucun). */
