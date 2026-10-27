@@ -159,16 +159,43 @@ main {
   border: 0;
   background: none;
   cursor: pointer;
+  touch-action: none; /* glisser le doigt déchire le paquet au lieu de faire défiler */
+  -webkit-user-select: none;
+  user-select: none;
   /* Légère flottaison au repos pour inviter à toucher */
   animation: booster-float 3s ease-in-out infinite;
 }
 
-.booster-pack img {
+/* Le dessin est affiché deux fois, découpé en dents de scie (clip-path posé par
+   booster.js) : la bande du haut, qui s'arrache, et le reste du paquet. */
+.pack-art {
+  position: relative;
   display: block;
   width: calc(32px * var(--pack-scale));
   height: calc(48px * var(--pack-scale));
-  /* Pas de filter ni de scale sur l'image : Safari la rendrait floue */
 }
+
+.pack-art img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* Pas de filter sur l'image : Safari la rendrait floue */
+  /* Le doigt agit sur le bouton, pas sur l'image : sinon le navigateur
+     « fait glisser l'image » et annule le geste de déchirure, et l'iPhone
+     ouvre son menu « Enregistrer l'image » sur un appui long. */
+  pointer-events: none;
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
+}
+
+/* La bande pivote depuis son coin gauche, au niveau de la ligne pointillée */
+.pack-top {
+  transform-origin: 0% 15%;
+  transition: transform 0.15s ease-out;
+}
+.booster-pack.dragging .pack-top { transition: none; }
 
 /* Ombre au sol, dessinée à part pour ne pas toucher aux pixels du paquet */
 .booster-pack::after {
@@ -183,8 +210,6 @@ main {
   filter: blur(8px);
   z-index: -1;
 }
-
-.booster-pack:active { opacity: 0.8; }
 
 /* Pas de booster disponible : paquet éteint, plus d'animation */
 .booster-pack:disabled {
@@ -470,16 +495,31 @@ main {
 }
 .booster-view[hidden] { display: none; }
 
-/* Ouverture : le paquet tremble puis s'envole */
-.booster-pack.opening { animation: booster-open 0.65s ease-in forwards; }
+/* Déchirure : la bande du haut s'arrache et s'envole, puis le paquet descend */
+.booster-pack.torn,
+.booster-pack.dragging { animation: none; }
+.booster-pack.torn .pack-top { animation: tear-off 0.5s ease-in forwards; }
+.booster-pack.torn .pack-body { animation: pack-drop 0.45s ease-in 0.2s forwards; }
+.booster-pack.torn::after { opacity: 0; transition: opacity 0.3s; }
 
-@keyframes booster-open {
-  0%   { transform: rotate(0); }
-  15%  { transform: rotate(-5deg); }
-  30%  { transform: rotate(5deg); }
-  45%  { transform: rotate(-3deg); opacity: 1; }
-  100% { transform: translateY(-40px); opacity: 0; }
+@keyframes tear-off {
+  0%   { transform: rotate(-6deg) translateY(-4px); opacity: 1; }
+  100% { transform: rotate(-38deg) translate(70px, -140px); opacity: 0; }
 }
+
+@keyframes pack-drop {
+  to { transform: translateY(40px); opacity: 0; }
+}
+
+/* Les cartes sortent du paquet une par une (délai posé par booster.js) */
+.flip-card.deal { animation: deal-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+
+@keyframes deal-in {
+  from { transform: translateY(-70px) rotate(-6deg); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+
+.reveal-hint { text-align: center; min-height: 1.4em; }
 
 /* --- Cartes --- */
 .card-row {
@@ -636,23 +676,200 @@ main {
 [data-rarity="epique"]     { --rarity-color: var(--rarity-epique); }
 [data-rarity="legendaire"] { --rarity-color: var(--rarity-legendaire); }
 
-/* Révélation marquée pour Épique et Légendaire : lueur qui pulse */
+/* --- Révélation dans le booster --- */
+
+/* Une carte face cachée se touche pour être retournée */
+.flip-card:not(.revealed) { cursor: pointer; }
+
+/* « Indice » : avant d'être retournée, le dos d'une carte Rare et plus brille
+   déjà de sa couleur (et une Légendaire tremble un peu). */
+.flip-card:not(.revealed)[data-rarity="rare"] .card-back {
+  border-color: var(--rarity-color);
+  box-shadow: 0 0 10px 0 var(--rarity-color);
+}
+.flip-card:not(.revealed)[data-rarity="epique"] .card-back,
+.flip-card:not(.revealed)[data-rarity="legendaire"] .card-back {
+  border-color: var(--rarity-color);
+  animation: rarity-glow 1.2s ease-in-out infinite;
+}
+.flip-card:not(.revealed):not(.deal):not(.charging)[data-rarity="legendaire"] {
+  animation: tease-shake 2.4s ease-in-out infinite;
+}
+
+/* Charge (Épique / Légendaire) : la carte tremble et brille de plus en plus */
+.flip-card.charging { animation: charge-shake 0.09s linear infinite; }
+.flip-card.charging .card-back {
+  border-color: var(--rarity-color);
+  box-shadow: 0 0 34px 10px var(--rarity-color);
+  transition: box-shadow 0.6s ease-in;
+}
+
+/* Lueur qui pulse : dos des cartes Épique / Légendaire, puis leur face */
 .flip-card.revealed[data-rarity="epique"] .card-face,
 .flip-card.revealed[data-rarity="legendaire"] .card-face {
   animation: rarity-glow 1.6s ease-in-out 0.45s infinite;
 }
-
-.flip-card.revealed[data-rarity="legendaire"] { animation: legendary-pop 0.5s ease-out 0.4s; }
 
 @keyframes rarity-glow {
   0%, 100% { box-shadow: 0 0 8px 0 var(--rarity-color); }
   50%      { box-shadow: 0 0 22px 4px var(--rarity-color); }
 }
 
-/* Petit saut (pas de scale : le sprite resterait à un facteur non entier) */
-@keyframes legendary-pop {
-  0%, 100% { transform: translateY(0); }
-  40%      { transform: translateY(-10px); }
+@keyframes tease-shake {
+  0%, 86%, 100% { transform: none; }
+  89% { transform: translateX(-2px) rotate(-1deg); }
+  92% { transform: translateX(2px) rotate(1deg); }
+  95% { transform: translateX(-1px); }
+}
+
+@keyframes charge-shake {
+  0%   { transform: translate(0, 0); }
+  25%  { transform: translate(-2px, 1px); }
+  50%  { transform: translate(2px, -1px); }
+  75%  { transform: translate(-1px, -1px); }
+  100% { transform: translate(1px, 1px); }
+}
+
+/* Rare : un reflet passe sur la carte */
+.card-face { position: relative; overflow: hidden; }
+.flip-card.shine .card-face::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, 0.5) 50%, transparent 65%);
+  background-size: 300% 100%;
+  animation: shine 0.9s ease-out forwards;
+}
+
+@keyframes shine {
+  from { background-position: 100% 0; }
+  to   { background-position: -50% 0; }
+}
+
+/* Badge « NOUVEAU » : carte jamais obtenue avant */
+.new-badge {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  z-index: 1;
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #0f0f11;
+  background: var(--text);
+}
+
+/* --- Plein écran de révélation (Épique et Légendaire) --- */
+.reveal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 24px;
+  overflow: hidden;
+  background: rgba(5, 5, 7, 0.9);
+  cursor: pointer;
+  animation: fade-in 0.25s ease-out;
+}
+.reveal-overlay[hidden] { display: none; }
+
+/* Éclair blanc au début (plus fort en Légendaire) */
+.reveal-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+  animation: flash 0.5s ease-out;
+}
+@keyframes flash {
+  0%   { opacity: 0.35; }
+  100% { opacity: 0; }
+}
+.reveal-overlay[data-rarity="legendaire"]::before { animation-duration: 0.8s; }
+
+/* Rayons qui tournent derrière la carte */
+.reveal-rays {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 220vmax;
+  height: 220vmax;
+  margin: -110vmax 0 0 -110vmax;
+  background: repeating-conic-gradient(var(--rarity-color) 0deg 8deg, transparent 8deg 24deg);
+  opacity: 0.22;
+  -webkit-mask-image: radial-gradient(circle, #000 8%, transparent 32%);
+  mask-image: radial-gradient(circle, #000 8%, transparent 32%);
+  animation: spin 14s linear infinite;
+  pointer-events: none;
+}
+.reveal-overlay[data-rarity="legendaire"] .reveal-rays { opacity: 0.4; animation-duration: 7s; }
+
+.reveal-title {
+  position: relative;
+  margin: 0;
+  font-size: clamp(26px, 9vw, 56px);
+  font-weight: 900;
+  font-stretch: 112%;
+  letter-spacing: -0.02em;
+  text-align: center;
+  text-transform: uppercase;
+  color: var(--rarity-color);
+  text-shadow: 0 0 24px var(--rarity-color);
+  animation: title-in 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
+}
+
+/* La grande carte : 240 px de large → sprite ×6 (container query des cartes) */
+.reveal-card {
+  position: relative;
+  width: min(240px, 66vw);
+  animation: card-rise 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2) 0.1s both;
+}
+.reveal-card .card-face { box-shadow: 0 0 40px 8px var(--rarity-color); }
+
+.reveal-tap {
+  position: relative;
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  animation: fade-in 0.4s ease-out 1s both;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fade-in { from { opacity: 0; } }
+@keyframes title-in {
+  from { transform: translateY(-30px); opacity: 0; letter-spacing: 0.3em; }
+}
+@keyframes card-rise {
+  from { transform: translateY(80px) rotate(8deg); opacity: 0; }
+}
+
+/* --- Particules (effects.js) --- */
+.fx-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+}
+.fx-particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  animation: particle 0.9s cubic-bezier(0.1, 0.8, 0.3, 1) both;
+}
+@keyframes particle {
+  from { transform: translate(0, 0); opacity: 1; }
+  to   { transform: translate(var(--dx), var(--dy)); opacity: 0; }
 }
 
 /* --- Écran Collection --- */
