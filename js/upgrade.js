@@ -9,10 +9,10 @@
 //   - les cartes misées sont perdues dans tous les cas ; une Légendaire ne s'améliore pas.
 // La défausse (contre de la monnaie du jeu) n'est pas encore codée : bouton grisé.
 
-import { RARITIES, UPGRADE_MAX_CARDS, UPGRADE_CHANCE_PER_CARD, getRarity } from "./data.js?v=23";
-import { getOwnedCards, addCards, removeCards, countCard } from "./inventory.js?v=23";
-import { createCardFace, createCardShell } from "./cards.js?v=23";
-import { playSound, vibrate, burst } from "./effects.js?v=23";
+import { RARITIES, UPGRADE_MAX_CARDS, UPGRADE_CHANCE_PER_CARD, getRarity } from "./data.js?v=24";
+import { getOwnedCards, addCards, removeCards, countCard } from "./inventory.js?v=24";
+import { createCardFace, createCardShell } from "./cards.js?v=24";
+import { playSound, vibrate, burst } from "./effects.js?v=24";
 
 const SPIN_TIME = 3200; // durée de la roue (identique au CSS)
 

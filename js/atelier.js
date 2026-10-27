@@ -6,14 +6,14 @@
 // rareté visée. Toucher une ligne ouvre la roue avec ces cartes déjà misées.
 // Les Légendaires (non améliorables) n'apparaissent pas.
 
-import { RARITIES, UPGRADE_MAX_CARDS, getRarity } from "./data.js?v=23";
-import { getOwnedCards } from "./inventory.js?v=23";
-import { nextRarity, upgradeChance } from "./upgrade.js?v=23";
+import { RARITIES, UPGRADE_MAX_CARDS, getRarity } from "./data.js?v=24";
+import { getOwnedCards } from "./inventory.js?v=24";
+import { nextRarity, upgradeChance } from "./upgrade.js?v=24";
 
 /**
  * Regroupe les cartes possédées par modèle + rareté.
  * Renvoie [{ piece, rarity, total, colorways: [{ colorway, count }] }],
- * trié du plus proche de 5 au plus éloigné.
+ * groupé par rareté (la plus haute d'abord), puis du plus proche de 5 au plus éloigné.
  */
 export function atelierRows(catalogue) {
   const groups = new Map(); // "pieceId|rarete" → ligne
@@ -31,11 +31,12 @@ export function atelierRows(catalogue) {
   const rarityRank = new Map(RARITIES.map((r, i) => [r.id, i]));
   const rows = [...groups.values()];
   for (const row of rows) row.colorways.sort((a, b) => b.count - a.count); // les plus nombreux d'abord
-  // Du plus proche de 5 au plus éloigné (au-delà de 5, c'est « prêt » comme à 5),
-  // puis la rareté la plus haute, puis l'ordre du catalogue.
+  // Groupées par rareté (la plus haute d'abord, pour les séparateurs), puis du
+  // plus proche de 5 au plus éloigné (au-delà de 5, c'est « prêt » comme à 5),
+  // puis l'ordre du catalogue.
   return rows.sort((a, b) =>
-    (Math.min(b.total, UPGRADE_MAX_CARDS) - Math.min(a.total, UPGRADE_MAX_CARDS))
-    || (rarityRank.get(b.rarity) - rarityRank.get(a.rarity))
+    (rarityRank.get(b.rarity) - rarityRank.get(a.rarity))
+    || (Math.min(b.total, UPGRADE_MAX_CARDS) - Math.min(a.total, UPGRADE_MAX_CARDS))
     || (pieceOrder.get(a.piece.id) - pieceOrder.get(b.piece.id)));
 }
 
@@ -49,8 +50,29 @@ export function setupAtelier({ catalogue, onRowTap }) {
 
   function render() {
     const rows = atelierRows(catalogue);
-    list.replaceChildren(...rows.map((row) => createRow(row)));
+    // Un séparateur (nom de la rareté + nombre de modèles) devant chaque groupe.
+    const items = [];
+    let current = null;
+    for (const row of rows) {
+      if (row.rarity !== current) {
+        current = row.rarity;
+        items.push(createDivider(current, rows.filter((r) => r.rarity === current).length));
+      }
+      items.push(createRow(row));
+    }
+    list.replaceChildren(...items);
     empty.hidden = rows.length > 0;
+  }
+
+  /** Séparateur de rareté : « ÉPIQUE · 2 » + un filet de la couleur de la rareté. */
+  function createDivider(rarity, n) {
+    const el = document.createElement("div");
+    el.className = "atelier-divider";
+    el.dataset.rarity = rarity;
+    el.setAttribute("role", "heading");
+    el.setAttribute("aria-level", "3");
+    el.append(text("span", "atelier-divider-name", getRarity(rarity).name), text("span", "atelier-divider-count", String(n)));
+    return el;
   }
 
   /** Une ligne : marque + modèle + rareté, barre X / 5, chances, coloris possédés. */
@@ -120,7 +142,16 @@ export function setupAtelier({ catalogue, onRowTap }) {
       chips.append(chip);
     }
 
-    el.append(head, progress, chips);
+    // Indice cliquable : on voit d'un coup d'œil que la ligne ouvre la roue.
+    const cta = document.createElement("span");
+    cta.className = "atelier-cta";
+    cta.dataset.rarity = target;
+    cta.textContent = count >= UPGRADE_MAX_CARDS
+      ? `Améliorer en ${getRarity(target).name} · garanti`
+      : `Tenter la roue · ${chance} %`;
+    cta.append(text("span", "atelier-cta-arrow", "›"));
+
+    el.append(head, progress, chips, cta);
     el.addEventListener("click", () => onRowTap?.(piece, rarity));
     return el;
   }

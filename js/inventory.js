@@ -12,8 +12,8 @@
 // }
 // Si le format change un jour, on crée "grail_save_v2" et on migre depuis v1.
 
-import { RARITIES } from "./data.js?v=23";
-import { createCardFace, createCardShell } from "./cards.js?v=23";
+import { RARITIES } from "./data.js?v=24";
+import { createCardFace, createCardShell } from "./cards.js?v=24";
 
 const SAVE_KEY = "grail_save_v1";
 
