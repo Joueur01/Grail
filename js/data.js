@@ -17,6 +17,19 @@ export const CARDS_PER_BOOSTER = 3;
 // Légendaire sort (forcée ou non). Il est visible sous le paquet.
 export const PITY_LEGENDAIRE = 30;
 
+// Amélioration (« roue ») : on mise de 1 à UPGRADE_MAX_CARDS cartes du même
+// modèle et de la même rareté ; chaque carte misée donne UPGRADE_CHANCE_PER_CARD %
+// de chances d'obtenir le modèle à la rareté au-dessus. Les cartes misées sont
+// perdues dans tous les cas (réussite ou échec).
+export const UPGRADE_MAX_CARDS = 5;
+export const UPGRADE_CHANCE_PER_CARD = 20;
+
+// Défausse — PAS ENCORE CODÉE (le bouton est grisé « Bientôt »).
+// Valeur d'une carte défaussée, en monnaie du jeu, selon sa rareté.
+// ⚠️ Monnaie virtuelle uniquement, jamais convertible en euros (section 9 du
+// CLAUDE.md), et hors périmètre de la bêta : à valider avant de l'activer.
+export const DISCARD_VALUES = { commun: 5, rare: 20, epique: 80, legendaire: 400 };
+
 // Catalogue chargé une seule fois, puis gardé en mémoire.
 let catalogue = null;
 

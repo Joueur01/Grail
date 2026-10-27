@@ -12,8 +12,8 @@
 // }
 // Si le format change un jour, on crée "grail_save_v2" et on migre depuis v1.
 
-import { RARITIES } from "./data.js?v=21";
-import { createCardFace, createCardShell } from "./cards.js?v=21";
+import { RARITIES } from "./data.js?v=22";
+import { createCardFace, createCardShell } from "./cards.js?v=22";
 
 const SAVE_KEY = "grail_save_v1";
 
@@ -64,6 +64,30 @@ export function addCards(cards) {
     save.cards[key] = (save.cards[key] || 0) + 1;
   }
   persist();
+}
+
+/**
+ * Retire des cartes de la collection (une par élément de la liste).
+ * Si le dernier exemplaire d'une carte portée disparaît, elle quitte la tenue.
+ */
+export function removeCards(cards) {
+  for (const { colorwayId, rarity } of cards) {
+    const key = cardKey(colorwayId, rarity);
+    if (!save.cards[key]) continue;
+    save.cards[key] -= 1;
+    if (save.cards[key] <= 0) {
+      delete save.cards[key];
+      for (const [slot, worn] of Object.entries(save.equipped)) {
+        if (worn === key) delete save.equipped[slot];
+      }
+    }
+  }
+  persist();
+}
+
+/** Nombre d'exemplaires possédés d'une carte (0 si aucun). */
+export function countCard(colorwayId, rarity) {
+  return save.cards[cardKey(colorwayId, rarity)] || 0;
 }
 
 // --- Tenue équipée (une carte par emplacement) ---
@@ -147,9 +171,10 @@ const CATEGORIES = [
 
 /**
  * Branche l'écran Collection et renvoie une fonction pour le redessiner
- * (à appeler après chaque ouverture de booster).
+ * (à appeler après chaque ouverture de booster ou amélioration).
+ * - onCardTap : appelé avec { colorwayId, rarity, count } quand on touche une carte
  */
-export function setupCollection({ catalogue }) {
+export function setupCollection({ catalogue, onCardTap }) {
   const grid = document.getElementById("collection-grid");
   const summary = document.getElementById("collection-summary");
   const empty = document.getElementById("collection-empty");
@@ -195,6 +220,11 @@ export function setupCollection({ catalogue }) {
         badge.textContent = `×${c.count}`;
         card.append(badge);
       }
+      // Toucher une carte ouvre sa fiche (améliorer, défausser…).
+      card.classList.add("tappable");
+      card.setAttribute("role", "button");
+      card.setAttribute("aria-label", `${colorway.piece.name}, ${colorway.name} : ouvrir la fiche`);
+      card.addEventListener("click", () => onCardTap?.(c));
       return card;
     }));
 

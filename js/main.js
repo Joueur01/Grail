@@ -3,11 +3,12 @@
 // ?v=… sur les imports : même numéro que dans index.html, et le même partout
 // (un module importé sous deux adresses différentes serait chargé deux fois).
 
-import { loadCatalogue } from "./data.js?v=21";
-import { loadSave, setupCollection } from "./inventory.js?v=21";
-import { initAvatar, setupOutfit } from "./avatar.js?v=21";
-import { setupBooster } from "./booster.js?v=21";
-import { setupShare } from "./share.js?v=21";
+import { loadCatalogue } from "./data.js?v=22";
+import { loadSave, setupCollection } from "./inventory.js?v=22";
+import { initAvatar, setupOutfit } from "./avatar.js?v=22";
+import { setupBooster } from "./booster.js?v=22";
+import { setupShare } from "./share.js?v=22";
+import { setupUpgrade } from "./upgrade.js?v=22";
 
 // ?debug=1 dans l'URL : boosters illimités pendant les tests.
 export const DEBUG = new URLSearchParams(location.search).get("debug") === "1";
@@ -54,10 +55,14 @@ async function start() {
 
   try {
     const catalogue = await loadCatalogue();
-    // La collection est redessinée après chaque ouverture de booster.
-    const refreshCollection = setupCollection({ catalogue });
     // La tenue prévient le partage à chaque changement (image préparée à l'avance).
-    setupOutfit({ catalogue, onChange: setupShare() });
+    const refreshOutfit = setupOutfit({ catalogue, onChange: setupShare() });
+    // Fiche de carte + roue : après une amélioration, collection et tenue sont
+    // redessinées (une carte portée a pu être misée).
+    const upgrade = setupUpgrade({ catalogue, onChange: () => { refreshCollection(); refreshOutfit(); } });
+    // La collection est redessinée après chaque ouverture de booster ;
+    // toucher une carte ouvre sa fiche.
+    const refreshCollection = setupCollection({ catalogue, onCardTap: (card) => upgrade.openCard(card) });
     setupBooster({ catalogue, debug: DEBUG || BOOSTERS_ILLIMITES, onOpened: refreshCollection });
   } catch (err) {
     // Arrive surtout si on ouvre index.html en double-cliquant (file://) :

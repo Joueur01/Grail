@@ -17,7 +17,7 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=21">
+  <link rel="stylesheet" href="style.css?v=22">
 </head>
 <body>
   <header class="topbar">
@@ -107,6 +107,17 @@
     <p class="reveal-tap">Glisse pour continuer</p>
   </div>
 
+  <!-- Fiche d'une carte de la collection + amélioration par la roue (upgrade.js) -->
+  <div class="picker" id="card-sheet" hidden>
+    <div class="picker-sheet" role="dialog" aria-modal="true" aria-labelledby="card-sheet-title">
+      <div class="picker-head">
+        <h3 class="picker-title" id="card-sheet-title"></h3>
+        <button class="picker-close" id="card-sheet-close" aria-label="Fermer">✕</button>
+      </div>
+      <div class="sheet-body" id="card-sheet-body"></div>
+    </div>
+  </div>
+
   <!-- Panneau de choix d'une pièce (s'ouvre par le bas, au-dessus de tout) -->
   <div class="picker" id="picker" hidden>
     <div class="picker-sheet" role="dialog" aria-modal="true" aria-labelledby="picker-title">
@@ -127,6 +138,6 @@
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=21"></script>
+  <script type="module" src="js/main.js?v=22"></script>
 </body>
 </html>
