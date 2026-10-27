@@ -555,6 +555,23 @@ main {
   cursor: pointer;
 }
 .atelier-row:active { opacity: 0.85; }
+/* Séparateur de rareté : nom + nombre de modèles + filet coloré */
+.atelier-divider { display: flex; align-items: center; gap: 10px; margin-top: 10px; color: var(--rarity-color); }
+.atelier-divider:first-child { margin-top: 0; }
+.atelier-divider::after { content: ""; flex: 1; height: 2px; border-radius: 2px; background: var(--rarity-color); opacity: 0.5; }
+.atelier-divider-name { font-size: 13px; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; }
+.atelier-divider-count { min-width: 22px; padding: 1px 7px; border-radius: 999px; background: var(--rarity-color); color: #0b0b0d; font-size: 12px; font-weight: 800; text-align: center; }
+/* Indice cliquable en bas de ligne (couleur de la rareté visée) */
+.atelier-cta {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  min-height: 40px; padding: 0 14px; border-radius: 999px;
+  border: 2px solid var(--rarity-color); color: var(--rarity-color);
+  font-size: 14px; font-weight: 800;
+}
+.atelier-cta-arrow { font-size: 22px; line-height: 1; }
+.atelier-row.ready .atelier-cta { background: var(--rarity-color); color: #0b0b0d; animation: atelier-pulse 1.8s ease-in-out infinite; }
+@keyframes atelier-pulse { 50% { box-shadow: 0 0 14px 0 var(--rarity-color); } }
+@media (prefers-reduced-motion: reduce) { .atelier-row.ready .atelier-cta { animation: none; } }
 /* 5 exemplaires ou plus : amélioration garantie, la ligne s'allume */
 .atelier-row.ready { border-color: var(--rarity-color); box-shadow: 0 0 14px -4px var(--rarity-color); }
 
