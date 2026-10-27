@@ -180,6 +180,9 @@ Pièces à retoucher plus tard (ne pas bloquer la bêta) : Manteau « Atelier »
 
 - Les taux sont **provisoires** : les garder dans **une seule constante** facile à modifier.
 - Tirage : on tire d'abord la rareté selon les taux, puis un coloris au hasard parmi les 75 (uniforme pour la bêta).
+- **Garantie « Rare minimum »** : jamais 3 Communes dans un booster. Si les autres cartes sont toutes Communes, la dernière est tirée parmi Rare / Épique / Légendaire en gardant leurs proportions (22 : 7 : 1).
+- **Pity « Légendaire garantie »** : après `PITY_LEGENDAIRE` − 1 boosters d'affilée sans Légendaire (constante dans `js/data.js`, **30** par défaut), le suivant (le 30e) en contient forcément une : la carte la moins rare devient Légendaire. Le compteur (`pity` dans la sauvegarde) repart à **0** dès qu'une Légendaire sort, forcée ou non. **Jauge visible sous le paquet** (« Légendaire garantie · 12 / 30 », barre dorée qui brille sur les 5 derniers, « Prochain booster ! » à 29).
+- Effet mesuré par simulation (200 000 boosters) avec ces deux garanties : par carte ≈ 58 % Commun · 30 % Rare · 9,7 % Épique · 1,9 % Légendaire ; ≈ 1 booster sur 17 contient une Légendaire (dont ~28 % offertes par la jauge).
 - La rareté **n'apparaît pas sur le sprite**. Elle s'affiche dans l'interface : bordure et étiquette colorées sur la carte, mention dans l'inventaire et sur l'image partagée. Une révélation plus marquée (lueur, son, vibration `navigator.vibrate` si dispo) pour Épique et Légendaire est bienvenue.
 
 ### Boosters

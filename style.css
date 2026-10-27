@@ -253,6 +253,43 @@ main {
 
 .booster-status { text-align: center; }
 
+/* --- Jauge « Légendaire garantie » (pity) --- */
+.pity {
+  width: min(320px, 100%);
+  align-self: center;
+}
+.pity-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  flex-wrap: wrap;    /* très petit écran : le compteur passe à la ligne… */
+}
+.pity-head span { white-space: nowrap; } /* …mais aucun des deux textes n'est coupé */
+.pity-label { color: var(--muted); }
+.pity-count { color: var(--rarity-legendaire); }
+.pity-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.pity-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #8a6d12, var(--rarity-legendaire));
+  transition: width 0.6s ease-out;
+}
+/* Les 5 derniers boosters : la jauge brille, la Légendaire approche */
+.pity.almost .pity-fill { animation: pity-glow 1.2s ease-in-out infinite; }
+@keyframes pity-glow {
+  50% { box-shadow: 0 0 12px 2px var(--rarity-legendaire); }
+}
+
 /* --- Boutons : larges, faciles au pouce (min. 48 px de haut) --- */
 .btn {
   width: 100%;

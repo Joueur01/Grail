@@ -12,11 +12,11 @@
 // Effets de révélation, du plus discret au plus fort : Rare (reflet + particules),
 // Épique (éclair violet, gerbe de particules, titre), Légendaire (plein écran).
 
-import { RARITIES, CARDS_PER_BOOSTER, getRarity } from "./data.js?v=19";
-import { addCards, canOpenFreeBooster, markFreeBoosterUsed, getOwnedCards, cardKey } from "./inventory.js?v=19";
-import { createCardFace, createCardShell } from "./cards.js?v=19";
-import { playSound, vibrate, burst } from "./effects.js?v=19";
-import { attachGesture } from "./gestures.js?v=19";
+import { RARITIES, CARDS_PER_BOOSTER, PITY_LEGENDAIRE, getRarity } from "./data.js?v=20";
+import { addCards, canOpenFreeBooster, markFreeBoosterUsed, getOwnedCards, cardKey, getPity, setPity } from "./inventory.js?v=20";
+import { createCardFace, createCardShell } from "./cards.js?v=20";
+import { playSound, vibrate, burst } from "./effects.js?v=20";
+import { attachGesture } from "./gestures.js?v=20";
 
 // Durées (en millisecondes), faciles à ajuster.
 const TEAR_TIME = 550;    // la bande s'envole, le paquet descend
@@ -47,31 +47,54 @@ function tearClip(top) {
     : `polygon(${points.join(", ")}, 100% 100%, 0% 100%)`;
 }
 
-/** Tire une rareté selon les poids définis dans RARITIES. */
-export function drawRarity() {
-  const total = RARITIES.reduce((sum, r) => sum + r.weight, 0);
+/**
+ * Tire une rareté selon les poids définis dans RARITIES.
+ * - exclude : raretés interdites (ex. ["commun"]) ; les autres gardent
+ *   leurs proportions entre elles (Rare 22 : Épique 7 : Légendaire 1).
+ */
+export function drawRarity(exclude = []) {
+  const allowed = RARITIES.filter((r) => !exclude.includes(r.id));
+  const total = allowed.reduce((sum, r) => sum + r.weight, 0);
   let roll = Math.random() * total;
-  for (const r of RARITIES) {
+  for (const r of allowed) {
     roll -= r.weight;
     if (roll < 0) return r.id;
   }
-  return RARITIES[0].id; // filet de sécurité (arrondis)
+  return allowed[0].id; // filet de sécurité (arrondis)
 }
 
 /**
- * Tire un booster : pour chaque carte, d'abord la rareté,
- * puis un coloris au hasard parmi tout le catalogue (uniforme pour la bêta).
- * Renvoie [{ colorwayId, rarity }, ...].
+ * Tire un booster : pour chaque carte, d'abord la rareté, puis un coloris au
+ * hasard parmi tout le catalogue (uniforme pour la bêta). Deux garanties :
+ *   1. jamais 3 Communes : si les autres cartes sont toutes Communes, la
+ *      dernière est au minimum Rare ;
+ *   2. pity : si le joueur a déjà ouvert PITY_LEGENDAIRE - 1 boosters
+ *      d'affilée sans Légendaire, celui-ci en contient forcément une.
+ * - pity : boosters ouverts d'affilée sans Légendaire AVANT celui-ci
+ * Renvoie [{ colorwayId, rarity, forced? }, ...].
  */
-export function drawBooster(catalogue) {
-  const cards = [];
+export function drawBooster(catalogue, pity = 0) {
+  const rarities = [];
   for (let i = 0; i < CARDS_PER_BOOSTER; i++) {
-    const rarity = drawRarity();
-    const list = catalogue.colorways;
-    const colorway = list[Math.floor(Math.random() * list.length)];
-    cards.push({ colorwayId: colorway.id, rarity });
+    const last = i === CARDS_PER_BOOSTER - 1;
+    const othersAllCommon = rarities.every((r) => r === "commun");
+    rarities.push(last && othersAllCommon ? drawRarity(["commun"]) : drawRarity());
   }
-  return cards;
+
+  // Pity : la carte la moins rare devient Légendaire (elle sera montrée en dernier).
+  let forced = -1;
+  if (pity + 1 >= PITY_LEGENDAIRE && !rarities.includes("legendaire")) {
+    const rank = (id) => RARITIES.findIndex((r) => r.id === id);
+    forced = rarities.reduce((low, r, i) => (rank(r) < rank(rarities[low]) ? i : low), 0);
+    rarities[forced] = "legendaire";
+  }
+
+  const list = catalogue.colorways;
+  return rarities.map((rarity, i) => ({
+    colorwayId: list[Math.floor(Math.random() * list.length)].id,
+    rarity,
+    forced: i === forced, // true = Légendaire offerte par la jauge
+  }));
 }
 
 /**
@@ -93,6 +116,9 @@ export function setupBooster({ catalogue, debug, onOpened }) {
   const recap = document.getElementById("booster-result");
   const doneBtn = document.getElementById("btn-booster-done");
   const overlay = document.getElementById("reveal-overlay");
+  const pityGauge = document.getElementById("pity");
+  const pityCount = document.getElementById("pity-count");
+  const pityFill = document.getElementById("pity-fill");
 
   packTop.style.clipPath = tearClip(true);
   packBody.style.clipPath = tearClip(false);
@@ -112,6 +138,18 @@ export function setupBooster({ catalogue, debug, onOpened }) {
     status.textContent = available
       ? "Glisse ton doigt sur le booster pour le déchirer."
       : "Reviens demain pour un nouveau booster.";
+    renderPity();
+  }
+
+  /** Jauge « Légendaire garantie » sous le paquet. */
+  function renderPity() {
+    const pity = getPity();
+    const nextIsSure = pity + 1 >= PITY_LEGENDAIRE;
+    pityCount.textContent = nextIsSure ? "Prochain booster\u00a0!" : `${pity} / ${PITY_LEGENDAIRE}`;
+    pityFill.style.width = `${Math.min(100, (pity / (PITY_LEGENDAIRE - 1)) * 100)}%`;
+    pityGauge.classList.toggle("almost", PITY_LEGENDAIRE - pity <= 5);
+    pityGauge.setAttribute("aria-label",
+      `Légendaire garantie : ${pity} boosters sans Légendaire sur ${PITY_LEGENDAIRE}`);
   }
 
   // --- 1. Déchirer le paquet (uniquement en glissant) ------------------------
@@ -145,7 +183,8 @@ export function setupBooster({ catalogue, debug, onOpened }) {
 
     // Cartes déjà possédées AVANT ce booster (pour le badge « NOUVEAU »).
     const owned = new Set(getOwnedCards().map((c) => cardKey(c.colorwayId, c.rarity)));
-    cards = drawBooster(catalogue).map((card) => {
+    const pity = getPity();
+    cards = drawBooster(catalogue, pity).map((card) => {
       const key = cardKey(card.colorwayId, card.rarity);
       const isNew = !owned.has(key);
       owned.add(key); // la même carte deux fois dans un booster : la 2e n'est pas « nouvelle »
@@ -158,6 +197,8 @@ export function setupBooster({ catalogue, debug, onOpened }) {
     // recharger la page pendant la révélation ne permet pas de retirer.
     addCards(cards);
     if (!debug) markFreeBoosterUsed();
+    // Jauge : remise à 0 si une Légendaire est sortie, sinon +1.
+    setPity(cards.some((c) => c.rarity === "legendaire") ? 0 : pity + 1);
     onOpened?.();
 
     playSound("tear");

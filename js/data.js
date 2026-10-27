@@ -12,6 +12,11 @@ export const RARITIES = [
 // Nombre de cartes par booster.
 export const CARDS_PER_BOOSTER = 3;
 
+// « Pity » : au bout de ce nombre de boosters d'affilée SANS Légendaire,
+// le suivant en contient forcément une. Le compteur repart à 0 dès qu'une
+// Légendaire sort (forcée ou non). Il est visible sous le paquet.
+export const PITY_LEGENDAIRE = 30;
+
 // Catalogue chargé une seule fois, puis gardé en mémoire.
 let catalogue = null;
 

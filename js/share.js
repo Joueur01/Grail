@@ -8,8 +8,8 @@
 // préparée À L'AVANCE, à chaque changement de tenue, pour être prête au moment
 // où l'on touche le bouton (sinon le partage serait refusé).
 
-import { RARITIES } from "./data.js?v=19";
-import { SLOTS, drawAvatar } from "./avatar.js?v=19";
+import { RARITIES } from "./data.js?v=20";
+import { SLOTS, drawAvatar } from "./avatar.js?v=20";
 
 const IMG_W = 1080;
 const IMG_H = 1350;
