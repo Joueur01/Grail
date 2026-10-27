@@ -22,7 +22,7 @@ Inspiration : WikiMasters (boosters quotidiens, collection, rareté), mais avec 
 **Critère de réussite :** dimanche 1er novembre, **3 amis** ont ouvert un booster et partagé une tenue depuis leur téléphone.
 
 Contraintes de la bêta :
-- **Budget 0 €** : aucun service payant, aucune API payante.
+- **Budget : GitHub Pages reste gratuit** ; le développeur loue aussi 2 serveurs Hetzner (voir section 12) pour la suite. Aucune API payante.
 - **Aucun serveur, aucune base de données, aucun compte.** Tout tourne dans le navigateur ; les données du joueur sont en `localStorage`.
 - Hébergement : **GitHub Pages** (site statique, branche `main`, racine du dépôt).
 - **Mobile d'abord** : le test se fait sur téléphone. Tout doit marcher au doigt, en portrait, sur un écran de ~375 px de large.
@@ -321,3 +321,12 @@ Le développeur n'est pas juriste ; ces règles sont prudentes en attendant un a
 - Test sur 2 semaines avec 15 à 30 amis ; signal positif si 3 à 4 reviennent d'eux-mêmes chaque jour.
 - Ensuite, progressivement : comptes, tenue du jour avec vote, éditions limitées, plus de marques (5 à 10 au total, 1 à 2 pièces par catégorie chacune), puis échanges entre joueurs en monnaie virtuelle.
 - Monétisation éventuelle (boosters supplémentaires ou abonnement) **seulement après avis juridique**.
+
+## 12. Migration vers les serveurs Hetzner (en cours, décidée par le développeur)
+
+- Le développeur loue **2 serveurs Hetzner** avec un nom de domaine. Objectif : tout héberger chez lui (front, puis back et base de données externe). **Étape 1 : refaire le serveur front de zéro.** Étape 2 : serveur back + base de données (comptes, vrai Market).
+- Le développeur n'a qu'un **iPad** cette semaine : Claude doit **tout faire à distance** (installation, déploiement, redémarrages, tests avec un vrai navigateur), sans demander de manipulation technique, et **guider pas à pas** pour ce qui ne peut passer que par la console Hetzner.
+- **Accès** : clé SSH dédiée au déploiement, stockée dans les **réglages de l'environnement** (secret / variable d'environnement), **jamais collée dans le chat**. L'environnement doit autoriser le réseau vers le serveur (le SSH sortant est bloqué par défaut). Une nouvelle session récupère ces réglages.
+- **Plan du serveur front** : Ubuntu LTS, utilisateur dédié, connexion par clé uniquement, pare-feu (22, 80, 443), mises à jour automatiques, Caddy (ou nginx) avec HTTPS automatique, déploiement automatique de `main` vers le serveur. **GitHub Pages reste en secours** : ne basculer le lien envoyé aux amis qu'une fois le nouveau serveur testé.
+- **Règle de sécurité** : ne jamais effacer ni réinstaller un serveur sans la confirmation explicite du développeur ; sauvegarde (snapshot) avant toute réinstallation.
+- Le Market et les comptes en ligne (hors périmètre de la bêta) viendront avec l'étape 2 ; la validation des échanges se fera **côté serveur**.
