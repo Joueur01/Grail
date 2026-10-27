@@ -1,13 +1,14 @@
-// avatar.js — écran « Ma tenue » : le bonhomme habillé + les 7 cases autour.
+// avatar.js — écran « Ma tenue » : la tenue « à plat » + les 7 cases autour.
 //
-// Les vêtements sont dessinés TELS QUELS (mêmes sprites 32 × 32 que dans la
-// collection) sur un bonhomme « mannequin » de 64 × 96 pixels. Chaque pièce est
-// placée selon sa zone réellement dessinée : le bas du bonnet sur la tête, le
-// haut du vêtement au cou, le haut du pantalon à la taille, les chaussures au sol…
+// Les sprites sont des icônes « catalogue » 32 × 32, pas des calques à porter.
+// Au centre, on montre donc la tenue « à plat », comme une photo de fit posée
+// au sol : les pièces portées sont empilées de haut en bas (tête, haut/veste,
+// bas, chaussures) avec un petit espace, et l'écharpe et le sac sont posés à côté.
+// Les sprites sont utilisés TELS QUELS, à leur taille réelle (×1 dans le canvas).
 
-import { RARITIES } from "./data.js?v=14";
-import { getOwnedCards, getEquipped, equip } from "./inventory.js?v=14";
-import { createCardFace, createCardShell } from "./cards.js?v=14";
+import { RARITIES } from "./data.js?v=15";
+import { getOwnedCards, getEquipped, equip } from "./inventory.js?v=15";
+import { createCardFace, createCardShell } from "./cards.js?v=15";
 
 // Les 7 emplacements, avec leur colonne sur la fiche.
 // Les identifiants correspondent au champ "slot" de pieces.json.
@@ -21,62 +22,21 @@ export const SLOTS = [
   { id: "chaussures", name: "Chaussures", side: "right" },
 ];
 
-// Ordre de dessin des emplacements, du fond vers le premier plan.
-export const DRAW_ORDER = ["bas", "chaussures", "haut", "veste", "cou", "tete", "sac"];
+// --- La tenue à plat (mesures en pixels « logiques » du canvas) ---
+const FLAT_W = 64;
+const FLAT_H = 96;
+const MARGIN = 2;     // marge en haut et en bas du canvas
+const GAP = 2;        // espace entre deux pièces de la pile…
+const MAX_OVERLAP = 4; // …qui devient un chevauchement si la tenue est trop haute
+const SIDE_SHIFT = 8; // avec écharpe ou sac, la pile se décale à gauche pour leur faire de la place
 
-// --- Le bonhomme (toutes les mesures sont en pixels « logiques ») ---
-const AVATAR_W = 64;
-const AVATAR_H = 96;
-const CX = 26;        // axe du corps (décalé à gauche : le sac pend à droite)
-const HEAD_TOP = 4;   // haut de la tête
-const NECK = 21;      // les hauts et vestes commencent ici
-const WAIST = 43;     // les bas commencent ici
-const GROUND = 91;    // le dessous des chaussures touche ici
-const SKIN = "#7a746c";    // gris « mannequin », neutre et non genré
-const OUTLINE = "#141414"; // contour noir, comme les sprites
-
-/** Prépare le canvas (64 × 96, net, sans lissage) et dessine le bonhomme sans vêtements. */
+/** Prépare le canvas (64 × 96, net, sans lissage). */
 export function initAvatar(canvas) {
-  canvas.width = AVATAR_W;
-  canvas.height = AVATAR_H;
+  canvas.width = FLAT_W;
+  canvas.height = FLAT_H;
   const ctx = canvas.getContext("2d");
   ctx.imageSmoothingEnabled = false;
-  drawBody(ctx, false);
   return ctx;
-}
-
-/** Rectangle avec un contour noir d'1 pixel (x1, y1 inclus). */
-function block(ctx, x0, y0, x1, y1) {
-  ctx.fillStyle = OUTLINE;
-  ctx.fillRect(x0, y0, x1 - x0 + 1, y1 - y0 + 1);
-  ctx.fillStyle = SKIN;
-  ctx.fillRect(x0 + 1, y0 + 1, x1 - x0 - 1, y1 - y0 - 1);
-}
-
-/**
- * Dessine le corps. covered = true quand un haut ou une veste est porté :
- * on ne dessine alors ni le torse ni les bras (sinon ils dépassent autour
- * du vêtement), seulement les mains.
- */
-function drawBody(ctx, covered) {
-  ctx.clearRect(0, 0, AVATAR_W, AVATAR_H);
-  block(ctx, CX - 7, HEAD_TOP, CX + 6, HEAD_TOP + 15);          // tête 14 × 16
-  for (const [x, y] of [[CX - 7, HEAD_TOP], [CX + 6, HEAD_TOP], [CX - 7, HEAD_TOP + 15], [CX + 6, HEAD_TOP + 15]]) {
-    ctx.clearRect(x, y, 1, 1);                                   // coins arrondis
-  }
-  block(ctx, CX - 2, 18, CX + 1, 23);                            // cou
-  if (!covered) {
-    block(ctx, CX - 9, 22, CX + 8, 46);                          // torse
-    block(ctx, CX - 14, 23, CX - 9, 46);                         // bras gauche
-    block(ctx, CX + 8, 23, CX + 13, 46);                         // bras droit
-  }
-  block(ctx, CX - 15, 45, CX - 10, 49);                          // main gauche
-  block(ctx, CX + 9, 45, CX + 14, 49);                           // main droite
-  block(ctx, CX - 8, 45, CX - 1, 86);                            // jambe gauche
-  block(ctx, CX, 45, CX + 7, 86);                                // jambe droite
-  ctx.fillStyle = OUTLINE;
-  ctx.fillRect(CX - 4, 11, 1, 1);                                // yeux : 2 pixels
-  ctx.fillRect(CX + 2, 11, 1, 1);
 }
 
 // --- Chargement des sprites + calcul de leur zone dessinée (mise en cache) ---
@@ -112,66 +72,67 @@ function loadSprite(src) {
   return spriteCache.get(src);
 }
 
-/** Position (coin haut-gauche de la zone dessinée) d'une pièce selon son emplacement. */
-function anchor(slot, box) {
-  switch (slot) {
-    case "tete": return { x: CX - Math.floor(box.w / 2), y: HEAD_TOP + 9 - box.h }; // couvre le haut de la tête
-    case "haut":
-    case "veste": return { x: CX - Math.floor(box.w / 2), y: NECK };
-    case "cou": return { x: CX - Math.floor(box.w / 2), y: NECK - 2 };
-    case "bas": return { x: CX - Math.floor(box.w / 2), y: WAIST };
-    case "chaussures": return { x: CX - Math.floor(box.w / 2), y: GROUND - box.h };
-    case "sac": return { x: AVATAR_W - box.w, y: 46 - Math.floor(box.h / 2) };     // pend à la main droite
-  }
-}
-
-/** Dessine la zone utile d'un sprite à (x, y) ; flip = retourné horizontalement. */
-function drawPiece(ctx, { img, box }, x, y, flip = false) {
-  if (flip) {
-    ctx.save();
-    ctx.scale(-1, 1);
-    ctx.drawImage(img, box.x, box.y, box.w, box.h, -x - box.w, y, box.w, box.h);
-    ctx.restore();
-  } else {
-    ctx.drawImage(img, box.x, box.y, box.w, box.h, x, y, box.w, box.h);
-  }
+/** Dessine la zone utile d'un sprite à (x, y). */
+function drawPiece(ctx, { img, box }, x, y) {
+  ctx.drawImage(img, box.x, box.y, box.w, box.h, x, y, box.w, box.h);
 }
 
 let drawToken = 0; // évite qu'un ancien dessin (images plus lentes) écrase le plus récent
 
 /**
- * Dessine le bonhomme habillé.
+ * Dessine la tenue à plat dans le canvas.
  * - pieces : { emplacement: coloris du catalogue } pour les pièces portées
+ * Renvoie le nombre de pièces dessinées.
  */
 export async function drawAvatar(canvas, pieces) {
   const token = ++drawToken;
   const loaded = {};
-  for (const slot of DRAW_ORDER) {
-    if (pieces[slot]) loaded[slot] = await loadSprite(pieces[slot].sprite);
-  }
-  if (token !== drawToken) return; // un dessin plus récent a été demandé entre-temps
+  for (const slot of Object.keys(pieces)) loaded[slot] = await loadSprite(pieces[slot].sprite);
+  if (token !== drawToken) return 0; // un dessin plus récent a été demandé entre-temps
 
   const ctx = canvas.getContext("2d");
   ctx.imageSmoothingEnabled = false;
-  drawBody(ctx, Boolean(loaded.haut || loaded.veste));
-  for (const slot of DRAW_ORDER) {
-    const sprite = loaded[slot];
-    if (!sprite) continue;
-    const { x, y } = anchor(slot, sprite.box);
-    if (slot === "chaussures") {
-      // Une paire : la chaussure gauche retournée, la droite normale, un peu décalées.
-      drawPiece(ctx, sprite, x - 6, y, true);
-      drawPiece(ctx, sprite, x + 6, y);
-    } else {
-      drawPiece(ctx, sprite, x, y);
-    }
+  ctx.clearRect(0, 0, FLAT_W, FLAT_H);
+
+  // 1. La pile centrale, de haut en bas. Le haut et la veste occupent la même
+  //    « marche » : la veste est posée par-dessus le haut.
+  const rows = [];
+  if (loaded.tete) rows.push([loaded.tete]);
+  const torso = [loaded.haut, loaded.veste].filter(Boolean);
+  if (torso.length) rows.push(torso);
+  if (loaded.bas) rows.push([loaded.bas]);
+  if (loaded.chaussures) rows.push([loaded.chaussures]);
+
+  // 2. Ce qui est posé à côté (à droite) : l'écharpe, puis le sac.
+  const side = [loaded.cou, loaded.sac].filter(Boolean);
+
+  // Hauteur d'une marche = celle de sa pièce la plus haute.
+  const rowHeight = (row) => Math.max(...row.map((sprite) => sprite.box.h));
+  const sum = rows.reduce((total, row) => total + rowHeight(row), 0);
+  // Espace entre les marches : GAP si ça tient, sinon on resserre (jusqu'à se chevaucher).
+  const gaps = Math.max(rows.length - 1, 1);
+  const spacing = Math.max(-MAX_OVERLAP, Math.min(GAP, Math.floor((FLAT_H - 2 * MARGIN - sum) / gaps)));
+  const total = sum + spacing * (rows.length - 1);
+  const centerX = side.length ? FLAT_W / 2 - SIDE_SHIFT : FLAT_W / 2;
+  let y = Math.max(0, Math.floor((FLAT_H - total) / 2)); // pile centrée verticalement
+
+  for (const row of rows) {
+    // Chaque pièce est centrée horizontalement, calée en haut de sa marche.
+    for (const sprite of row) drawPiece(ctx, sprite, Math.round(centerX - sprite.box.w / 2), y);
+    y += rowHeight(row) + spacing;
   }
+
+  // Les pièces posées à côté : collées au bord droit, empilées, centrées en hauteur
+  // (un peu plus bas que le milieu, au niveau du haut et du bas de la tenue).
+  const sideTotal = side.reduce((t, sprite) => t + sprite.box.h, 0) + GAP * (side.length - 1);
+  let sy = Math.max(0, Math.floor((FLAT_H - sideTotal) / 2) + 4);
+  for (const sprite of side) {
+    drawPiece(ctx, sprite, FLAT_W - sprite.box.w, sy);
+    sy += sprite.box.h + GAP;
+  }
+  return Object.keys(loaded).length;
 }
 
-/**
- * Branche la fiche de tenue et renvoie une fonction pour la redessiner.
- * - catalogue : résultat de loadCatalogue()
- */
 export function setupOutfit({ catalogue }) {
   const leftCol = document.getElementById("outfit-left");
   const rightCol = document.getElementById("outfit-right");
@@ -189,8 +150,9 @@ export function setupOutfit({ catalogue }) {
   const catalogueOrder = new Map(catalogue.colorways.map((c, i) => [c.id, i]));
 
   const canvas = document.getElementById("avatar-canvas");
+  const hint = document.getElementById("outfit-hint");
 
-  /** Redessine les 7 cases de la fiche et le bonhomme habillé. */
+  /** Redessine les 7 cases de la fiche et la tenue à plat. */
   function render() {
     leftCol.replaceChildren();
     rightCol.replaceChildren();
@@ -201,8 +163,10 @@ export function setupOutfit({ catalogue }) {
       if (colorway) worn[slot.id] = colorway;
       (slot.side === "left" ? leftCol : rightCol).append(createSlotButton(slot, colorway, card));
     }
-    summary.textContent = `${Object.keys(worn).length} / ${SLOTS.length} pièces portées`;
-    drawAvatar(canvas, worn).catch((err) => console.error("Avatar :", err));
+    const count = Object.keys(worn).length;
+    summary.textContent = `${count} / ${SLOTS.length} pièces portées`;
+    hint.hidden = count > 0; // invitation affichée tant que rien n'est porté
+    drawAvatar(canvas, worn).catch((err) => console.error("Tenue :", err));
   }
 
   /** Une case de la fiche : l'icône équipée (ou vide) + le nom de l'emplacement. */
