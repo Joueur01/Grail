@@ -17,7 +17,7 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=24">
+  <link rel="stylesheet" href="style.css?v=25">
 </head>
 <body>
   <header class="topbar">
@@ -79,6 +79,7 @@
       <div class="collection-view" id="collection-view">
         <!-- Filtres : menus natifs du téléphone, faciles au doigt. Restent collés en haut. -->
         <div class="filters">
+          <input class="search" id="search-collection" type="search" placeholder="Rechercher une carte" aria-label="Rechercher une carte par nom" autocomplete="off" enterkeyhint="search">
           <select id="filter-brand" aria-label="Filtrer par marque"><option value="">Marque</option></select>
           <select id="filter-category" aria-label="Filtrer par catégorie"><option value="">Type</option></select>
           <select id="filter-rarity" aria-label="Filtrer par rareté"><option value="">Rareté</option></select>
@@ -90,7 +91,18 @@
 
       <!-- Vue Atelier : une ligne par modèle + rareté (atelier.js) -->
       <div class="collection-view" id="atelier-view" hidden>
+        <div class="filters">
+          <input class="search" id="search-atelier" type="search" placeholder="Rechercher un modèle" aria-label="Rechercher un modèle par nom" autocomplete="off" enterkeyhint="search">
+          <select id="atelier-brand" aria-label="Filtrer par marque"><option value="">Marque</option></select>
+          <select id="atelier-category" aria-label="Filtrer par catégorie"><option value="">Type</option></select>
+          <select id="atelier-sort" aria-label="Trier les modèles : progression, nom ou marque">
+            <option value="progress">Progrès</option>
+            <option value="name">Nom A→Z</option>
+            <option value="catalogue">Marque</option>
+          </select>
+        </div>
         <p class="muted atelier-intro">5 exemplaires d'un même modèle à la même rareté, tous coloris confondus = amélioration garantie. Moins de 5 : tente ta chance à la roue.</p>
+        <p class="muted atelier-locked-note" id="atelier-locked-note" hidden></p>
         <div class="atelier-list" id="atelier-list"></div>
         <p class="muted collection-empty" id="atelier-empty" hidden>Rien à améliorer pour l'instant. Ouvre des boosters !</p>
         <!-- Emplacement réservé à la future défausse (pas encore codée) -->
@@ -159,6 +171,6 @@
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=24"></script>
+  <script type="module" src="js/main.js?v=25"></script>
 </body>
 </html>

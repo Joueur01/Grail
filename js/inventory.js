@@ -7,18 +7,19 @@
 //   cards: { "<colorwayId>|<rarete>": nombreExemplaires, ... },
 //   lastFreeBooster: "AAAA-MM-JJ" | null,   // date locale du dernier booster gratuit
 //   equipped: { tete: "<colorwayId>|<rarete>", haut: ..., ... },
+//   locked: { "<colorwayId>|<rarete>": true },  // cartes verrouillées (jamais proposées à l'amélioration)
 //   pity: 0,  // boosters ouverts d'affilée sans Légendaire (jauge « Légendaire garantie »)
 //   tutorialDone: false  // true après le 1er booster (tuto « glisse, ne touche pas »)
 // }
 // Si le format change un jour, on crée "grail_save_v2" et on migre depuis v1.
 
-import { RARITIES } from "./data.js?v=24";
-import { createCardFace, createCardShell } from "./cards.js?v=24";
+import { RARITIES, matchesSearch, getRarity } from "./data.js?v=25";
+import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=25";
 
 const SAVE_KEY = "grail_save_v1";
 
 function emptySave() {
-  return { version: 1, cards: {}, lastFreeBooster: null, equipped: {}, pity: 0, tutorialDone: false };
+  return { version: 1, cards: {}, lastFreeBooster: null, equipped: {}, locked: {}, pity: 0, tutorialDone: false };
 }
 
 // Sauvegarde en mémoire : c'est elle qu'on lit/modifie, puis on persiste.
@@ -77,6 +78,7 @@ export function removeCards(cards) {
     save.cards[key] -= 1;
     if (save.cards[key] <= 0) {
       delete save.cards[key];
+      delete save.locked[key]; // plus d'exemplaire : le verrou disparaît aussi
       for (const [slot, worn] of Object.entries(save.equipped)) {
         if (worn === key) delete save.equipped[slot];
       }
@@ -88,6 +90,22 @@ export function removeCards(cards) {
 /** Nombre d'exemplaires possédés d'une carte (0 si aucun). */
 export function countCard(colorwayId, rarity) {
   return save.cards[cardKey(colorwayId, rarity)] || 0;
+}
+
+// --- Verrouillage : une carte verrouillée n'est jamais proposée à l'amélioration ---
+
+/** true si la carte (tous ses exemplaires) est verrouillée. */
+export function isLocked(colorwayId, rarity) {
+  return save.locked?.[cardKey(colorwayId, rarity)] === true;
+}
+
+/** Verrouille ou déverrouille une carte, et sauvegarde. */
+export function setLocked(colorwayId, rarity, locked) {
+  save.locked = save.locked || {};
+  const key = cardKey(colorwayId, rarity);
+  if (locked) save.locked[key] = true;
+  else delete save.locked[key];
+  persist();
 }
 
 // --- Tenue équipée (une carte par emplacement) ---
@@ -153,11 +171,11 @@ export function markFreeBoosterUsed() {
 
 // --- Écran Collection ---
 
-/** Liste des cartes possédées : [{ colorwayId, rarity, count }, ...]. */
+/** Liste des cartes possédées : [{ colorwayId, rarity, count, locked }, ...]. */
 export function getOwnedCards() {
   return Object.entries(save.cards).map(([key, count]) => {
     const [colorwayId, rarity] = key.split("|");
-    return { colorwayId, rarity, count };
+    return { colorwayId, rarity, count, locked: save.locked?.[key] === true };
   });
 }
 
@@ -178,6 +196,7 @@ export function setupCollection({ catalogue, onCardTap }) {
   const grid = document.getElementById("collection-grid");
   const summary = document.getElementById("collection-summary");
   const empty = document.getElementById("collection-empty");
+  const searchInput = document.getElementById("search-collection");
   const brandSelect = document.getElementById("filter-brand");
   const categorySelect = document.getElementById("filter-category");
   const raritySelect = document.getElementById("filter-rarity");
@@ -201,7 +220,8 @@ export function setupCollection({ catalogue, onCardTap }) {
     const visible = owned
       .filter((c) => {
         const colorway = catalogue.colorwayById.get(c.colorwayId);
-        return (!brandSelect.value || colorway.brand.id === brandSelect.value)
+        return matchesSearch(searchInput.value, [colorway.piece.name, colorway.name, colorway.brand.name, getRarity(c.rarity).name])
+          && (!brandSelect.value || colorway.brand.id === brandSelect.value)
           && (!categorySelect.value || colorway.piece.category === categorySelect.value)
           && (!raritySelect.value || c.rarity === raritySelect.value);
       })
@@ -214,6 +234,7 @@ export function setupCollection({ catalogue, onCardTap }) {
       const card = createCardShell(colorway, c.rarity);
       card.classList.add("owned");
       card.append(createCardFace(colorway, c.rarity));
+      if (c.locked) card.append(createLockBadge());
       if (c.count > 1) {
         const badge = document.createElement("span");
         badge.className = "count-badge";
@@ -231,12 +252,13 @@ export function setupCollection({ catalogue, onCardTap }) {
     empty.hidden = visible.length > 0;
     empty.textContent = owned.length === 0
       ? "Aucune carte pour l'instant. Ouvre un booster !"
-      : "Aucune carte ne correspond à ces filtres.";
+      : "Aucune carte ne correspond à ta recherche.";
   }
 
   for (const select of [brandSelect, categorySelect, raritySelect]) {
     select.addEventListener("change", render);
   }
+  searchInput.addEventListener("input", render);
   render();
   return render;
 }
