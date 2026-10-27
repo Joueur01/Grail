@@ -6,9 +6,10 @@
 // rareté visée. Toucher une ligne ouvre la roue avec ces cartes déjà misées.
 // Les Légendaires (non améliorables) n'apparaissent pas.
 
-import { RARITIES, UPGRADE_MAX_CARDS, getRarity, matchesSearch } from "./data.js?v=25";
-import { getOwnedCards } from "./inventory.js?v=25";
-import { nextRarity, upgradeChance } from "./upgrade.js?v=25";
+import { RARITIES, getRarity, matchesSearch } from "./data.js?v=26";
+import { UPGRADE } from "./economy-config.js?v=26";
+import { getOwnedCards } from "./inventory.js?v=26";
+import { nextRarity, upgradeChance } from "./upgrade.js?v=26";
 
 /**
  * Regroupe les cartes possédées par modèle + rareté.
@@ -36,7 +37,7 @@ export function atelierRows(catalogue, sort = "progress") {
   // plus proche de 5 au plus éloigné (au-delà de 5, c'est « prêt » comme à 5),
   // puis l'ordre du catalogue.
   // Critère choisi dans le menu « Tri » (la rareté passe toujours en premier).
-  const byProgress = (a, b) => Math.min(b.total, UPGRADE_MAX_CARDS) - Math.min(a.total, UPGRADE_MAX_CARDS);
+  const byProgress = (a, b) => Math.min(b.total, UPGRADE.maxCards) - Math.min(a.total, UPGRADE.maxCards);
   const byName = (a, b) => a.piece.name.localeCompare(b.piece.name, "fr");
   const byCatalogue = (a, b) => pieceOrder.get(a.piece.id) - pieceOrder.get(b.piece.id);
   const criteria = { progress: [byProgress, byCatalogue], name: [byName], catalogue: [byCatalogue] }[sort] || [byProgress, byCatalogue];
@@ -53,6 +54,9 @@ export function setupAtelier({ catalogue, onRowTap }) {
   const list = document.getElementById("atelier-list");
   const empty = document.getElementById("atelier-empty");
   const lockedNote = document.getElementById("atelier-locked-note");
+  // Texte d'aide : les seuils viennent de la config (rien d'écrit en dur dans le HTML).
+  document.getElementById("atelier-intro").textContent =
+    `${UPGRADE.maxCards} exemplaires d'un même modèle à la même rareté, tous coloris confondus = amélioration garantie. Moins de ${UPGRADE.maxCards} : tente ta chance à la roue.`;
   const searchInput = document.getElementById("search-atelier");
   const brandSelect = document.getElementById("atelier-brand");
   const categorySelect = document.getElementById("atelier-category");
@@ -108,7 +112,7 @@ export function setupAtelier({ catalogue, onRowTap }) {
   /** Une ligne : marque + modèle + rareté, barre X / 5, chances, coloris possédés. */
   function createRow({ piece, rarity, total, colorways }) {
     const target = nextRarity(rarity);
-    const count = Math.min(total, UPGRADE_MAX_CARDS); // la roue prend 5 cartes au maximum
+    const count = Math.min(total, UPGRADE.maxCards); // la roue prend 5 cartes au maximum
     const chance = upgradeChance(count);
     const brand = colorways[0].colorway.brand;
 
@@ -116,9 +120,9 @@ export function setupAtelier({ catalogue, onRowTap }) {
     el.className = "atelier-row";
     el.dataset.rarity = rarity; // couleur de la rareté actuelle (bordure, étiquette)
     el.dataset.brand = brand.id;
-    if (count >= UPGRADE_MAX_CARDS) el.classList.add("ready");
+    if (count >= UPGRADE.maxCards) el.classList.add("ready");
     el.setAttribute("aria-label",
-      `${piece.name} ${getRarity(rarity).name} : ${total} sur ${UPGRADE_MAX_CARDS}, ${chance} % vers ${getRarity(target).name}`);
+      `${piece.name} ${getRarity(rarity).name} : ${total} sur ${UPGRADE.maxCards}, ${chance} % vers ${getRarity(target).name}`);
 
     // En-tête : marque, nom du modèle, rareté | chances et rareté visée
     const head = document.createElement("div");
@@ -147,10 +151,10 @@ export function setupAtelier({ catalogue, onRowTap }) {
     bar.className = "atelier-bar";
     const fill = document.createElement("div");
     fill.className = "atelier-fill";
-    fill.style.width = `${(count / UPGRADE_MAX_CARDS) * 100}%`;
+    fill.style.width = `${(count / UPGRADE.maxCards) * 100}%`;
     bar.append(fill);
     progress.append(bar, text("span", "atelier-count",
-      total > UPGRADE_MAX_CARDS ? `${total}/${UPGRADE_MAX_CARDS}` : `${count}/${UPGRADE_MAX_CARDS}`));
+      total > UPGRADE.maxCards ? `${total}/${UPGRADE.maxCards}` : `${count}/${UPGRADE.maxCards}`));
 
     // Les coloris possédés, avec leur nombre
     const chips = document.createElement("div");
@@ -176,7 +180,7 @@ export function setupAtelier({ catalogue, onRowTap }) {
     const cta = document.createElement("span");
     cta.className = "atelier-cta";
     cta.dataset.rarity = target;
-    cta.textContent = count >= UPGRADE_MAX_CARDS
+    cta.textContent = count >= UPGRADE.maxCards
       ? `Améliorer en ${getRarity(target).name} · garanti`
       : `Tenter la roue · ${chance} %`;
     cta.append(text("span", "atelier-cta-arrow", "›"));

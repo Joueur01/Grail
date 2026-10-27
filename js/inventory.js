@@ -8,18 +8,22 @@
 //   lastFreeBooster: "AAAA-MM-JJ" | null,   // date locale du dernier booster gratuit
 //   equipped: { tete: "<colorwayId>|<rarete>", haut: ..., ... },
 //   locked: { "<colorwayId>|<rarete>": true },  // cartes verrouillées (jamais proposées à l'amélioration)
+//   freeBoostersUsed: 1,   // boosters gratuits pris le jour de lastFreeBooster
+//   coins: 0,              // solde de pièces (entier ≥ 0)
+//   lastDailyBonus: "AAAA-MM-JJ" | null,  // dernier jour (heure de Paris) du bonus de connexion
 //   pity: 0,  // boosters ouverts d'affilée sans Légendaire (jauge « Légendaire garantie »)
 //   tutorialDone: false  // true après le 1er booster (tuto « glisse, ne touche pas »)
 // }
 // Si le format change un jour, on crée "grail_save_v2" et on migre depuis v1.
 
-import { RARITIES, matchesSearch, getRarity } from "./data.js?v=25";
-import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=25";
+import { RARITIES, matchesSearch, getRarity } from "./data.js?v=26";
+import { BOOSTER, COINS } from "./economy-config.js?v=26";
+import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=26";
 
 const SAVE_KEY = "grail_save_v1";
 
 function emptySave() {
-  return { version: 1, cards: {}, lastFreeBooster: null, equipped: {}, locked: {}, pity: 0, tutorialDone: false };
+  return { version: 1, cards: {}, lastFreeBooster: null, equipped: {}, locked: {}, freeBoostersUsed: 0, coins: COINS.startBalance, lastDailyBonus: null, pity: 0, tutorialDone: false };
 }
 
 // Sauvegarde en mémoire : c'est elle qu'on lit/modifie, puis on persiste.
@@ -160,13 +164,63 @@ function todayLocal() {
   return `${d.getFullYear()}-${mm}-${dd}`;
 }
 
+/** Boosters gratuits encore disponibles aujourd'hui (le stock se remplit à minuit). */
+export function freeBoostersLeft() {
+  if (save.lastFreeBooster !== todayLocal()) return BOOSTER.freePerDay;
+  // Ancienne sauvegarde (avant le compteur) : un booster avait été pris ce jour-là.
+  const used = Number.isInteger(save.freeBoostersUsed) && save.freeBoostersUsed > 0 ? save.freeBoostersUsed : 1;
+  return Math.max(0, BOOSTER.freePerDay - used);
+}
+
 export function canOpenFreeBooster() {
-  return save.lastFreeBooster !== todayLocal();
+  return freeBoostersLeft() > 0;
 }
 
 export function markFreeBoosterUsed() {
+  const used = BOOSTER.freePerDay - freeBoostersLeft();
   save.lastFreeBooster = todayLocal();
+  save.freeBoostersUsed = used + 1;
   persist();
+}
+
+// --- Pièces (monnaie du jeu) ---
+
+const coinListeners = [];
+
+/** Solde actuel (toujours un entier ≥ 0, même si la sauvegarde est abîmée). */
+export function getCoins() {
+  return Number.isInteger(save.coins) && save.coins > 0 ? save.coins : 0;
+}
+
+/** Appelle fn(solde) à chaque changement du solde (sert à l'affichage). */
+export function onCoinsChange(fn) {
+  coinListeners.push(fn);
+}
+
+/**
+ * LA fonction centrale pour ajouter (delta > 0) ou retirer (delta < 0) des pièces.
+ * Refuse un delta qui n'est pas un entier, et tout retrait qui ferait passer le
+ * solde sous 0 : dans ces cas rien ne change et elle renvoie false.
+ */
+export function changeCoins(delta) {
+  if (!Number.isInteger(delta)) return false;
+  const next = getCoins() + delta;
+  if (next < 0) return false;
+  save.coins = next;
+  persist();
+  for (const fn of coinListeners) fn(next);
+  return true;
+}
+
+/** Dernier jour (AAAA-MM-JJ, heure de Paris) où le bonus de connexion a été pris. */
+export function getLastDailyBonus() {
+  return save.lastDailyBonus || null;
+}
+
+/** Enregistre le jour du bonus ET verse les pièces en une seule sauvegarde. */
+export function claimDailyBonus(day, amount) {
+  save.lastDailyBonus = day;
+  return changeCoins(amount);
 }
 
 // --- Écran Collection ---

@@ -12,11 +12,12 @@
 // Effets de révélation, du plus discret au plus fort : Rare (reflet + particules),
 // Épique (éclair violet, gerbe de particules, titre), Légendaire (plein écran).
 
-import { RARITIES, CARDS_PER_BOOSTER, PITY_LEGENDAIRE, getRarity } from "./data.js?v=25";
-import { addCards, canOpenFreeBooster, markFreeBoosterUsed, getOwnedCards, cardKey, getPity, setPity, isTutorialDone, setTutorialDone } from "./inventory.js?v=25";
-import { createCardFace, createCardShell } from "./cards.js?v=25";
-import { playSound, vibrate, burst } from "./effects.js?v=25";
-import { attachGesture } from "./gestures.js?v=25";
+import { RARITIES, getRarity } from "./data.js?v=26";
+import { BOOSTER, PITY } from "./economy-config.js?v=26";
+import { addCards, canOpenFreeBooster, markFreeBoosterUsed, getOwnedCards, cardKey, getPity, setPity, isTutorialDone, setTutorialDone } from "./inventory.js?v=26";
+import { createCardFace, createCardShell } from "./cards.js?v=26";
+import { playSound, vibrate, burst } from "./effects.js?v=26";
+import { attachGesture } from "./gestures.js?v=26";
 
 // Durées (en millisecondes), faciles à ajuster.
 const TEAR_TIME = 550;    // la bande s'envole, le paquet descend
@@ -68,22 +69,24 @@ export function drawRarity(exclude = []) {
  * hasard parmi tout le catalogue (uniforme pour la bêta). Deux garanties :
  *   1. jamais 3 Communes : si les autres cartes sont toutes Communes, la
  *      dernière est au minimum Rare ;
- *   2. pity : si le joueur a déjà ouvert PITY_LEGENDAIRE - 1 boosters
+ *   2. pity : si le joueur a déjà ouvert PITY.legendaryEvery - 1 boosters
  *      d'affilée sans Légendaire, celui-ci en contient forcément une.
  * - pity : boosters ouverts d'affilée sans Légendaire AVANT celui-ci
  * Renvoie [{ colorwayId, rarity, forced? }, ...].
  */
 export function drawBooster(catalogue, pity = 0) {
   const rarities = [];
-  for (let i = 0; i < CARDS_PER_BOOSTER; i++) {
-    const last = i === CARDS_PER_BOOSTER - 1;
-    const othersAllCommon = rarities.every((r) => r === "commun");
-    rarities.push(last && othersAllCommon ? drawRarity(["commun"]) : drawRarity());
+  // Raretés plus communes que le minimum garanti pour la dernière carte (ex. ["commun"]).
+  const tooLow = RARITIES.slice(0, RARITIES.findIndex((r) => r.id === BOOSTER.lastCardMinRarity)).map((r) => r.id);
+  for (let i = 0; i < BOOSTER.cardsPerPack; i++) {
+    const last = i === BOOSTER.cardsPerPack - 1;
+    const othersAllLow = tooLow.length > 0 && rarities.every((r) => tooLow.includes(r));
+    rarities.push(last && othersAllLow ? drawRarity(tooLow) : drawRarity());
   }
 
   // Pity : la carte la moins rare devient Légendaire (elle sera montrée en dernier).
   let forced = -1;
-  if (pity + 1 >= PITY_LEGENDAIRE && !rarities.includes("legendaire")) {
+  if (pity + 1 >= PITY.legendaryEvery && !rarities.includes("legendaire")) {
     const rank = (id) => RARITIES.findIndex((r) => r.id === id);
     forced = rarities.reduce((low, r, i) => (rank(r) < rank(rarities[low]) ? i : low), 0);
     rarities[forced] = "legendaire";
@@ -167,12 +170,12 @@ export function setupBooster({ catalogue, debug, onOpened }) {
   /** Jauge « Légendaire garantie » sous le paquet. */
   function renderPity() {
     const pity = getPity();
-    const nextIsSure = pity + 1 >= PITY_LEGENDAIRE;
-    pityCount.textContent = nextIsSure ? "Prochain booster\u00a0!" : `${pity} / ${PITY_LEGENDAIRE}`;
-    pityFill.style.width = `${Math.min(100, (pity / (PITY_LEGENDAIRE - 1)) * 100)}%`;
-    pityGauge.classList.toggle("almost", PITY_LEGENDAIRE - pity <= 5);
+    const nextIsSure = pity + 1 >= PITY.legendaryEvery;
+    pityCount.textContent = nextIsSure ? "Prochain booster\u00a0!" : `${pity} / ${PITY.legendaryEvery}`;
+    pityFill.style.width = `${Math.min(100, (pity / (PITY.legendaryEvery - 1)) * 100)}%`;
+    pityGauge.classList.toggle("almost", PITY.legendaryEvery - pity <= PITY.almostThreshold);
     pityGauge.setAttribute("aria-label",
-      `Légendaire garantie : ${pity} boosters sans Légendaire sur ${PITY_LEGENDAIRE}`);
+      `Légendaire garantie : ${pity} boosters sans Légendaire sur ${PITY.legendaryEvery}`);
   }
 
   // --- 1. Déchirer le paquet (uniquement en glissant) ------------------------
