@@ -1,29 +1,33 @@
 // booster.js — tirage des cartes, ouverture du paquet et révélation carte par carte.
 //
-// Déroulé :
-//   1. on DÉCHIRE le paquet : un toucher (il tremble puis se déchire tout seul),
-//      ou en glissant le doigt sur le paquet (la bande du haut se déchire petit à petit) ;
-//   2. les 3 cartes sortent face cachée, la plus rare toujours en DERNIER (suspense) ;
-//      le dos des cartes Rare et plus brille déjà un peu de leur couleur ;
-//   3. on touche chaque carte pour la retourner. Plus elle est rare, plus la
-//      révélation est marquée (Épique et Légendaire : plein écran avec rayons).
+// Tout se fait en GLISSANT le doigt (ou la souris), comme avec un vrai booster :
+//   1. glisser sur le paquet le DÉCHIRE (un simple toucher ne l'ouvre pas) ;
+//   2. les 3 cartes forment une pile ; on en voit UNE à la fois, la plus rare en dernier ;
+//   3. sur une carte face cachée :
+//        - glisser la RETOURNE directement ;
+//        - rester appuyé fait monter son AURA palier par palier (gris → bleu → violet
+//          → or) jusqu'à sa rareté : on devine ce qui arrive avant de la retourner ;
+//   4. une fois retournée, glisser à nouveau passe à la carte SUIVANTE ;
+//   5. après la 3e : récapitulatif des 3 cartes + « Continuer ».
+// Effets de révélation, du plus discret au plus fort : Rare (reflet + particules),
+// Épique (éclair violet, gerbe de particules, titre), Légendaire (plein écran).
 
-import { RARITIES, CARDS_PER_BOOSTER, getRarity } from "./data.js?v=17";
-import { addCards, canOpenFreeBooster, markFreeBoosterUsed, getOwnedCards, cardKey } from "./inventory.js?v=17";
-import { createCardFace, createCardShell } from "./cards.js?v=17";
-import { playSound, vibrate, burst } from "./effects.js?v=17";
+import { RARITIES, CARDS_PER_BOOSTER, getRarity } from "./data.js?v=18";
+import { addCards, canOpenFreeBooster, markFreeBoosterUsed, getOwnedCards, cardKey } from "./inventory.js?v=18";
+import { createCardFace, createCardShell } from "./cards.js?v=18";
+import { playSound, vibrate, burst } from "./effects.js?v=18";
+import { attachGesture } from "./gestures.js?v=18";
 
 // Durées (en millisecondes), faciles à ajuster.
-const SHAKE_TIME = 350;   // secousse avant la déchirure (ouverture au toucher)
-const TEAR_TIME = 550;    // la bande s'envole
-const DEAL_DELAY = 140;   // écart entre deux cartes distribuées
+const TEAR_TIME = 550;    // la bande s'envole, le paquet descend
 const FLIP_TIME = 450;    // retournement d'une carte (identique au CSS)
-// Temps de « charge » (la carte tremble et brille) avant de se retourner.
-const CHARGE_TIME = { commun: 0, rare: 0, epique: 650, legendaire: 1100 };
+const FLY_TIME = 320;     // la carte part sur le côté (identique au CSS)
+const AURA_STEP = 650;    // durée d'un palier d'aura quand on reste appuyé
 const VIBRATIONS = { rare: [20], epique: [60, 40, 60], legendaire: [80, 60, 80, 60, 220] };
 
-// Glisser le doigt sur au moins cette part de la largeur du paquet = déchirure.
+// Glisser sur au moins cette part de la largeur de l'élément = geste validé.
 const SWIPE_TO_TEAR = 0.45;
+const SWIPE_CARD = 0.3;
 
 // La déchirure suit la ligne pointillée du dessin (rangée 6 sur 48) :
 // la bande du haut garde les rangées 0 à 6, plus une rangée sur deux blocs
@@ -83,44 +87,72 @@ export function setupBooster({ catalogue, debug, onOpened }) {
   const packTop = pack.querySelector(".pack-top");
   const packBody = pack.querySelector(".pack-body");
   const status = document.getElementById("booster-status");
-  const result = document.getElementById("booster-result");
+  const counter = document.getElementById("reveal-counter");
+  const stage = document.getElementById("reveal-stage");
   const hint = document.getElementById("reveal-hint");
+  const recap = document.getElementById("booster-result");
   const doneBtn = document.getElementById("btn-booster-done");
   const overlay = document.getElementById("reveal-overlay");
 
   packTop.style.clipPath = tearClip(true);
   packBody.style.clipPath = tearClip(false);
 
-  let opening = false;    // une ouverture est en cours
-  let overlayOpen = false;
+  const rank = new Map(RARITIES.map((r, i) => [r.id, i]));
+  let cards = [];      // les 3 cartes du booster en cours (la plus rare en dernier)
+  let index = 0;       // carte affichée
+  let current = null;  // { el, card, revealed, aura, timer }
 
   // Met le paquet dans le bon état (disponible ou « reviens demain »).
   function refreshPack() {
     const available = debug || canOpenFreeBooster();
     pack.disabled = !available;
-    opening = false;
-    pack.classList.remove("shake", "torn", "dragging");
+    pack.dataset.locked = "0";
+    pack.classList.remove("nudge", "torn", "dragging");
     packTop.style.transform = "";
     status.textContent = available
-      ? "Glisse le doigt sur le booster pour le déchirer (ou touche-le)."
+      ? "Glisse ton doigt sur le booster pour le déchirer."
       : "Reviens demain pour un nouveau booster.";
   }
 
-  // --- 1. Déchirer le paquet -------------------------------------------------
+  // --- 1. Déchirer le paquet (uniquement en glissant) ------------------------
 
-  /** Lance l'ouverture : tirage + sauvegarde immédiats, puis animation. */
-  function open(withShake) {
-    if (opening || pack.disabled) return;
-    opening = true;
+  attachGesture(pack, {
+    threshold: SWIPE_TO_TEAR,
+    onDrag: (dx, progress) => {
+      pack.classList.add("dragging");
+      // La bande pivote depuis son coin gauche, de plus en plus.
+      packTop.style.transform = `rotate(${-12 * progress}deg) translateY(${-6 * progress}px)`;
+    },
+    onSwipe: () => open(),
+    onRelease: () => {
+      // Pas assez glissé : la bande retombe.
+      pack.classList.remove("dragging");
+      packTop.style.transform = "";
+    },
+    onTap: () => {
+      // Un toucher n'ouvre PAS : le paquet sursaute pour rappeler qu'il faut glisser.
+      pack.classList.remove("nudge");
+      void pack.offsetWidth; // rejoue l'animation
+      pack.classList.add("nudge");
+      status.textContent = "Glisse ton doigt sur le booster pour le déchirer.";
+    },
+  });
+
+  /** Tirage + sauvegarde immédiats, puis déchirure et première carte. */
+  function open() {
+    if (pack.disabled || pack.dataset.locked === "1") return;
+    pack.dataset.locked = "1";
 
     // Cartes déjà possédées AVANT ce booster (pour le badge « NOUVEAU »).
     const owned = new Set(getOwnedCards().map((c) => cardKey(c.colorwayId, c.rarity)));
-    const cards = drawBooster(catalogue).map((card) => {
+    cards = drawBooster(catalogue).map((card) => {
       const key = cardKey(card.colorwayId, card.rarity);
       const isNew = !owned.has(key);
       owned.add(key); // la même carte deux fois dans un booster : la 2e n'est pas « nouvelle »
       return { ...card, isNew };
     });
+    // La plus rare en dernier : on garde le meilleur pour la fin.
+    cards.sort((a, b) => rank.get(a.rarity) - rank.get(b.rarity));
 
     // Le tirage est SAUVEGARDÉ tout de suite, avant l'animation :
     // recharger la page pendant la révélation ne permet pas de retirer.
@@ -128,165 +160,223 @@ export function setupBooster({ catalogue, debug, onOpened }) {
     if (!debug) markFreeBoosterUsed();
     onOpened?.();
 
-    const tear = () => {
-      playSound("tear");
-      vibrate([15]);
-      pack.classList.remove("shake", "dragging");
-      pack.classList.add("torn");
-      packTop.style.transform = "";
-      setTimeout(() => showCards(cards), TEAR_TIME);
-    };
-    if (withShake) {
-      pack.classList.add("shake");
-      setTimeout(tear, SHAKE_TIME);
-    } else {
-      tear();
-    }
-  }
-
-  // Glisser pour déchirer : la bande se soulève en suivant le doigt.
-  let dragStartX = null;
-  pack.addEventListener("pointerdown", (e) => {
-    if (pack.disabled || opening) return;
-    dragStartX = e.clientX;
-    pack.setPointerCapture(e.pointerId);
-  });
-  pack.addEventListener("pointermove", (e) => {
-    if (dragStartX === null) return;
-    const progress = Math.min(1, Math.abs(e.clientX - dragStartX) / pack.offsetWidth);
-    if (progress > 0.05) {
-      pack.classList.add("dragging");
-      // La bande pivote depuis son coin gauche, de plus en plus.
-      packTop.style.transform = `rotate(${-12 * progress}deg) translateY(${-6 * progress}px)`;
-    }
-    if (progress >= SWIPE_TO_TEAR) {
-      dragStartX = null;
-      open(false);
-    }
-  });
-  const endDrag = (e) => {
-    if (dragStartX === null) return;
-    const moved = Math.abs(e.clientX - dragStartX) / pack.offsetWidth;
-    dragStartX = null;
-    if (moved < 0.05) {
-      open(true); // simple toucher : secousse puis déchirure
-    } else {
-      // Pas assez glissé : la bande retombe.
-      pack.classList.remove("dragging");
-      packTop.style.transform = "";
-    }
-  };
-  pack.addEventListener("pointerup", endDrag);
-  // Geste interrompu par le téléphone : la bande retombe, rien ne s'ouvre.
-  pack.addEventListener("pointercancel", () => {
-    dragStartX = null;
+    playSound("tear");
+    vibrate([15]);
     pack.classList.remove("dragging");
+    pack.classList.add("torn");
     packTop.style.transform = "";
-  });
-  // Clavier (Entrée / Espace) : un « clic » sans pointeur.
-  pack.addEventListener("click", (e) => { if (e.detail === 0) open(true); });
-
-  // --- 2. Distribuer les cartes face cachée ----------------------------------
-
-  function showCards(cards) {
-    closedView.hidden = true;
-    openedView.hidden = false;
-    doneBtn.hidden = true;
-    hint.hidden = false;
-    hint.textContent = "Touche une carte pour la retourner.";
-
-    // La plus rare en dernier : on garde le meilleur pour la fin.
-    const rank = new Map(RARITIES.map((r, i) => [r.id, i]));
-    const sorted = [...cards].sort((a, b) => rank.get(a.rarity) - rank.get(b.rarity));
-
-    result.replaceChildren(...sorted.map((card, i) => {
-      const el = createCard(catalogue.colorwayById.get(card.colorwayId), card);
-      el.style.animationDelay = `${i * DEAL_DELAY}ms`;
-      el.addEventListener("click", () => reveal(el));
-      return el;
-    }));
-  }
-
-  // --- 3. Retourner une carte ------------------------------------------------
-
-  function reveal(el) {
-    if (el.classList.contains("revealed") || el.classList.contains("charging") || overlayOpen) return;
-    const rarity = el.dataset.rarity;
-    const charge = CHARGE_TIME[rarity];
-
-    // Épique / Légendaire : la carte tremble et brille de plus en plus avant de se retourner.
-    if (charge) {
-      el.classList.add("charging");
-      playSound("charge");
-      vibrate([10]);
-    }
     setTimeout(() => {
-      el.classList.remove("charging");
-      el.classList.add("revealed");
-      playSound("flip");
-      setTimeout(() => celebrate(el, rarity), FLIP_TIME * 0.6);
-    }, charge);
+      closedView.hidden = true;
+      openedView.hidden = false;
+      recap.hidden = true;
+      doneBtn.hidden = true;
+      index = 0;
+      showCard();
+    }, TEAR_TIME);
   }
 
-  /** L'effet après le retournement, selon la rareté. */
-  function celebrate(el, rarity) {
+  // --- 2. Une carte à la fois -----------------------------------------------
+
+  function showCard() {
+    const card = cards[index];
+    const colorway = catalogue.colorwayById.get(card.colorwayId);
+    const el = createCard(colorway, card);
+    el.classList.add("current", "enter");
+    // Une fois arrivée, la carte perd « enter » : sinon l'animation d'arrivée
+    // se rejouerait quand une autre animation (tremblement de l'aura) s'arrête.
+    el.addEventListener("animationend", (e) => {
+      if (e.animationName === "card-enter") el.classList.remove("enter");
+    });
+    current = { el, card, revealed: false, aura: -1, timer: null };
+
+    counter.textContent = `Carte ${index + 1} / ${cards.length}`;
+    stage.dataset.remaining = String(cards.length - index - 1); // cartes encore dans la pile
+    stage.replaceChildren(el);
+    setHint();
+
+    const me = current;
+    attachGesture(el, {
+      threshold: SWIPE_CARD,
+      onHoldStart: () => { if (!me.revealed) startAura(me); },
+      onHoldEnd: () => stopAura(me),
+      onDrag: (dx, progress) => {
+        el.classList.add("dragging");
+        el.style.transform = me.revealed
+          ? `translateX(${dx}px) rotate(${dx * 0.04}deg)`            // la carte part avec le doigt
+          : `rotateY(${Math.sign(dx) * 35 * progress}deg)`;         // la carte commence à pivoter
+      },
+      onRelease: () => {
+        el.classList.remove("dragging");
+        el.style.transform = "";
+      },
+      onSwipe: (dir) => {
+        el.classList.remove("dragging");
+        el.style.transform = "";
+        if (!me.revealed) flip(me);
+        else next(me, dir);
+      },
+      onTap: () => {
+        // Un toucher ne fait rien : on rappelle le geste.
+        hint.classList.remove("pulse");
+        void hint.offsetWidth;
+        hint.classList.add("pulse");
+      },
+    });
+  }
+
+  function setHint() {
+    if (!current.revealed) {
+      hint.textContent = "Glisse pour retourner · reste appuyé pour voir l'aura";
+    } else {
+      hint.textContent = index < cards.length - 1 ? "Glisse pour la carte suivante" : "Glisse pour voir ton drop";
+    }
+  }
+
+  // --- 3. L'aura : rester appuyé la fait monter palier par palier ------------
+
+  function setAura(state, level) {
+    state.aura = level;
+    for (const r of RARITIES) state.el.classList.remove(`aura-${r.id}`);
+    if (level >= 0) state.el.classList.add(`aura-${RARITIES[level].id}`);
+  }
+
+  function startAura(state) {
+    const target = rank.get(state.card.rarity); // l'aura ne dépasse jamais la rareté de la carte
+    const step = () => {
+      if (state.aura >= target) {             // palier final atteint : on arrête de monter
+        stopAura(state);
+        return;
+      }
+      setAura(state, state.aura + 1);
+      playSound(`aura${state.aura}`);
+      vibrate([8 + state.aura * 8]);
+    };
+    step(); // 1er palier tout de suite
+    state.timer = setInterval(step, AURA_STEP);
+  }
+
+  function stopAura(state) {
+    clearInterval(state.timer);
+    state.timer = null;
+  }
+
+  // --- 4. Retourner la carte -------------------------------------------------
+
+  function flip(state) {
+    stopAura(state);
+    state.revealed = true;
+    state.el.dataset.locked = "1"; // pas de nouveau geste pendant l'animation
+    state.el.classList.add("revealed");
+    // Après le retournement, l'aura correspond à la VRAIE rareté de la carte.
+    setAura(state, state.card.rarity === "commun" ? -1 : rank.get(state.card.rarity));
+    playSound("flip");
+    setTimeout(() => celebrate(state), FLIP_TIME * 0.6);
+  }
+
+  /** L'effet après le retournement, du plus discret (Rare) au plus fort (Légendaire). */
+  function celebrate(state) {
+    const { el, card } = state;
     const color = getComputedStyle(el).getPropertyValue("--rarity-color").trim();
     const box = el.getBoundingClientRect();
     const cx = box.left + box.width / 2;
     const cy = box.top + box.height / 2;
 
-    if (rarity === "rare") {
+    if (card.rarity === "rare") {
       el.classList.add("shine");
-      burst(cx, cy, color, 12, 90);
+      burst(cx, cy, color, 10, 90);
       playSound("rare");
       vibrate(VIBRATIONS.rare);
+    } else if (card.rarity === "epique") {
+      el.classList.add("shine", "epic-hit");
+      burst(cx, cy, color, 26, 170);
+      setTimeout(() => burst(cx, cy, color, 14, 120), 220);
+      popTitle(getRarity("epique").name);
+      playSound("epique");
+      vibrate(VIBRATIONS.epique);
+    } else if (card.rarity === "legendaire") {
+      showOverlay(state, color);
+      return; // on quitte le plein écran en glissant (voir plus bas)
     }
-    if (rarity === "epique" || rarity === "legendaire") {
-      showOverlay(el, rarity, color);
-      return; // la suite se fait quand on ferme le plein écran
-    }
-    afterReveal();
+    el.dataset.locked = "0";
+    setHint();
   }
 
-  /** Plein écran de révélation (Épique et Légendaire). */
-  function showOverlay(el, rarity, color) {
-    overlayOpen = true;
-    const card = catalogue.colorwayById.get(el.dataset.colorway);
-    overlay.dataset.rarity = rarity;
-    // Espace insécable avant « ! » : il ne part jamais seul à la ligne.
-    document.getElementById("reveal-title").textContent = `${getRarity(rarity).name}\u00a0!`;
-    const big = createCardShell(card, rarity);
+  /** Titre qui surgit au-dessus de la carte (Épique). */
+  function popTitle(text) {
+    const title = document.createElement("p");
+    title.className = "pop-title";
+    title.textContent = `${text}\u00a0!`; // espace insécable : le « ! » ne part pas seul à la ligne
+    stage.append(title);
+    counter.style.visibility = "hidden"; // le titre passe par-dessus « Carte 2 / 3 »
+    setTimeout(() => {
+      title.remove();
+      counter.style.visibility = "";
+    }, 1800);
+  }
+
+  // --- Plein écran Légendaire ------------------------------------------------
+
+  function showOverlay(state, color) {
+    const colorway = catalogue.colorwayById.get(state.card.colorwayId);
+    overlay.dataset.rarity = "legendaire";
+    document.getElementById("reveal-title").textContent = `${getRarity("legendaire").name}\u00a0!`;
+    const big = createCardShell(colorway, "legendaire");
     big.classList.add("owned");
-    big.append(createCardFace(card, rarity));
-    if (el.dataset.new === "1") big.append(newBadge());
+    big.append(createCardFace(colorway, "legendaire"));
+    if (state.card.isNew) big.append(newBadge());
     document.getElementById("reveal-card").replaceChildren(big);
     overlay.hidden = false;
+    hint.textContent = ""; // sinon le texte transparaît sous le plein écran
+    overlay.dataset.locked = "1";
+    setTimeout(() => { overlay.dataset.locked = "0"; }, 900); // laisse le temps de savourer
 
-    playSound(rarity);
-    vibrate(VIBRATIONS[rarity]);
-    // Plusieurs gerbes de particules depuis le centre de l'écran.
-    const waves = rarity === "legendaire" ? 3 : 1;
-    for (let i = 0; i < waves; i++) {
-      setTimeout(() => burst(innerWidth / 2, innerHeight / 2, color, rarity === "legendaire" ? 36 : 24, 220), 150 + i * 350);
+    playSound("legendaire");
+    vibrate(VIBRATIONS.legendaire);
+    for (let i = 0; i < 3; i++) {
+      setTimeout(() => burst(innerWidth / 2, innerHeight / 2, color, 36, 220), 150 + i * 350);
     }
   }
 
-  overlay.addEventListener("click", () => {
-    if (!overlayOpen) return;
-    overlay.hidden = true;
-    overlayOpen = false;
-    afterReveal();
+  // Glisser sur le plein écran : on le ferme et on passe à la carte suivante.
+  attachGesture(overlay, {
+    threshold: 0.25,
+    onSwipe: (dir) => {
+      if (overlay.hidden) return;
+      overlay.hidden = true;
+      if (current) next(current, dir);
+    },
   });
 
-  /** Quand toutes les cartes sont retournées : bouton « Continuer ». */
-  function afterReveal() {
-    const left = result.querySelectorAll(".flip-card:not(.revealed)").length;
-    if (left === 0) {
-      hint.hidden = true;
-      doneBtn.hidden = false;
-    } else {
-      hint.textContent = left === 1 ? "Plus qu'une carte…" : "Touche une carte pour la retourner.";
-    }
+  // --- 5. Carte suivante, puis récapitulatif ---------------------------------
+
+  function next(state, dir) {
+    state.el.dataset.locked = "1";
+    state.el.style.setProperty("--fly", dir < 0 ? "-130vw" : "130vw");
+    state.el.classList.add("fly");
+    playSound("flip");
+    setTimeout(() => {
+      index++;
+      if (index < cards.length) showCard();
+      else showRecap();
+    }, FLY_TIME);
+  }
+
+  function showRecap() {
+    current = null;
+    stage.replaceChildren();
+    stage.dataset.remaining = "0";
+    counter.textContent = "Ton drop";
+    hint.textContent = "";
+    recap.replaceChildren(...cards.map((card) => {
+      const colorway = catalogue.colorwayById.get(card.colorwayId);
+      const el = createCardShell(colorway, card.rarity);
+      el.classList.add("owned");
+      el.append(createCardFace(colorway, card.rarity));
+      if (card.isNew) el.append(newBadge());
+      return el;
+    }));
+    recap.hidden = false;
+    doneBtn.hidden = false;
   }
 
   doneBtn.addEventListener("click", () => {
@@ -309,11 +399,8 @@ function newBadge() {
 /** Carte qui se retourne : un dos « ? » puis la face (voir cards.js). */
 function createCard(colorway, card) {
   const el = createCardShell(colorway, card.rarity);
-  el.classList.add("flip-card", "deal");
-  el.dataset.colorway = colorway.id;
-  el.dataset.new = card.isNew ? "1" : "0";
-  el.setAttribute("role", "button");
-  el.setAttribute("aria-label", "Retourner la carte");
+  el.classList.add("flip-card");
+  el.setAttribute("aria-label", "Carte face cachée : glisse pour la retourner");
 
   const back = document.createElement("div");
   back.className = "card-back";
@@ -322,10 +409,5 @@ function createCard(colorway, card) {
   const face = createCardFace(colorway, card.rarity);
   if (card.isNew) face.append(newBadge());
   el.append(back, face);
-  // Une fois arrivée, la carte perd sa classe « deal » : sinon l'animation de
-  // distribution se rejouerait quand une autre animation (charge…) se termine.
-  el.addEventListener("animationend", (e) => {
-    if (e.animationName === "deal-in") el.classList.remove("deal");
-  });
   return el;
 }

@@ -62,6 +62,7 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 │   ├── data.js        # chargement du catalogue
 │   ├── booster.js     # tirage, déchirure du paquet, révélation carte par carte
 │   ├── effects.js     # sons synthétisés, vibrations, particules
+│   ├── gestures.js    # gestes : glisser, rester appuyé, toucher
 │   ├── inventory.js   # collection + sauvegarde localStorage + écran Collection
 │   ├── cards.js       # dessin d'une carte (partagé booster / collection)
 │   ├── avatar.js      # rendu de l'avatar en canvas
@@ -186,11 +187,14 @@ Pièces à retoucher plus tard (ne pas bloquer la bêta) : Manteau « Atelier »
 - Un booster = **3 cartes**.
 - ⚠️ **Actuellement : boosters illimités pour les tests** (`BOOSTERS_ILLIMITES = true` dans `js/main.js`). **Remettre à `false` avant d'envoyer le lien aux amis.**
 - Bêta : **1 booster gratuit par jour** (remise à zéro à minuit, heure locale), plus un bouton de test caché ou un paramètre d'URL (`?debug=1`) pour en ouvrir autant que voulu pendant les tests.
-- Ouverture (en place, `js/booster.js`) :
-  1. **On déchire le paquet** : glisser le doigt dessus (la bande du haut se soulève puis s'arrache le long de la ligne pointillée, bord en dents de scie) ou simple toucher (il tremble puis se déchire). Bruit de déchirure.
-  2. Les 3 cartes sortent **face cachée**, distribuées une par une, **la plus rare toujours en dernier**. Le dos d'une carte Rare et plus brille déjà de sa couleur (la Légendaire tremble un peu) : un indice qui donne envie.
-  3. **On touche chaque carte** pour la retourner, dans l'ordre qu'on veut. Commun : simple retournement. Rare : reflet + particules bleues. **Épique / Légendaire** : la carte tremble et se charge, puis **plein écran** (éclair, rayons qui tournent, grande carte, particules, son, vibration), plus long et plus fort en Légendaire. Badge « NOUVEAU » sur les cartes jamais obtenues.
-  4. Bouton « Continuer » quand tout est retourné.
+- Ouverture (en place, `js/booster.js`) — **tout se fait en glissant le doigt (ou la souris)**, un simple toucher ne fait rien (le paquet sursaute, le texte d'aide rappelle le geste) :
+  1. **Glisser sur le paquet le déchire** : la bande du haut suit le doigt puis s'arrache le long de la ligne pointillée (bord en dents de scie). Bruit de déchirure.
+  2. Les 3 cartes forment une **pile** ; **une seule carte à la fois** (« Carte 1 / 3 »), **la plus rare toujours en dernier**.
+  3. Sur une carte face cachée : **glisser la retourne** directement ; **rester appuyé fait monter son aura palier par palier** (gris Commun → bleu Rare → violet Épique → or Légendaire, ~0,65 s par palier, une note de plus en plus aiguë) **jusqu'à la rareté de la carte**, puis s'arrête. Lâcher garde l'aura atteinte.
+  4. Une fois retournée, **glisser à nouveau** fait partir la carte sur le côté et amène la suivante. Après la 3e : récapitulatif des 3 cartes + « Continuer ».
+  - **Hiérarchie des effets** (du plus discret au plus fort) : Rare = halo bleu fixe + reflet + quelques particules ; Épique = halo violet qui respire + onde + gerbe de particules + titre « ÉPIQUE ! » (sur place) ; Légendaire = double halo doré rapide (la carte tremble face cachée) puis **plein écran** (éclair, rayons, grande carte, 3 vagues de particules, son), qu'on quitte **en glissant** (bloqué 0,9 s pour savourer) → carte suivante.
+  - Badge « NOUVEAU » sur les cartes jamais obtenues.
+  - Halo limité à ~65 px de portée : au-delà, il est coupé par le bord de l'écran et forme un rectangle.
 - Les cartes sont sauvegardées **dès la déchirure** (recharger la page ne permet pas de retirer).
 - Sons synthétisés par le navigateur (Web Audio, aucun fichier) ; constante `SONS_ACTIFS` dans `js/effects.js` pour les couper.
 - Pas de monnaie, pas d'achat dans la bêta.

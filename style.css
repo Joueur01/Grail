@@ -233,8 +233,8 @@ main {
   .booster-pack { --pack-scale: 4; }
 }
 
-/* Secousse jouée quand on touche le paquet */
-.booster-pack.shake { animation: booster-shake 0.4s ease-in-out; }
+/* Un simple toucher n'ouvre pas : le paquet sursaute pour rappeler qu'il faut glisser */
+.booster-pack.nudge { animation: booster-shake 0.4s ease-in-out; }
 
 @keyframes booster-float {
   0%, 100% { transform: translateY(0); }
@@ -511,12 +511,89 @@ main {
   to { transform: translateY(40px); opacity: 0; }
 }
 
-/* Les cartes sortent du paquet une par une (délai posé par booster.js) */
-.flip-card.deal { animation: deal-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+/* --- Révélation carte par carte : une pile, une carte jouable à la fois --- */
+.reveal-stage {
+  --card-w: min(240px, 66vw); /* 240 px → sprite ×6 (container query des cartes) */
+  position: relative;
+  display: grid;
+  justify-items: center;
+  padding: 10px 0 18px;
+}
 
-@keyframes deal-in {
-  from { transform: translateY(-70px) rotate(-6deg); opacity: 0; }
-  to   { transform: none; opacity: 1; }
+/* La pile : 1 ou 2 cartes (dos) visibles derrière la carte jouée */
+.reveal-stage::before,
+.reveal-stage::after {
+  content: "";
+  grid-area: 1 / 1;
+  width: var(--card-w);
+  border-radius: 12px;
+  background: var(--surface-2);
+  border: 2px solid var(--border);
+  z-index: 0;
+  display: none;
+}
+.reveal-stage::before { transform: translate(10px, 10px) rotate(3deg); }
+.reveal-stage::after { transform: translate(-8px, 6px) rotate(-2deg); }
+.reveal-stage[data-remaining="1"]::before,
+.reveal-stage[data-remaining="2"]::before,
+.reveal-stage[data-remaining="2"]::after { display: block; }
+
+.reveal-stage .flip-card.current {
+  grid-area: 1 / 1;
+  position: relative;
+  z-index: 1;
+  width: var(--card-w);
+  touch-action: none;           /* le doigt glisse la carte au lieu de faire défiler */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  cursor: grab;
+  transition: transform 0.2s ease-out;
+}
+.reveal-stage .flip-card.current img { pointer-events: none; -webkit-user-drag: none; }
+.reveal-stage .flip-card.current.dragging { transition: none; }
+
+/* La carte arrive du dessus de la pile */
+.reveal-stage .flip-card.enter { animation: card-enter 0.35s ease-out; }
+@keyframes card-enter {
+  from { transform: translate(10px, 10px) rotate(3deg); opacity: 0.6; }
+}
+
+/* La carte part sur le côté (sens du glissement) */
+.reveal-stage .flip-card.fly {
+  transform: translateX(var(--fly)) rotate(18deg) !important;
+  opacity: 0;
+  transition: transform 0.32s ease-in, opacity 0.32s ease-in;
+}
+
+/* Rappel du geste quand on se contente de toucher */
+.reveal-hint.pulse { animation: hint-pulse 0.5s ease-out; }
+@keyframes hint-pulse {
+  30% { color: var(--text); transform: translateY(-3px); }
+}
+
+/* Titre qui surgit au-dessus de la carte (Épique) */
+.pop-title {
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  z-index: 3;
+  margin: 0;
+  white-space: nowrap;
+  font-size: clamp(26px, 9vw, 40px);
+  font-weight: 900;
+  font-stretch: 112%;
+  text-transform: uppercase;
+  color: var(--rarity-epique);
+  text-shadow: 0 0 18px var(--rarity-epique);
+  pointer-events: none;
+  animation: pop-title 1.8s ease-out forwards;
+}
+@keyframes pop-title {
+  0%   { transform: translate(-50%, 20px); opacity: 0; }
+  15%  { transform: translate(-50%, -8px); opacity: 1; }
+  75%  { transform: translate(-50%, -14px); opacity: 1; }
+  100% { transform: translate(-50%, -30px); opacity: 0; }
 }
 
 .reveal-hint { text-align: center; min-height: 1.4em; }
@@ -676,51 +753,47 @@ main {
 [data-rarity="epique"]     { --rarity-color: var(--rarity-epique); }
 [data-rarity="legendaire"] { --rarity-color: var(--rarity-legendaire); }
 
-/* --- Révélation dans le booster --- */
+/* --- Auras (de la plus discrète à la plus forte) ---
+   Face cachée : rester appuyé fait monter l'aura palier par palier (booster.js
+   ajoute aura-commun, puis aura-rare… jusqu'à la rareté de la carte).
+   Retournée : l'aura de la vraie rareté reste (rien pour une Commune). */
+.flip-card.aura-commun     { --aura-color: rgba(242, 241, 238, 0.6); }
+.flip-card.aura-rare       { --aura-color: var(--rarity-rare); }
+.flip-card.aura-epique     { --aura-color: var(--rarity-epique); }
+.flip-card.aura-legendaire { --aura-color: var(--rarity-legendaire); }
 
-/* Une carte face cachée se touche pour être retournée */
-.flip-card:not(.revealed) { cursor: pointer; }
+.flip-card .card-back,
+.flip-card .card-face { transition: transform 0.45s ease, box-shadow 0.4s ease, border-color 0.4s ease; }
 
-/* « Indice » : avant d'être retournée, le dos d'une carte Rare et plus brille
-   déjà de sa couleur (et une Légendaire tremble un peu). */
-.flip-card:not(.revealed)[data-rarity="rare"] .card-back {
-  border-color: var(--rarity-color);
-  box-shadow: 0 0 10px 0 var(--rarity-color);
-}
-.flip-card:not(.revealed)[data-rarity="epique"] .card-back,
-.flip-card:not(.revealed)[data-rarity="legendaire"] .card-back {
-  border-color: var(--rarity-color);
-  animation: rarity-glow 1.2s ease-in-out infinite;
-}
-.flip-card:not(.revealed):not(.deal):not(.charging)[data-rarity="legendaire"] {
-  animation: tease-shake 2.4s ease-in-out infinite;
-}
+/* Le bord de la carte prend la couleur de l'aura */
+.flip-card[class*="aura-"]:not(.revealed) .card-back { border-color: var(--aura-color); }
 
-/* Charge (Épique / Légendaire) : la carte tremble et brille de plus en plus */
-.flip-card.charging { animation: charge-shake 0.09s linear infinite; }
-.flip-card.charging .card-back {
-  border-color: var(--rarity-color);
-  box-shadow: 0 0 34px 10px var(--rarity-color);
-  transition: box-shadow 0.6s ease-in;
-}
+/* Commun : un simple halo gris, très léger */
+.flip-card.aura-commun:not(.revealed) .card-back { box-shadow: 0 0 10px 1px var(--aura-color); }
 
-/* Lueur qui pulse : dos des cartes Épique / Légendaire, puis leur face */
-.flip-card.revealed[data-rarity="epique"] .card-face,
-.flip-card.revealed[data-rarity="legendaire"] .card-face {
-  animation: rarity-glow 1.6s ease-in-out 0.45s infinite;
+/* Rare : halo bleu net mais fixe */
+.flip-card.aura-rare:not(.revealed) .card-back,
+.flip-card.aura-rare.revealed .card-face { box-shadow: 0 0 16px 3px var(--aura-color); }
+
+/* Épique : halo violet plus large, qui respire */
+.flip-card.aura-epique:not(.revealed) .card-back,
+.flip-card.aura-epique.revealed .card-face { animation: aura-epique 1.1s ease-in-out infinite; }
+@keyframes aura-epique {
+  0%, 100% { box-shadow: 0 0 16px 4px var(--aura-color); }
+  50%      { box-shadow: 0 0 28px 8px var(--aura-color); }
 }
 
-@keyframes rarity-glow {
-  0%, 100% { box-shadow: 0 0 8px 0 var(--rarity-color); }
-  50%      { box-shadow: 0 0 22px 4px var(--rarity-color); }
+/* Légendaire : halo doré intense, rapide, et la carte face cachée tremble */
+.flip-card.aura-legendaire:not(.revealed) .card-back,
+.flip-card.aura-legendaire.revealed .card-face { animation: aura-legendaire 0.8s ease-in-out infinite; }
+/* Portée max ~65 px : au-delà, le halo serait coupé par les bords de l'écran
+   (il formerait un rectangle). Il reste nettement plus fort que l'Épique :
+   double halo, plus intense, plus rapide. */
+@keyframes aura-legendaire {
+  0%, 100% { box-shadow: 0 0 18px 6px var(--aura-color), 0 0 40px 10px var(--aura-color); }
+  50%      { box-shadow: 0 0 26px 10px var(--aura-color), 0 0 50px 16px var(--aura-color); }
 }
-
-@keyframes tease-shake {
-  0%, 86%, 100% { transform: none; }
-  89% { transform: translateX(-2px) rotate(-1deg); }
-  92% { transform: translateX(2px) rotate(1deg); }
-  95% { transform: translateX(-1px); }
-}
+.flip-card.aura-legendaire:not(.revealed):not(.dragging) { animation: charge-shake 0.12s linear infinite; }
 
 @keyframes charge-shake {
   0%   { transform: translate(0, 0); }
@@ -728,6 +801,22 @@ main {
   50%  { transform: translate(2px, -1px); }
   75%  { transform: translate(-1px, -1px); }
   100% { transform: translate(1px, 1px); }
+}
+
+/* Épique : onde violette qui part de la carte au retournement */
+.flip-card.epic-hit::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border: 3px solid var(--rarity-epique);
+  border-radius: 14px;
+  pointer-events: none;
+  animation: ring-out 0.7s ease-out forwards;
+}
+@keyframes ring-out {
+  from { transform: scale(1); opacity: 1; }
+  to   { transform: scale(1.35); opacity: 0; }
 }
 
 /* Rare : un reflet passe sur la carte */
@@ -765,6 +854,10 @@ main {
 
 /* --- Plein écran de révélation (Épique et Légendaire) --- */
 .reveal-overlay {
+  touch-action: none; /* on glisse pour continuer */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
   position: fixed;
   inset: 0;
   z-index: 20;
@@ -776,7 +869,7 @@ main {
   padding: 24px;
   overflow: hidden;
   background: rgba(5, 5, 7, 0.9);
-  cursor: pointer;
+  cursor: grab;
   animation: fade-in 0.25s ease-out;
 }
 .reveal-overlay[hidden] { display: none; }
@@ -835,6 +928,7 @@ main {
   animation: card-rise 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2) 0.1s both;
 }
 .reveal-card .card-face { box-shadow: 0 0 40px 8px var(--rarity-color); }
+.reveal-overlay img { pointer-events: none; -webkit-user-drag: none; }
 
 .reveal-tap {
   position: relative;
@@ -921,11 +1015,10 @@ main {
   background: var(--text);
 }
 
-/* Lueur fixe (sans animation) pour Épique et Légendaire dans la collection */
-.card.owned[data-rarity="epique"] .card-face,
-.card.owned[data-rarity="legendaire"] .card-face {
-  box-shadow: 0 0 12px 0 var(--rarity-color);
-}
+/* Lueur fixe dans la collection, de plus en plus forte : Rare < Épique < Légendaire */
+.card.owned[data-rarity="rare"] .card-face { box-shadow: 0 0 6px 0 var(--rarity-color); }
+.card.owned[data-rarity="epique"] .card-face { box-shadow: 0 0 12px 1px var(--rarity-color); }
+.card.owned[data-rarity="legendaire"] .card-face { box-shadow: 0 0 20px 4px var(--rarity-color); }
 
 /* --- Barre d'onglets, toujours en bas (dernier élément de la colonne) --- */
 .tabbar {

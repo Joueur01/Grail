@@ -66,7 +66,11 @@ export function playSound(kind) {
       [523, 659, 784, 1047, 1319, 1568].forEach((f, i) => note(a, f, t + i * 0.1, 0.7, { volume: 0.09 }));
       [1047, 1319, 1568].forEach((f) => note(a, f, t + 0.7, 1.4, { type: "sine", volume: 0.05 }));
       break;
-    case "charge": note(a, 180, t, 0.5, { type: "sawtooth", volume: 0.025 }); break;
+    // Paliers d'aura (rester appuyé sur une carte) : une note de plus en plus aiguë.
+    case "aura0": note(a, 262, t, 0.35, { type: "sine", volume: 0.05 }); break;
+    case "aura1": note(a, 392, t, 0.4, { type: "sine", volume: 0.06 }); break;
+    case "aura2": [523, 659].forEach((f, i) => note(a, f, t + i * 0.06, 0.5, { type: "sine", volume: 0.06 })); break;
+    case "aura3": [784, 988, 1175].forEach((f, i) => note(a, f, t + i * 0.06, 0.7, { type: "sine", volume: 0.07 })); break;
   }
 }
 
