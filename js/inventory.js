@@ -6,17 +6,18 @@
 //   version: 1,
 //   cards: { "<colorwayId>|<rarete>": nombreExemplaires, ... },
 //   lastFreeBooster: "AAAA-MM-JJ" | null,   // date locale du dernier booster gratuit
-//   equipped: { tete: "<colorwayId>|<rarete>", haut: ..., ... }
+//   equipped: { tete: "<colorwayId>|<rarete>", haut: ..., ... },
+//   pity: 0   // boosters ouverts d'affilée sans Légendaire (jauge « Légendaire garantie »)
 // }
 // Si le format change un jour, on crée "grail_save_v2" et on migre depuis v1.
 
-import { RARITIES } from "./data.js?v=19";
-import { createCardFace, createCardShell } from "./cards.js?v=19";
+import { RARITIES } from "./data.js?v=20";
+import { createCardFace, createCardShell } from "./cards.js?v=20";
 
 const SAVE_KEY = "grail_save_v1";
 
 function emptySave() {
-  return { version: 1, cards: {}, lastFreeBooster: null, equipped: {} };
+  return { version: 1, cards: {}, lastFreeBooster: null, equipped: {}, pity: 0 };
 }
 
 // Sauvegarde en mémoire : c'est elle qu'on lit/modifie, puis on persiste.
@@ -79,6 +80,18 @@ export function getEquipped(slot) {
 export function equip(slot, card) {
   if (card) save.equipped[slot] = cardKey(card.colorwayId, card.rarity);
   else delete save.equipped[slot];
+  persist();
+}
+
+// --- Jauge « Légendaire garantie » (pity) ---
+
+/** Nombre de boosters ouverts d'affilée sans Légendaire. */
+export function getPity() {
+  return Number.isInteger(save.pity) ? save.pity : 0; // sauvegarde ancienne ou abîmée : 0
+}
+
+export function setPity(value) {
+  save.pity = value;
   persist();
 }
 

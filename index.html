@@ -17,7 +17,7 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=19">
+  <link rel="stylesheet" href="style.css?v=20">
 </head>
 <body>
   <header class="topbar">
@@ -43,6 +43,15 @@
           </span>
         </button>
         <p class="muted booster-status" id="booster-status">Chargement…</p>
+        <!-- Jauge « Légendaire garantie » (pity) : se remplit à chaque booster sans
+             Légendaire, repart à 0 quand une Légendaire sort (booster.js) -->
+        <div class="pity" id="pity" role="img">
+          <div class="pity-head">
+            <span class="pity-label">Légendaire garantie</span>
+            <span class="pity-count" id="pity-count">0 / 30</span>
+          </div>
+          <div class="pity-bar"><div class="pity-fill" id="pity-fill"></div></div>
+        </div>
       </div>
 
       <!-- Vue 2 : les cartes, UNE à la fois, sur une pile (booster.js) :
@@ -118,6 +127,6 @@
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=19"></script>
+  <script type="module" src="js/main.js?v=20"></script>
 </body>
 </html>
