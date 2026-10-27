@@ -38,7 +38,7 @@ Contraintes de la bêta :
 
 ### Hors périmètre de la bêta (ne pas coder pour l'instant)
 
-Comptes, serveur, marché entre joueurs, échanges, achats en argent réel (les pièces du jeu servent seulement à acheter des boosters), abonnement, votes, défis de style, contenu créé librement par les joueurs (textes, images), notifications, 3D.
+Comptes, serveur, marché entre joueurs, échanges, achats (en argent réel ou en pièces), abonnement, votes, défis de style, contenu créé librement par les joueurs (textes, images), notifications, 3D.
 
 Ces fonctionnalités viendront plus tard **seulement si le test est positif**. Le code peut rester simple et ne pas les anticiper.
 
@@ -62,7 +62,7 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 │   ├── data.js        # chargement du catalogue, raretés, recherche
 │   ├── economy-config.js  # TOUTES les valeurs chiffrées de l'économie
 │   ├── wallet.js      # solde de pièces (en-tête), bonus quotidien, notification
-│   ├── booster.js     # écran Booster : stock, minuteur, achat, déchirure, révélation
+│   ├── booster.js     # écran Booster : stock, minuteur, déchirure, révélation
 │   ├── distribution.js # règles pures : tirage, Signature, pity, stock (partagé avec la simulation)
 │   ├── effects.js     # sons synthétisés, vibrations, particules
 │   ├── gestures.js    # gestes : glisser, rester appuyé, toucher
@@ -188,10 +188,10 @@ Tous les chiffres sont dans **`js/economy-config.js`** (`DROP_RATES`, `BOOSTER`,
 | Légendaire | 0,5 % | 5 % | or |
 
 - Tirage : pour chaque carte, la rareté selon sa table, puis un coloris au hasard parmi les 75 (uniforme pour la bêta).
-- **Booster Signature** : **1 booster gratuit sur 4** (`BOOSTER.signatureEvery`). Sa 3e carte suit la table Signature et est **toujours révélée en dernier**. Compteur visible « Signature dans X boosters gratuits » ; les boosters **achetés ne le font pas avancer** (et ne sont jamais Signature). Paquet avec lueur dorée fixe et étiquette « Booster Signature ».
+- **Booster Signature** : **1 booster gratuit sur 4** (`BOOSTER.signatureEvery`). Sa 3e carte suit la table Signature et est **toujours révélée en dernier**. Compteur visible « Signature dans X boosters gratuits » ; Paquet avec lueur dorée fixe et étiquette « Booster Signature ».
 - **Pity Légendaire** (`pity` dans la sauvegarde) : après **40** boosters d'affilée sans Légendaire, le taux Légendaire de chaque carte monte de **+1 point par booster** (41e : +1, 42e : +2…, les autres raretés gardent leurs proportions) ; le **60e** en contient forcément une. Choix de la courbe (+1 point linéaire) fait par Claude, à valider : `PITY.legendary.softStep`.
 - **Pity Épique** (`pityEpic`) : après **16** boosters d'affilée sans Épique ou mieux, le suivant en contient une.
-- Garantie forcée : la carte qui la reçoit est la carte Signature (booster Signature), sinon la carte la moins rare. Les deux compteurs comptent **tous** les boosters (gratuits, Signature, achetés) et repartent à 0 dès que la rareté (ou mieux pour l'Épique) sort, forcée ou non. Deux jauges sous le paquet (« Légendaire garantie · 12 / 60 », qui brille dès 40 ; « Épique garantie · 3 / 16 »).
+- Garantie forcée : la carte qui la reçoit est la carte Signature (booster Signature), sinon la carte la moins rare. Les deux compteurs comptent **tous** les boosters (gratuits, Signature) et repartent à 0 dès que la rareté (ou mieux pour l'Épique) sort, forcée ou non. Deux jauges sous le paquet (« Légendaire garantie · 12 / 60 », qui brille dès 40 ; « Épique garantie · 3 / 16 »).
 - L'ancienne garantie « jamais 3 Communes » est **supprimée** (remplacée par le Signature et la pity Épique).
 - **Simulation** (hors jeu) : `node tools/simulation.js` (Node 22+) ou la page `tools/simulation.html` (sur GitHub Pages : `/Grail/tools/simulation.html`). Elle ouvre 100 000 boosters avec le vrai code, affiche les taux obtenus par table et par position, la fréquence des pity, et vérifie les règles. Résultat avec les valeurs actuelles : ≈ 1 booster sur 27 contient une Légendaire, ≈ 1 sur 5,6 une Épique ou mieux ; pity Épique ≈ 0,6 % des boosters ; Légendaire forcée au 60e ≈ 0,003 % (la pity douce fait presque tout le travail).
 - La rareté **n'apparaît pas sur le sprite**. Elle s'affiche dans l'interface : bordure et étiquette colorées sur la carte, mention dans l'inventaire et sur l'image partagée. Une révélation plus marquée (lueur, son, vibration `navigator.vibrate` si dispo) pour Épique et Légendaire est bienvenue.
@@ -200,7 +200,7 @@ Tous les chiffres sont dans **`js/economy-config.js`** (`DROP_RATES`, `BOOSTER`,
 
 - Un booster = **3 cartes**.
 - **Stock gratuit** : **1 booster généré toutes les 6 h**, **stock maximum 3** (`BOOSTER.refillHours`, `maxStock`, `startStock` = 3 pour un nouveau joueur). Le calcul se fait sur **l'heure réelle** (`boosterStock` + `stockUpdatedAt` dans la sauvegarde) : on peut fermer le site et revenir plus tard. Stock plein = minuteur arrêté ; il repart à l'ouverture d'un booster. Si l'horloge du téléphone recule, la recharge en cours repart de zéro. Affichage au-dessus du paquet : 3 pastilles + « Prochain dans 5:12:08 » (ou « Stock plein »), mis à jour chaque seconde.
-- **Achat** : quand il n'y a plus rien à ouvrir, bouton « Acheter un booster · 100 pièces » (`BOOSTER.price`), grisé avec « il en manque X » si le solde est insuffisant. Le booster acheté est enregistré (`boughtBoosters`) avant d'être ouvert. Ordre d'ouverture : le stock gratuit d'abord, puis les achetés.
+- **Pas d'achat de booster, pas d'accélération** : les boosters ne s'obtiennent que par le stock gratuit (1 toutes les 6 h). Aucun moyen de payer pour en avoir plus ou pour avancer le minuteur.
 - ⚠️ **Actuellement : mode test** (`BOOSTER.unlimited = true` dans `js/economy-config.js`, ou `?debug=1`) : le stock et le minuteur fonctionnent normalement, mais quand il n'y a plus rien, on peut quand même ouvrir un booster « test » (compté comme gratuit, donc il fait avancer le Signature). **Remettre à `false` avant d'envoyer le lien aux amis.**
 - Ouverture (en place, `js/booster.js`) — **tout se fait en glissant le doigt (ou la souris)**, un simple toucher ne fait rien (le paquet sursaute, le texte d'aide rappelle le geste) :
   1. **Glisser sur le paquet le déchire** : la bande du haut suit le doigt puis s'arrache le long de la ligne pointillée (bord en dents de scie). Bruit de déchirure.
@@ -213,7 +213,7 @@ Tous les chiffres sont dans **`js/economy-config.js`** (`DROP_RATES`, `BOOSTER`,
   - Halo limité à ~65 px de portée : au-delà, il est coupé par le bord de l'écran et forme un rectangle.
 - Les cartes sont sauvegardées **dès la déchirure** (recharger la page ne permet pas de retirer).
 - Sons synthétisés par le navigateur (Web Audio, aucun fichier) ; constante `SONS_ACTIFS` dans `js/effects.js` pour les couper.
-- Pièces du jeu : seulement pour acheter un booster supplémentaire (100 pièces). Aucun argent réel.
+- Pièces du jeu : pas de dépense possible pour l'instant. Aucun argent réel.
 
 ### Amélioration par la roue (`js/upgrade.js`)
 
@@ -242,10 +242,10 @@ Tous les chiffres sont dans **`js/economy-config.js`** (`DROP_RATES`, `BOOSTER`,
 ### Économie et pièces (`js/economy-config.js`, `js/wallet.js`)
 
 - **Un seul fichier de configuration** : `js/economy-config.js` contient **toutes** les valeurs chiffrées (taux de drop `DROP_RATES`, boosters `BOOSTER` : mode test / cartes par booster / recharge et stock / Signature / prix, `PITY` (Légendaire douce + garantie, Épique), `UPGRADE` : mise min/max, chance par carte, plafond, `DISCARD_VALUES`, `COINS` : solde de départ, bonus quotidien, fuseau). **Aucune valeur d'économie ne s'écrit en dur ailleurs** : toute règle chiffrée nouvelle va dans ce fichier.
-- **Stock de boosters** : voir « Boosters » plus haut (1 toutes les 6 h, max 3, achat 100 pièces).
+- **Stock de boosters** : voir « Boosters » plus haut (1 toutes les 6 h, max 3).
 - **Pièces** : solde `coins` dans la sauvegarde (entier ≥ 0), affiché **en haut à droite de toutes les pages** (le solde « bondit » à chaque changement). **Une seule fonction centrale**, `changeCoins(delta)` dans `js/inventory.js` : elle refuse un delta non entier et tout retrait qui rendrait le solde négatif (renvoie `false`, rien ne change). Ne jamais modifier `save.coins` autrement.
 - **Bonus de connexion** : `COINS.dailyLoginBonus` (20) pièces, **une fois par jour calendaire à Paris** (`COINS.dailyBonusTimeZone`), à l'ouverture du jeu et au retour sur l'onglet (`lastDailyBonus` = dernier jour pris, AAAA-MM-JJ). Une notification « +20 pièces · bonus du jour » s'affiche sous l'en-tête.
-- Les pièces se dépensent **uniquement** pour acheter un booster (`buyBooster()` dans `js/inventory.js`, qui passe par `changeCoins`). La défausse n'est pas codée. Monnaie virtuelle uniquement, jamais convertible en euros (section 9).
+- Pour l'instant les pièces **ne se dépensent nulle part** (ni boosters, ni défausse). Le solde et le bonus quotidien existent ; l'usage des pièces sera décidé plus tard.
 
 ### Défausse (prévue, PAS codée)
 

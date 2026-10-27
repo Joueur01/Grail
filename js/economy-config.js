@@ -29,11 +29,10 @@ export const BOOSTER = {
   maxStock: 3,
   startStock: 3,          // stock d'un nouveau joueur
   signatureEvery: 4,      // 1 booster GRATUIT sur 4 est un booster Signature
-  price: 100,             // prix d'un booster supplémentaire, en pièces
 };
 
 // --- Pity (compteurs de boosters d'affilée sans la rareté) --------------------------
-// Les compteurs comptent TOUS les boosters (gratuits, Signature, achetés) et
+// Les compteurs comptent TOUS les boosters (gratuits, Signature) et
 // repartent à 0 dès que la rareté (ou mieux, pour l'Épique) sort.
 export const PITY = {
   legendary: {

@@ -4,8 +4,8 @@
 // Le solde lui-même et la fonction changeCoins() sont dans inventory.js
 // (c'est lui qui possède la sauvegarde) ; les montants viennent de economy-config.js.
 
-import { COINS } from "./economy-config.js?v=27";
-import { getCoins, onCoinsChange, getLastDailyBonus, claimDailyBonus } from "./inventory.js?v=27";
+import { COINS } from "./economy-config.js?v=28";
+import { getCoins, onCoinsChange, getLastDailyBonus, claimDailyBonus } from "./inventory.js?v=28";
 
 /** Jour calendaire AAAA-MM-JJ dans le fuseau du bonus (heure de Paris). */
 function todayForBonus() {

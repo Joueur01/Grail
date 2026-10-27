@@ -427,13 +427,11 @@ main {
 .stock-pip.full { border-color: var(--text); background: var(--text); }
 .stock-timer { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
-/* Sous le paquet : compteur Signature, boosters achetés, achat */
+/* Sous le paquet : compteur Signature */
 .stock { display: flex; flex-direction: column; gap: 6px; width: min(320px, 100%); align-self: center; text-align: center; }
-.stock-signature, .stock-bought { margin: 0; font-size: 13px; }
+.stock-signature { margin: 0; font-size: 13px; }
 .stock-signature { color: var(--muted); }
 .stock-signature.now { color: var(--rarity-legendaire); font-weight: 700; }
-.stock-bought { color: var(--text); font-weight: 700; }
-.stock .btn { margin-top: 4px; min-height: 48px; padding: 10px 16px; font-size: 14px; }
 
 /* Booster Signature : étiquette dorée et halo doré FIXE autour du paquet (aucune animation) */
 .booster-eyebrow.signature { color: var(--rarity-legendaire); }
