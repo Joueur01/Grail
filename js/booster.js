@@ -12,11 +12,11 @@
 // Effets de révélation, du plus discret au plus fort : Rare (reflet + particules),
 // Épique (éclair violet, gerbe de particules, titre), Légendaire (plein écran).
 
-import { RARITIES, CARDS_PER_BOOSTER, PITY_LEGENDAIRE, getRarity } from "./data.js?v=20";
-import { addCards, canOpenFreeBooster, markFreeBoosterUsed, getOwnedCards, cardKey, getPity, setPity } from "./inventory.js?v=20";
-import { createCardFace, createCardShell } from "./cards.js?v=20";
-import { playSound, vibrate, burst } from "./effects.js?v=20";
-import { attachGesture } from "./gestures.js?v=20";
+import { RARITIES, CARDS_PER_BOOSTER, PITY_LEGENDAIRE, getRarity } from "./data.js?v=21";
+import { addCards, canOpenFreeBooster, markFreeBoosterUsed, getOwnedCards, cardKey, getPity, setPity, isTutorialDone, setTutorialDone } from "./inventory.js?v=21";
+import { createCardFace, createCardShell } from "./cards.js?v=21";
+import { playSound, vibrate, burst } from "./effects.js?v=21";
+import { attachGesture } from "./gestures.js?v=21";
 
 // Durées (en millisecondes), faciles à ajuster.
 const TEAR_TIME = 550;    // la bande s'envole, le paquet descend
@@ -127,6 +127,27 @@ export function setupBooster({ catalogue, debug, onOpened }) {
   let cards = [];      // les 3 cartes du booster en cours (la plus rare en dernier)
   let index = 0;       // carte affichée
   let current = null;  // { el, card, revealed, aura, timer }
+  let tutorial = false; // tuto en cours (tant que le 1er booster n'est pas terminé)
+
+  // --- Tutoriel du 1er booster : un « doigt » qui glisse, avec une étiquette ---
+
+  /** Crée l'animation « doigt qui glisse » avec son texte. */
+  function swipeHint(text) {
+    const el = document.createElement("div");
+    el.className = "swipe-hint";
+    el.innerHTML = '<span class="swipe-track"><span class="swipe-dot"></span></span>';
+    const label = document.createElement("span");
+    label.className = "swipe-label";
+    label.textContent = text;
+    el.append(label);
+    return el;
+  }
+
+  /** Affiche (ou retire, si text est vide) le tuto par-dessus un élément. */
+  function showTutorial(container, text) {
+    container.querySelector(":scope > .swipe-hint")?.remove();
+    if (text) container.append(swipeHint(text));
+  }
 
   // Met le paquet dans le bon état (disponible ou « reviens demain »).
   function refreshPack() {
@@ -138,6 +159,8 @@ export function setupBooster({ catalogue, debug, onOpened }) {
     status.textContent = available
       ? "Glisse ton doigt sur le booster pour le déchirer."
       : "Reviens demain pour un nouveau booster.";
+    // 1er booster : le doigt montre qu'il faut GLISSER sur le paquet (pas toucher).
+    showTutorial(pack.querySelector(".pack-art"), available && !isTutorialDone() ? "Glisse pour déchirer" : "");
     renderPity();
   }
 
@@ -180,6 +203,8 @@ export function setupBooster({ catalogue, debug, onOpened }) {
   function open() {
     if (pack.disabled || pack.dataset.locked === "1") return;
     pack.dataset.locked = "1";
+    tutorial = !isTutorialDone();
+    showTutorial(pack.querySelector(".pack-art"), "");
 
     // Cartes déjà possédées AVANT ce booster (pour le badge « NOUVEAU »).
     const owned = new Set(getOwnedCards().map((c) => cardKey(c.colorwayId, c.rarity)));
@@ -271,6 +296,10 @@ export function setupBooster({ catalogue, debug, onOpened }) {
     } else {
       hint.textContent = index < cards.length - 1 ? "Glisse pour la carte suivante" : "Glisse pour voir ton drop";
     }
+    // Tuto (1re carte du 1er booster) : le doigt montre le geste par-dessus la carte.
+    if (tutorial && index === 0) {
+      showTutorial(stage, current.revealed ? "Glisse pour la suivante" : "Glisse pour retourner");
+    }
   }
 
   // --- 3. L'aura : rester appuyé la fait monter palier par palier ------------
@@ -307,6 +336,7 @@ export function setupBooster({ catalogue, debug, onOpened }) {
     stopAura(state);
     state.revealed = true;
     state.el.dataset.locked = "1"; // pas de nouveau geste pendant l'animation
+    showTutorial(stage, "");       // le doigt réapparaîtra après le retournement
     state.el.classList.add("revealed");
     // Après le retournement, l'aura correspond à la VRAIE rareté de la carte.
     setAura(state, state.card.rarity === "commun" ? -1 : rank.get(state.card.rarity));
@@ -404,6 +434,11 @@ export function setupBooster({ catalogue, debug, onOpened }) {
 
   function showRecap() {
     current = null;
+    // 1er booster terminé : le tuto ne s'affichera plus.
+    if (tutorial) {
+      setTutorialDone();
+      tutorial = false;
+    }
     stage.replaceChildren();
     stage.dataset.remaining = "0";
     counter.textContent = "Ton drop";

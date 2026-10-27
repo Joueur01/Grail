@@ -7,17 +7,18 @@
 //   cards: { "<colorwayId>|<rarete>": nombreExemplaires, ... },
 //   lastFreeBooster: "AAAA-MM-JJ" | null,   // date locale du dernier booster gratuit
 //   equipped: { tete: "<colorwayId>|<rarete>", haut: ..., ... },
-//   pity: 0   // boosters ouverts d'affilée sans Légendaire (jauge « Légendaire garantie »)
+//   pity: 0,  // boosters ouverts d'affilée sans Légendaire (jauge « Légendaire garantie »)
+//   tutorialDone: false  // true après le 1er booster (tuto « glisse, ne touche pas »)
 // }
 // Si le format change un jour, on crée "grail_save_v2" et on migre depuis v1.
 
-import { RARITIES } from "./data.js?v=20";
-import { createCardFace, createCardShell } from "./cards.js?v=20";
+import { RARITIES } from "./data.js?v=21";
+import { createCardFace, createCardShell } from "./cards.js?v=21";
 
 const SAVE_KEY = "grail_save_v1";
 
 function emptySave() {
-  return { version: 1, cards: {}, lastFreeBooster: null, equipped: {}, pity: 0 };
+  return { version: 1, cards: {}, lastFreeBooster: null, equipped: {}, pity: 0, tutorialDone: false };
 }
 
 // Sauvegarde en mémoire : c'est elle qu'on lit/modifie, puis on persiste.
@@ -92,6 +93,18 @@ export function getPity() {
 
 export function setPity(value) {
   save.pity = value;
+  persist();
+}
+
+// --- Tutoriel du 1er booster ---
+
+/** true si le joueur a déjà terminé un booster (le tuto ne s'affiche plus). */
+export function isTutorialDone() {
+  return save.tutorialDone === true;
+}
+
+export function setTutorialDone() {
+  save.tutorialDone = true;
   persist();
 }
 

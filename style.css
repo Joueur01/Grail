@@ -253,6 +253,81 @@ main {
 
 .booster-status { text-align: center; }
 
+/* --- Tutoriel du 1er booster : un « doigt » qui glisse de gauche à droite --- */
+.swipe-hint {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  pointer-events: none; /* le vrai doigt passe au travers */
+  transition: opacity 0.2s;
+}
+/* Sur la carte du booster : par-dessus la carte (même case de la grille) */
+.reveal-stage > .swipe-hint {
+  position: relative;
+  grid-area: 1 / 1;
+  inset: auto;
+}
+/* Dès que le joueur glisse vraiment, le tuto s'efface */
+.booster-pack.dragging .swipe-hint,
+.flip-card.dragging ~ .swipe-hint { opacity: 0; }
+
+.swipe-track {
+  position: relative;
+  width: 140px;
+  height: 44px;
+}
+/* Le « doigt » : un point lumineux qui laisse une traînée */
+.swipe-dot {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 34px;
+  height: 34px;
+  margin-top: -17px;
+  border-radius: 50%;
+  background: rgba(242, 241, 238, 0.95);
+  box-shadow: 0 0 0 6px rgba(242, 241, 238, 0.25), 0 4px 14px rgba(0, 0, 0, 0.5);
+  animation: swipe-dot 1.6s ease-in-out infinite;
+}
+.swipe-dot::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 50%;
+  width: 0;
+  height: 6px;
+  margin-top: -3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgba(242, 241, 238, 0.6));
+  animation: swipe-trail 1.6s ease-in-out infinite;
+}
+@keyframes swipe-dot {
+  0%   { transform: translateX(0); opacity: 0; }
+  15%  { transform: translateX(0); opacity: 1; }
+  70%  { transform: translateX(106px); opacity: 1; }
+  100% { transform: translateX(106px); opacity: 0; }
+}
+@keyframes swipe-trail {
+  0%, 15% { width: 0; }
+  70%     { width: 100px; }
+  100%    { width: 100px; }
+}
+.swipe-label {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(15, 15, 17, 0.88);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 /* --- Jauge « Légendaire garantie » (pity) --- */
 .pity {
   width: min(320px, 100%);
