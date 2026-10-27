@@ -783,6 +783,26 @@ main {
 }
 .discard-gain { margin: 8px 0 0; text-align: center; font-size: 44px; font-weight: 900; font-stretch: 125%; color: var(--rarity-legendaire); }
 
+/* Mode « Sélectionner » de la Collection : barre collée en bas de la zone qui défile */
+.select-bar {
+  position: sticky;
+  bottom: -24px;               /* compense le padding-bas de <main> */
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 10px 0 12px;
+  background: var(--bg);
+  box-shadow: 0 -12px 16px -4px var(--bg), -24px 0 var(--bg), 24px 0 var(--bg);
+  border-top: 1px solid var(--border);
+}
+.select-summary { margin: 0; text-align: center; font-size: 15px; font-weight: 800; color: var(--muted); }
+.select-summary.on { color: var(--rarity-legendaire); }
+.select-tools { display: flex; gap: 8px; }
+.select-tools .btn { min-height: 40px; padding: 6px; font-size: 13px; }
+.select-bar > .btn-primary { min-height: 48px; padding: 10px 16px; }
+
 /* Pièces qui volent vers le solde (wallet.js) */
 .fly-coin {
   position: fixed;
@@ -1473,6 +1493,20 @@ main {
   -webkit-appearance: none;
   appearance: none;
 }
+.filters.with-select .search { grid-column: span 2; }
+.select-toggle {
+  min-height: 44px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.select-toggle[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
 .filters .search::placeholder { color: var(--muted); }
 .filters .search:focus { outline: none; border-color: var(--text); }
 

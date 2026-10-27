@@ -5,15 +5,15 @@
 // une pastille de la sélection en retire un. Les cartes verrouillées sont
 // protégées. Les valeurs viennent de economy-config.js (DISCARD_VALUES).
 // On peut l'ouvrir depuis la fiche d'une carte, une ligne de l'Atelier ou le
-// bouton « Défausser des cartes » de l'Atelier.
+// bouton « Sélectionner » de la Collection (createSelection, plus bas).
 
-import { RARITIES, getRarity } from "./data.js?v=29";
-import { DISCARD_VALUES, DISCARD_CONFIRM_FROM, DISCARD_KEEP } from "./economy-config.js?v=29";
-import { getOwnedCards, getEquipped, discardCards, cardKey } from "./inventory.js?v=29";
-import { SLOTS } from "./avatar.js?v=29";
-import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=29";
-import { playSound, vibrate } from "./effects.js?v=29";
-import { flyCoins } from "./wallet.js?v=29";
+import { RARITIES, getRarity } from "./data.js?v=31";
+import { DISCARD_VALUES, DISCARD_CONFIRM_FROM, DISCARD_KEEP } from "./economy-config.js?v=31";
+import { getOwnedCards, getEquipped, discardCards, cardKey } from "./inventory.js?v=31";
+import { SLOTS } from "./avatar.js?v=31";
+import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=31";
+import { playSound, vibrate } from "./effects.js?v=31";
+import { flyCoins, showToast } from "./wallet.js?v=31";
 
 /** Pièces gagnées pour une carte de cette rareté. */
 export function discardValue(rarity) {
@@ -21,7 +21,7 @@ export function discardValue(rarity) {
 }
 
 /**
- * Branche l'écran de défausse. Renvoie { openCard, openModel, openAll }.
+ * Branche l'écran de défausse. Renvoie { openCard, openModel }.
  * - onChange : appelé quand la collection a changé (pour tout redessiner)
  */
 export function setupDiscard({ catalogue, onChange }) {
@@ -258,13 +258,129 @@ export function setupDiscard({ catalogue, onChange }) {
         filter: (c, cw) => cw.piece.id === piece.id && c.rarity === rarity,
       });
     },
-    /** Toute la collection. */
-    openAll() {
-      open({
-        heading: "Défausser",
-        subtitle: "Touche des cartes pour les ajouter à la sélection, ou garde un exemplaire de chaque d'un seul geste.",
-        filter: () => true,
-      });
+  };
+}
+
+/**
+ * Mode « Sélectionner » de la Collection : on choisit, parmi TOUTES ses cartes
+ * (filtres et recherche utilisables), celles à défausser, puis on confirme.
+ * - Toucher une carte la sélectionne ; si on en a plusieurs exemplaires, chaque
+ *   toucher en ajoute un (puis revient à zéro).
+ * - Une barre en bas montre le total et propose « Tout », « Doublons » (tout sauf
+ *   DISCARD_KEEP exemplaire de chaque, parmi les cartes affichées) et « Vider ».
+ * Renvoie l'objet à passer à setupCollection ({ selection }) ; appeler bind(render)
+ * avec la fonction de redessin de la Collection.
+ */
+export function createSelection({ catalogue, onChange }) {
+  const view = document.getElementById("collection-view");
+  const toggleBtn = document.getElementById("btn-select");
+  const bar = document.getElementById("select-bar");
+  const summary = document.getElementById("select-summary");
+  const allBtn = document.getElementById("select-all");
+  const dupesBtn = document.getElementById("select-dupes");
+  const clearBtn = document.getElementById("select-clear");
+  const confirmBtn = document.getElementById("select-confirm");
+
+  const rank = new Map(RARITIES.map((r, i) => [r.id, i]));
+  const confirmRank = rank.get(DISCARD_CONFIRM_FROM);
+  const picked = new Map(); // clé de carte → nombre d'exemplaires choisis
+  let active = false;
+  let armed = false;        // 2e toucher demandé (Épique / Légendaire)
+  let visible = [];         // cartes affichées (après filtres)
+  let refresh = () => {};
+
+  dupesBtn.textContent = `Doublons (garder ${DISCARD_KEEP})`;
+
+  /** Cartes à défausser, une par exemplaire (en ignorant ce qui a changé ou est verrouillé). */
+  function list() {
+    const owned = new Map(getOwnedCards().map((c) => [cardKey(c.colorwayId, c.rarity), c]));
+    const out = [];
+    for (const [key, n] of picked) {
+      const c = owned.get(key);
+      if (!c || c.locked) { picked.delete(key); continue; }
+      const count = Math.min(n, c.count);
+      for (let i = 0; i < count; i++) out.push({ colorwayId: c.colorwayId, rarity: c.rarity });
+    }
+    return out;
+  }
+
+  function renderBar() {
+    view.classList.toggle("selecting", active);
+    toggleBtn.textContent = active ? "Terminer" : "Sélectionner";
+    toggleBtn.setAttribute("aria-pressed", String(active));
+    bar.hidden = !active;
+    if (!active) return;
+    const chosen = list();
+    const coins = chosen.reduce((sum, c) => sum + discardValue(c.rarity), 0);
+    const shown = new Set(visible.map((c) => cardKey(c.colorwayId, c.rarity)));
+    const hidden = chosen.filter((c) => !shown.has(cardKey(c.colorwayId, c.rarity))).length;
+    summary.textContent = chosen.length
+      ? `${chosen.length} carte${chosen.length > 1 ? "s" : ""} · +${coins} pièces${hidden ? ` (dont ${hidden} masquée${hidden > 1 ? "s" : ""} par les filtres)` : ""}`
+      : "Touche des cartes pour les sélectionner";
+    summary.classList.toggle("on", chosen.length > 0);
+    allBtn.disabled = !visible.some((c) => !c.locked);
+    dupesBtn.disabled = !visible.some((c) => !c.locked && c.count > DISCARD_KEEP);
+    clearBtn.disabled = chosen.length === 0;
+    confirmBtn.disabled = chosen.length === 0;
+    const needsConfirm = chosen.some((c) => rank.get(c.rarity) >= confirmRank);
+    confirmBtn.textContent = !chosen.length ? "Défausser"
+      : armed ? `Confirmer : ${chosen.length} carte${chosen.length > 1 ? "s" : ""} contre ${coins} pièces`
+        : `Défausser${needsConfirm ? "…" : ""}`;
+    confirmBtn.classList.toggle("armed", armed);
+  }
+
+  function setActive(on) {
+    active = on;
+    armed = false;
+    if (!on) picked.clear();
+    refresh();
+  }
+
+  toggleBtn.addEventListener("click", () => setActive(!active));
+  allBtn.addEventListener("click", () => {
+    for (const c of visible) if (!c.locked) picked.set(cardKey(c.colorwayId, c.rarity), c.count);
+    armed = false;
+    refresh();
+  });
+  dupesBtn.addEventListener("click", () => {
+    for (const c of visible) {
+      if (!c.locked && c.count > DISCARD_KEEP) picked.set(cardKey(c.colorwayId, c.rarity), c.count - DISCARD_KEEP);
+    }
+    armed = false;
+    refresh();
+  });
+  clearBtn.addEventListener("click", () => { picked.clear(); armed = false; refresh(); });
+  confirmBtn.addEventListener("click", () => {
+    const chosen = list();
+    if (!chosen.length) return;
+    if (chosen.some((c) => rank.get(c.rarity) >= confirmRank) && !armed) { armed = true; renderBar(); return; }
+    const gained = discardCards(chosen);
+    if (gained === null) { picked.clear(); armed = false; refresh(); return; } // la collection a changé entre-temps
+    playSound("coin");
+    vibrate([20]);
+    flyCoins(confirmBtn, gained);
+    showToast(`${chosen.length} carte${chosen.length > 1 ? "s" : ""} défaussée${chosen.length > 1 ? "s" : ""} · +${gained} pièces`);
+    setActive(false);
+    onChange?.();
+  });
+
+  return {
+    /** À appeler une fois la Collection créée : fonction qui la redessine. */
+    bind(fn) { refresh = fn; },
+    get active() { return active; },
+    setActive,
+    /** Exemplaires sélectionnés d'une carte. */
+    pickedCount: (c) => picked.get(cardKey(c.colorwayId, c.rarity)) || 0,
+    /** Toucher une carte : +1 exemplaire (puis retour à 0 après le dernier). */
+    toggle(c) {
+      if (c.locked) return;
+      const key = cardKey(c.colorwayId, c.rarity);
+      const next = (picked.get(key) || 0) + 1;
+      if (next > c.count) picked.delete(key); else picked.set(key, next);
+      armed = false;
+      refresh();
     },
+    /** Appelé par la Collection à chaque dessin : cartes affichées, puis mise à jour de la barre. */
+    update(cards) { visible = cards; renderBar(); },
   };
 }
