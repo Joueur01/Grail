@@ -65,6 +65,7 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 │   ├── gestures.js    # gestes : glisser, rester appuyé, toucher
 │   ├── inventory.js   # collection + sauvegarde localStorage + écran Collection
 │   ├── cards.js       # dessin d'une carte (partagé booster / collection)
+│   ├── upgrade.js     # fiche d'une carte + amélioration par la roue
 │   ├── avatar.js      # rendu de l'avatar en canvas
 │   └── share.js       # export PNG + partage
 ├── data/
@@ -202,6 +203,19 @@ Pièces à retoucher plus tard (ne pas bloquer la bêta) : Manteau « Atelier »
 - Les cartes sont sauvegardées **dès la déchirure** (recharger la page ne permet pas de retirer).
 - Sons synthétisés par le navigateur (Web Audio, aucun fichier) ; constante `SONS_ACTIFS` dans `js/effects.js` pour les couper.
 - Pas de monnaie, pas d'achat dans la bêta.
+
+### Amélioration par la roue (`js/upgrade.js`)
+
+- Dans la Collection, **toucher une carte ouvre sa fiche** : carte en grand, nombre d'exemplaires, « Améliorer en [rareté suivante] » et « Défausser · bientôt » (grisé).
+- On **mise de 1 à 5 cartes du même modèle et de la même rareté** (coloris libres, plusieurs exemplaires d'un même coloris comptent chacun). **Chance = 20 % par carte misée** (`UPGRADE_CHANCE_PER_CARD`, `UPGRADE_MAX_CARDS` dans `js/data.js`) : 5 cartes = 100 %.
+- **Réussite** : 1 carte du même modèle, **rareté au-dessus**. **Même coloris** si toutes les cartes misées ont le même coloris, sinon **coloris au hasard parmi tous ceux du modèle**.
+- **Les cartes misées sont perdues dans tous les cas** (réussite ou échec). Une Légendaire ne s'améliore pas (« Rareté maximale »). Une carte portée dont le dernier exemplaire est misé quitte la tenue.
+- Écran : 5 cases de mise (pré-remplies avec la carte touchée ; toucher une case la vide), cartes disponibles à ajouter, **roue** dont la part colorée (couleur de la rareté visée) = la chance, flèche en haut, avertissement si la réussite n'est pas sûre. La roue tourne ~3 s et s'arrête là où le tirage est tombé. La collection est mise à jour **dès le lancement** (recharger ne permet pas de rejouer).
+
+### Défausse (prévue, PAS codée)
+
+- Défausser une carte contre de la **monnaie du jeu**, montant selon la rareté (`DISCARD_VALUES` dans `js/data.js`, valeurs provisoires). Bouton grisé « Défausser · bientôt » dans la fiche.
+- ⚠️ La monnaie du jeu est **hors périmètre de la bêta** (section 3) ; monnaie **virtuelle uniquement, jamais convertible en euros** (section 9). À valider avant de l'activer.
 
 ## 7. Avatar — fiche de tenue (option validée)
 

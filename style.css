@@ -511,6 +511,103 @@ main {
 
 .share-status { text-align: center; min-height: 1.4em; }
 
+/* --- Fiche d'une carte et roue d'amélioration (upgrade.js) --- */
+.card.tappable { cursor: pointer; }
+.card.tappable:active .card-face { opacity: 0.85; }
+.card.used { opacity: 0.35; }
+
+.sheet-body {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+}
+.sheet-card { align-self: center; width: min(220px, 62vw); }
+.sheet-text, .sheet-subtitle { margin: 0; text-align: center; }
+.sheet-subtitle { font-weight: 700; }
+.sheet-eyebrow { margin: 6px 0 0; }
+.sheet-actions { display: flex; flex-direction: column; gap: 10px; }
+
+/* Les 5 cases de mise */
+.stake-slots {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+.stake-slot {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 2px solid var(--rarity-color, var(--border));
+  border-radius: 10px;
+  background: #cccac4; /* case claire : les contours noirs restent visibles */
+  cursor: pointer;
+}
+.stake-slot img { width: 64px; height: 64px; } /* ×2 */
+@media (max-width: 400px) { .stake-slot img { width: 32px; height: 32px; } } /* ×1 sur petit écran */
+.stake-slot.empty {
+  border-style: dashed;
+  border-color: var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 22px;
+  cursor: default;
+}
+
+/* La roue : la part colorée (réussite) fait chance × 3,6° depuis le haut,
+   le reste est gris (échec). La flèche fixe en haut indique le résultat. */
+.wheel-wrap {
+  position: relative;
+  align-self: center;
+  width: 200px;
+  height: 200px;
+}
+.wheel-wrap::before { /* la flèche */
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  z-index: 2;
+  margin-left: -11px;
+  border: 11px solid transparent;
+  border-top: 18px solid var(--text);
+  border-bottom: 0;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6));
+}
+.wheel {
+  --chance: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 4px solid var(--surface-2);
+  background:
+    repeating-conic-gradient(rgba(0, 0, 0, 0.18) 0deg 1deg, transparent 1deg 36deg), /* repères tous les 10 % */
+    conic-gradient(var(--rarity-color) 0deg calc(var(--chance) * 3.6deg), #2a2a31 0deg);
+  box-shadow: 0 0 24px -4px var(--rarity-color);
+  transition: background 0.3s;
+}
+.wheel.spinning { transition: transform 3.2s cubic-bezier(0.12, 0.8, 0.18, 1); }
+.wheel-chance {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: auto;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 2px solid var(--border);
+  font-size: 24px;
+  font-weight: 900;
+  pointer-events: none;
+}
+
+/* Résultat réussi : la nouvelle carte arrive avec son aura */
+.upgrade-win { animation: card-rise 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+.upgrade-win .card-face { box-shadow: 0 0 26px 6px var(--rarity-color); }
+
 /* --- Panneau de choix d'une pièce (monte depuis le bas) --- */
 .picker {
   position: fixed;

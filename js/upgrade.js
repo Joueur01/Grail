@@ -1,0 +1,294 @@
+// upgrade.js — fiche d'une carte (depuis la Collection) et amélioration par la roue.
+//
+// Règles (section 6 du CLAUDE.md) :
+//   - on mise de 1 à 5 cartes du MÊME modèle et de la MÊME rareté (coloris libres) ;
+//   - chaque carte misée = 20 % de réussite (5 cartes = 100 %) ;
+//   - réussite : 1 carte du même modèle, rareté au-dessus. Même coloris si toutes
+//     les cartes misées ont le même coloris, sinon coloris au hasard parmi TOUS
+//     ceux du modèle ;
+//   - les cartes misées sont perdues dans tous les cas ; une Légendaire ne s'améliore pas.
+// La défausse (contre de la monnaie du jeu) n'est pas encore codée : bouton grisé.
+
+import { RARITIES, UPGRADE_MAX_CARDS, UPGRADE_CHANCE_PER_CARD, getRarity } from "./data.js?v=22";
+import { getOwnedCards, addCards, removeCards, countCard } from "./inventory.js?v=22";
+import { createCardFace, createCardShell } from "./cards.js?v=22";
+import { playSound, vibrate, burst } from "./effects.js?v=22";
+
+const SPIN_TIME = 3200; // durée de la roue (identique au CSS)
+
+// --- Règles (sans affichage : faciles à tester) -----------------------------
+
+/** Rareté juste au-dessus, ou null pour une Légendaire. */
+export function nextRarity(rarityId) {
+  const i = RARITIES.findIndex((r) => r.id === rarityId);
+  return i >= 0 && i < RARITIES.length - 1 ? RARITIES[i + 1].id : null;
+}
+
+/** Chance de réussite (en %) pour un nombre de cartes misées. */
+export function upgradeChance(count) {
+  return Math.min(100, count * UPGRADE_CHANCE_PER_CARD);
+}
+
+/**
+ * Résout une amélioration.
+ * - piece : la pièce du catalogue (avec ses colorways)
+ * - rarity : rareté des cartes misées
+ * - stake : liste des coloris misés, un élément par carte (ex. ["id_a", "id_a", "id_b"])
+ * Renvoie { success, roll, result } — result = { colorwayId, rarity } si réussite.
+ * roll (0 → 100) sert aussi à placer la roue là où le tirage est tombé.
+ */
+export function resolveUpgrade(piece, rarity, stake) {
+  const chance = upgradeChance(stake.length);
+  const roll = Math.random() * 100;
+  if (roll >= chance) return { success: false, roll, result: null };
+  const sameColorway = stake.every((id) => id === stake[0]);
+  const colorwayId = sameColorway
+    ? stake[0]
+    : piece.colorways[Math.floor(Math.random() * piece.colorways.length)].id;
+  return { success: true, roll, result: { colorwayId, rarity: nextRarity(rarity) } };
+}
+
+// --- Affichage --------------------------------------------------------------
+
+/**
+ * Branche la fiche de carte et la roue. Renvoie { openCard }.
+ * - catalogue : résultat de loadCatalogue()
+ * - onChange : appelé quand la collection a changé (pour tout redessiner)
+ */
+export function setupUpgrade({ catalogue, onChange }) {
+  const sheet = document.getElementById("card-sheet");
+  const title = document.getElementById("card-sheet-title");
+  const body = document.getElementById("card-sheet-body");
+  let spinning = false;
+  let wheelTurn = 0; // rotation cumulée de la roue (en degrés), pour qu'elle reparte d'où elle était
+
+  function close() {
+    if (spinning) return; // on ne ferme pas pendant que la roue tourne
+    sheet.hidden = true;
+  }
+  document.getElementById("card-sheet-close").addEventListener("click", close);
+  sheet.addEventListener("click", (e) => { if (e.target === sheet) close(); });
+
+  /** Grande carte (fiche, résultat). */
+  function bigCard(colorwayId, rarity) {
+    const colorway = catalogue.colorwayById.get(colorwayId);
+    const el = createCardShell(colorway, rarity);
+    el.classList.add("owned", "sheet-card");
+    el.append(createCardFace(colorway, rarity));
+    return el;
+  }
+
+  function button(text, { primary = false, disabled = false, onClick } = {}) {
+    const b = document.createElement("button");
+    b.className = primary ? "btn btn-primary" : "btn";
+    b.textContent = text;
+    b.disabled = disabled;
+    if (onClick) b.addEventListener("click", onClick);
+    return b;
+  }
+
+  function para(text, className = "muted sheet-text") {
+    const p = document.createElement("p");
+    p.className = className;
+    p.textContent = text;
+    return p;
+  }
+
+  // --- 1. Fiche d'une carte ---
+
+  function openCard({ colorwayId, rarity }) {
+    const colorway = catalogue.colorwayById.get(colorwayId);
+    const count = countCard(colorwayId, rarity);
+    if (!colorway || count === 0) return;
+    const target = nextRarity(rarity);
+
+    title.textContent = colorway.piece.name;
+    const actions = document.createElement("div");
+    actions.className = "sheet-actions";
+    actions.append(
+      target
+        ? button(`Améliorer en ${getRarity(target).name}`, { primary: true, onClick: () => openUpgrade(colorway.piece, rarity, colorwayId) })
+        : button("Rareté maximale", { primary: true, disabled: true }),
+      // Défausse : prévue mais pas encore codée.
+      button("Défausser · bientôt", { disabled: true }),
+    );
+    body.replaceChildren(
+      bigCard(colorwayId, rarity),
+      para(`${count} exemplaire${count > 1 ? "s" : ""}`),
+      actions,
+    );
+    sheet.hidden = false;
+  }
+
+  // --- 2. Amélioration : choix de la mise + roue ---
+
+  function openUpgrade(piece, rarity, firstColorwayId) {
+    const target = nextRarity(rarity);
+    // Cartes possédées de ce modèle à cette rareté : [{ colorwayId, count }]
+    const owned = getOwnedCards()
+      .filter((c) => c.rarity === rarity && catalogue.colorwayById.get(c.colorwayId)?.piece.id === piece.id)
+      .map((c) => ({ colorwayId: c.colorwayId, count: c.count }));
+    // Mise de départ : les exemplaires de la carte touchée (jusqu'à 5).
+    const stake = [];
+    const first = owned.find((c) => c.colorwayId === firstColorwayId);
+    for (let i = 0; i < Math.min(first?.count || 0, UPGRADE_MAX_CARDS); i++) stake.push(firstColorwayId);
+
+    title.textContent = "Améliorer";
+    const subtitle = para(`${piece.name} · ${getRarity(rarity).name} → ${getRarity(target).name}`, "sheet-subtitle");
+
+    // Les 5 cases de mise
+    const slots = document.createElement("div");
+    slots.className = "stake-slots";
+
+    // La roue : part colorée (réussite) dont la taille = la chance
+    const wheelWrap = document.createElement("div");
+    wheelWrap.className = "wheel-wrap";
+    wheelWrap.dataset.rarity = target; // la part gagnante prend la couleur de la rareté visée
+    const wheel = document.createElement("div");
+    wheel.className = "wheel";
+    wheel.style.transform = `rotate(${wheelTurn}deg)`;
+    const chanceLabel = document.createElement("span");
+    chanceLabel.className = "wheel-chance";
+    wheelWrap.append(wheel, chanceLabel);
+
+    const warning = para("");
+    const spinBtn = button("Lancer la roue", { primary: true, onClick: spin });
+
+    // Cartes disponibles à ajouter à la mise
+    const pool = document.createElement("div");
+    pool.className = "card-grid stake-pool";
+
+    function render() {
+      const chance = upgradeChance(stake.length);
+      // Cases de mise
+      slots.replaceChildren(...Array.from({ length: UPGRADE_MAX_CARDS }, (_, i) => {
+        const slot = document.createElement("button");
+        slot.className = "stake-slot";
+        const id = stake[i];
+        if (id) {
+          const img = document.createElement("img");
+          img.className = "pixel";
+          img.src = catalogue.colorwayById.get(id).sprite;
+          img.width = 32;
+          img.height = 32;
+          img.alt = "";
+          slot.append(img);
+          slot.setAttribute("aria-label", "Retirer cette carte de la mise");
+          slot.addEventListener("click", () => { if (!spinning) { stake.splice(i, 1); render(); } });
+        } else {
+          slot.classList.add("empty");
+          slot.textContent = "+";
+          slot.disabled = true;
+        }
+        return slot;
+      }));
+      // Roue et textes
+      wheel.style.setProperty("--chance", chance);
+      chanceLabel.textContent = `${chance} %`;
+      warning.textContent = stake.length === 0
+        ? "Touche tes cartes ci-dessous pour les miser."
+        : chance >= 100
+          ? `Réussite assurée : tes ${stake.length} cartes deviennent 1 carte ${getRarity(target).name}.`
+          : `Si la roue s'arrête sur le gris, tu perds ${stake.length > 1 ? `les ${stake.length} cartes misées` : "la carte misée"}.`;
+      spinBtn.disabled = stake.length === 0 || spinning;
+      spinBtn.textContent = stake.length ? `Lancer la roue · ${chance} %` : "Lancer la roue";
+      // Cartes disponibles (exemplaires pas encore misés)
+      pool.replaceChildren(...owned.map((c) => {
+        const left = c.count - stake.filter((id) => id === c.colorwayId).length;
+        const colorway = catalogue.colorwayById.get(c.colorwayId);
+        const el = createCardShell(colorway, rarity);
+        el.classList.add("owned", "tappable");
+        if (left === 0 || stake.length >= UPGRADE_MAX_CARDS) el.classList.add("used");
+        el.append(createCardFace(colorway, rarity));
+        const badge = document.createElement("span");
+        badge.className = "count-badge";
+        badge.textContent = `×${left}`;
+        el.append(badge);
+        el.addEventListener("click", () => {
+          if (spinning || left === 0 || stake.length >= UPGRADE_MAX_CARDS) return;
+          stake.push(c.colorwayId);
+          render();
+        });
+        return el;
+      }));
+    }
+
+    function spin() {
+      if (spinning || stake.length === 0) return;
+      spinning = true;
+      render();
+      const outcome = resolveUpgrade(piece, rarity, stake);
+      const spent = stake.map((colorwayId) => ({ colorwayId, rarity }));
+
+      // La part colorée va de 0° à chance × 3,6° (sens horaire, depuis le haut).
+      // On fait tourner la roue pour que la flèche (en haut) tombe sur l'angle
+      // correspondant au tirage : dans la part colorée si réussite, sinon dans le gris.
+      const landing = outcome.roll * 3.6;
+      const current = ((wheelTurn % 360) + 360) % 360;
+      wheelTurn += 360 * 5 + ((360 - landing - current + 720) % 360);
+      wheel.style.transform = `rotate(${wheelTurn}deg)`;
+      wheel.classList.add("spinning");
+      // Petits « clics » qui ralentissent avec la roue
+      for (let i = 0; i < 18; i++) setTimeout(() => playSound("tick"), SPIN_TIME * (1 - Math.pow(1 - i / 18, 1.8)));
+
+      // La collection est mise à jour TOUT DE SUITE (recharger ne permet pas de rejouer).
+      removeCards(spent);
+      if (outcome.success) addCards([outcome.result]);
+      onChange?.();
+
+      setTimeout(() => {
+        spinning = false;
+        wheel.classList.remove("spinning");
+        showResult(outcome, piece, rarity, spent.length);
+      }, SPIN_TIME + 250);
+    }
+
+    const actions = document.createElement("div");
+    actions.className = "sheet-actions";
+    actions.append(spinBtn);
+    body.replaceChildren(subtitle, slots, wheelWrap, warning, actions, para("Tes cartes", "eyebrow sheet-eyebrow"), pool);
+    render();
+    sheet.hidden = false;
+  }
+
+  // --- 3. Résultat ---
+
+  function showResult(outcome, piece, rarity, spentCount) {
+    const actions = document.createElement("div");
+    actions.className = "sheet-actions";
+    // Encore assez de cartes de ce modèle à cette rareté pour retenter ?
+    const left = getOwnedCards().filter((c) => c.rarity === rarity
+      && catalogue.colorwayById.get(c.colorwayId)?.piece.id === piece.id);
+
+    if (outcome.success) {
+      const { colorwayId, rarity: newRarity } = outcome.result;
+      title.textContent = "Réussi !";
+      const card = bigCard(colorwayId, newRarity);
+      card.classList.add("upgrade-win");
+      actions.append(button("Super", { primary: true, onClick: close }));
+      body.replaceChildren(
+        para(`Nouvelle carte ${getRarity(newRarity).name} ajoutée à ta collection.`, "sheet-subtitle"),
+        card, actions);
+      setTimeout(() => {
+        const box = card.getBoundingClientRect();
+        burst(box.left + box.width / 2, box.top + box.height / 2,
+          getComputedStyle(card).getPropertyValue("--rarity-color").trim(), 30, 180);
+      }, 50);
+      playSound(newRarity);
+      vibrate([60, 40, 60]);
+    } else {
+      title.textContent = "Raté…";
+      actions.append(button("Fermer", { primary: true, onClick: close }));
+      if (left.length) {
+        actions.append(button("Réessayer", { onClick: () => openUpgrade(piece, rarity, left[0].colorwayId) }));
+      }
+      body.replaceChildren(
+        para(`La roue s'est arrêtée sur le gris : ${spentCount > 1 ? `tes ${spentCount} cartes sont perdues` : "ta carte est perdue"}.`, "sheet-subtitle"),
+        actions);
+      playSound("fail");
+      vibrate([30]);
+    }
+  }
+
+  return { openCard };
+}
