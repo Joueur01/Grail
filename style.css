@@ -1292,6 +1292,26 @@ main {
   box-shadow: -24px 0 var(--bg), 24px 0 var(--bg);
 }
 
+/* Barre de recherche : pleine largeur, au-dessus des menus */
+.filters .search {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 14px 0 40px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  /* Loupe dessinée en SVG */
+  background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%238f8d88' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='7' cy='7' r='5'/%3E%3Cpath d='M11 11l4 4'/%3E%3C/svg%3E") no-repeat left 14px center;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 600;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.filters .search::placeholder { color: var(--muted); }
+.filters .search:focus { outline: none; border-color: var(--text); }
+
 .filters select {
   width: 100%;
   min-height: 44px;
@@ -1310,6 +1330,22 @@ main {
 }
 
 .collection-empty { text-align: center; padding: 32px 0; }
+
+/* Pastille cadenas : carte verrouillée (en haut à gauche) */
+.lock-badge {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  color: var(--bg);
+  background: var(--rarity-legendaire);
+}
+.atelier-locked-note { margin: 0; font-size: 13px; }
 
 /* Badge « ×2 » des doublons */
 .count-badge {

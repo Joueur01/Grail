@@ -6,20 +6,21 @@
 // rareté visée. Toucher une ligne ouvre la roue avec ces cartes déjà misées.
 // Les Légendaires (non améliorables) n'apparaissent pas.
 
-import { RARITIES, UPGRADE_MAX_CARDS, getRarity } from "./data.js?v=24";
-import { getOwnedCards } from "./inventory.js?v=24";
-import { nextRarity, upgradeChance } from "./upgrade.js?v=24";
+import { RARITIES, UPGRADE_MAX_CARDS, getRarity, matchesSearch } from "./data.js?v=25";
+import { getOwnedCards } from "./inventory.js?v=25";
+import { nextRarity, upgradeChance } from "./upgrade.js?v=25";
 
 /**
  * Regroupe les cartes possédées par modèle + rareté.
  * Renvoie [{ piece, rarity, total, colorways: [{ colorway, count }] }],
  * groupé par rareté (la plus haute d'abord), puis du plus proche de 5 au plus éloigné.
  */
-export function atelierRows(catalogue) {
+export function atelierRows(catalogue, sort = "progress") {
   const groups = new Map(); // "pieceId|rarete" → ligne
   for (const c of getOwnedCards()) {
     const colorway = catalogue.colorwayById.get(c.colorwayId);
     if (!colorway || !nextRarity(c.rarity)) continue; // coloris inconnu ou Légendaire
+    if (c.locked) continue; // verrouillée : jamais proposée à l'amélioration
     const key = `${colorway.piece.id}|${c.rarity}`;
     if (!groups.has(key)) groups.set(key, { piece: colorway.piece, rarity: c.rarity, total: 0, colorways: [] });
     const row = groups.get(key);
@@ -34,10 +35,14 @@ export function atelierRows(catalogue) {
   // Groupées par rareté (la plus haute d'abord, pour les séparateurs), puis du
   // plus proche de 5 au plus éloigné (au-delà de 5, c'est « prêt » comme à 5),
   // puis l'ordre du catalogue.
-  return rows.sort((a, b) =>
-    (rarityRank.get(b.rarity) - rarityRank.get(a.rarity))
-    || (Math.min(b.total, UPGRADE_MAX_CARDS) - Math.min(a.total, UPGRADE_MAX_CARDS))
-    || (pieceOrder.get(a.piece.id) - pieceOrder.get(b.piece.id)));
+  // Critère choisi dans le menu « Tri » (la rareté passe toujours en premier).
+  const byProgress = (a, b) => Math.min(b.total, UPGRADE_MAX_CARDS) - Math.min(a.total, UPGRADE_MAX_CARDS);
+  const byName = (a, b) => a.piece.name.localeCompare(b.piece.name, "fr");
+  const byCatalogue = (a, b) => pieceOrder.get(a.piece.id) - pieceOrder.get(b.piece.id);
+  const criteria = { progress: [byProgress, byCatalogue], name: [byName], catalogue: [byCatalogue] }[sort] || [byProgress, byCatalogue];
+  return rows.sort((a, b) => (rarityRank.get(b.rarity) - rarityRank.get(a.rarity))
+    || criteria.reduce((diff, cmp) => diff || cmp(a, b), 0)
+    || byCatalogue(a, b));
 }
 
 /**
@@ -47,9 +52,31 @@ export function atelierRows(catalogue) {
 export function setupAtelier({ catalogue, onRowTap }) {
   const list = document.getElementById("atelier-list");
   const empty = document.getElementById("atelier-empty");
+  const lockedNote = document.getElementById("atelier-locked-note");
+  const searchInput = document.getElementById("search-atelier");
+  const brandSelect = document.getElementById("atelier-brand");
+  const categorySelect = document.getElementById("atelier-category");
+  const sortSelect = document.getElementById("atelier-sort");
+
+  // Remplit les menus (même principe que la Collection).
+  fillSelect(brandSelect, catalogue.brands);
+  fillSelect(categorySelect, [
+    { id: "haut", name: "Haut" }, { id: "bas", name: "Bas" },
+    { id: "chaussures", name: "Chaussures" }, { id: "accessoire", name: "Accessoire" },
+  ]);
 
   function render() {
-    const rows = atelierRows(catalogue);
+    const all = atelierRows(catalogue, sortSelect.value);
+    const rows = all.filter(({ piece, rarity, colorways }) => {
+      const brand = colorways[0].colorway.brand;
+      return matchesSearch(searchInput.value, [piece.name, brand.name, getRarity(rarity).name, ...colorways.map((c) => c.colorway.name)])
+        && (!brandSelect.value || brand.id === brandSelect.value)
+        && (!categorySelect.value || piece.category === categorySelect.value);
+    });
+    // Cartes verrouillées (améliorables en théorie) : elles ne comptent pas ici.
+    const lockedCopies = getOwnedCards().filter((c) => c.locked && nextRarity(c.rarity)).reduce((n, c) => n + c.count, 0);
+    lockedNote.hidden = lockedCopies === 0;
+    lockedNote.textContent = `${lockedCopies} carte${lockedCopies > 1 ? "s" : ""} verrouillée${lockedCopies > 1 ? "s" : ""} : non comptée${lockedCopies > 1 ? "s" : ""} ici.`;
     // Un séparateur (nom de la rareté + nombre de modèles) devant chaque groupe.
     const items = [];
     let current = null;
@@ -62,6 +89,9 @@ export function setupAtelier({ catalogue, onRowTap }) {
     }
     list.replaceChildren(...items);
     empty.hidden = rows.length > 0;
+    empty.textContent = all.length === 0
+      ? "Rien à améliorer pour l'instant. Ouvre des boosters !"
+      : "Aucun modèle ne correspond à ta recherche.";
   }
 
   /** Séparateur de rareté : « ÉPIQUE · 2 » + un filet de la couleur de la rareté. */
@@ -156,6 +186,8 @@ export function setupAtelier({ catalogue, onRowTap }) {
     return el;
   }
 
+  for (const el of [brandSelect, categorySelect, sortSelect]) el.addEventListener("change", render);
+  searchInput.addEventListener("input", render);
   render();
   return render;
 }
@@ -179,4 +211,14 @@ function text(tag, className, content) {
   el.className = className;
   el.textContent = content;
   return el;
+}
+
+/** Ajoute une <option> par élément { id, name } (après l'option « tout »). */
+function fillSelect(select, items) {
+  for (const item of items) {
+    const option = document.createElement("option");
+    option.value = item.id;
+    option.textContent = item.name;
+    select.append(option);
+  }
 }

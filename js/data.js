@@ -67,3 +67,19 @@ export async function loadCatalogue() {
 export function getRarity(id) {
   return RARITIES.find((r) => r.id === id);
 }
+
+/** Minuscules sans accents, pour comparer des textes (« Écharpe » = « echarpe »). */
+export function normalizeText(text) {
+  return String(text).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+}
+
+/**
+ * Recherche : true si CHAQUE mot de la requête apparaît dans l'un des textes.
+ * Une requête vide correspond à tout.
+ */
+export function matchesSearch(query, texts) {
+  const words = normalizeText(query).split(/\s+/).filter(Boolean);
+  if (!words.length) return true;
+  const haystack = normalizeText(texts.join(" "));
+  return words.every((w) => haystack.includes(w));
+}

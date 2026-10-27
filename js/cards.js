@@ -1,6 +1,6 @@
 // cards.js — dessin d'une carte (utilisé par le booster ET par la collection).
 
-import { getRarity } from "./data.js?v=24";
+import { getRarity } from "./data.js?v=25";
 
 /**
  * Crée la face d'une carte : sprite sur case claire, marque, nom,
@@ -53,4 +53,14 @@ function textEl(className, text) {
   el.className = className;
   el.textContent = text;
   return el;
+}
+
+/** Petite pastille « cadenas » posée sur une carte verrouillée. */
+export function createLockBadge() {
+  const badge = document.createElement("span");
+  badge.className = "lock-badge";
+  badge.setAttribute("aria-label", "Carte verrouillée");
+  // Cadenas dessiné en SVG (pas d'emoji : leur rendu change d'un téléphone à l'autre).
+  badge.innerHTML = '<svg viewBox="0 0 12 14" width="10" height="12" aria-hidden="true"><path d="M3 6V4a3 3 0 1 1 6 0v2h1v7H2V6h1zm1.5 0h3V4a1.5 1.5 0 0 0-3 0v2z" fill="currentColor"/></svg>';
+  return badge;
 }

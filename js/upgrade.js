@@ -9,10 +9,10 @@
 //   - les cartes misées sont perdues dans tous les cas ; une Légendaire ne s'améliore pas.
 // La défausse (contre de la monnaie du jeu) n'est pas encore codée : bouton grisé.
 
-import { RARITIES, UPGRADE_MAX_CARDS, UPGRADE_CHANCE_PER_CARD, getRarity } from "./data.js?v=24";
-import { getOwnedCards, addCards, removeCards, countCard } from "./inventory.js?v=24";
-import { createCardFace, createCardShell } from "./cards.js?v=24";
-import { playSound, vibrate, burst } from "./effects.js?v=24";
+import { RARITIES, UPGRADE_MAX_CARDS, UPGRADE_CHANCE_PER_CARD, getRarity } from "./data.js?v=25";
+import { getOwnedCards, addCards, removeCards, countCard, isLocked, setLocked } from "./inventory.js?v=25";
+import { createCardFace, createCardShell } from "./cards.js?v=25";
+import { playSound, vibrate, burst } from "./effects.js?v=25";
 
 const SPIN_TIME = 3200; // durée de la roue (identique au CSS)
 
@@ -101,20 +101,27 @@ export function setupUpgrade({ catalogue, onChange }) {
     const count = countCard(colorwayId, rarity);
     if (!colorway || count === 0) return;
     const target = nextRarity(rarity);
+    const locked = isLocked(colorwayId, rarity);
 
     title.textContent = colorway.piece.name;
     const actions = document.createElement("div");
     actions.className = "sheet-actions";
     actions.append(
-      target
+      locked
+        ? button("Carte verrouillée", { primary: true, disabled: true })
+        : target
         ? button(`Améliorer en ${getRarity(target).name}`, { primary: true, onClick: () => openUpgrade(colorway.piece, rarity, colorwayId) })
         : button("Rareté maximale", { primary: true, disabled: true }),
+      // Verrou : une carte verrouillée n'est jamais proposée à l'amélioration.
+      button(locked ? "Déverrouiller" : "Verrouiller", {
+        onClick: () => { setLocked(colorwayId, rarity, !locked); onChange?.(); openCard({ colorwayId, rarity }); },
+      }),
       // Défausse : prévue mais pas encore codée.
       button("Défausser · bientôt", { disabled: true }),
     );
     body.replaceChildren(
       bigCard(colorwayId, rarity),
-      para(`${count} exemplaire${count > 1 ? "s" : ""}`),
+      para(`${count} exemplaire${count > 1 ? "s" : ""}${locked ? " · verrouillée : jamais proposée à l'amélioration" : ""}`),
       actions,
     );
     sheet.hidden = false;
@@ -131,7 +138,7 @@ export function setupUpgrade({ catalogue, onChange }) {
     const target = nextRarity(rarity);
     // Cartes possédées de ce modèle à cette rareté : [{ colorwayId, count }]
     const owned = getOwnedCards()
-      .filter((c) => c.rarity === rarity && catalogue.colorwayById.get(c.colorwayId)?.piece.id === piece.id)
+      .filter((c) => !c.locked && c.rarity === rarity && catalogue.colorwayById.get(c.colorwayId)?.piece.id === piece.id)
       .map((c) => ({ colorwayId: c.colorwayId, count: c.count }));
     const stake = [];
     if (fillModel) {
@@ -272,7 +279,7 @@ export function setupUpgrade({ catalogue, onChange }) {
     const actions = document.createElement("div");
     actions.className = "sheet-actions";
     // Encore assez de cartes de ce modèle à cette rareté pour retenter ?
-    const left = getOwnedCards().filter((c) => c.rarity === rarity
+    const left = getOwnedCards().filter((c) => !c.locked && c.rarity === rarity
       && catalogue.colorwayById.get(c.colorwayId)?.piece.id === piece.id);
 
     if (outcome.success) {
