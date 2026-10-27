@@ -38,7 +38,7 @@ Contraintes de la bêta :
 
 ### Hors périmètre de la bêta (ne pas coder pour l'instant)
 
-Comptes, serveur, marché entre joueurs, échanges, achats (en argent réel ou en pièces), abonnement, votes, défis de style, contenu créé librement par les joueurs (textes, images), notifications, 3D.
+Comptes, serveur, **vrai** marché entre joueurs en ligne (seule une simulation locale existe, voir « Market »), échanges directs, achats en argent réel, abonnement, votes, défis de style, contenu créé librement par les joueurs (textes, images), notifications, 3D.
 
 Ces fonctionnalités viendront plus tard **seulement si le test est positif**. Le code peut rester simple et ne pas les anticiper.
 
@@ -71,6 +71,7 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 │   ├── upgrade.js     # fiche d'une carte + amélioration par la roue
 │   ├── discard.js     # défausse : sélection de plusieurs cartes contre des pièces
 │   ├── atelier.js     # vue « Atelier » : progression par modèle + rareté
+│   ├── market.js      # Market entre joueurs (SIMULATION locale, sans serveur)
 │   ├── avatar.js      # rendu de l'avatar en canvas
 │   └── share.js       # export PNG + partage
 ├── data/
@@ -247,6 +248,16 @@ Tous les chiffres sont dans **`js/economy-config.js`** (`DROP_RATES`, `BOOSTER`,
 - **Pièces** : solde `coins` dans la sauvegarde (entier ≥ 0), affiché **en haut à droite de toutes les pages** (le solde « bondit » à chaque changement). **Une seule fonction centrale**, `changeCoins(delta)` dans `js/inventory.js` : elle refuse un delta non entier et tout retrait qui rendrait le solde négatif (renvoie `false`, rien ne change). Ne jamais modifier `save.coins` autrement.
 - **Bonus de connexion** : `COINS.dailyLoginBonus` (20) pièces, **une fois par jour calendaire à Paris** (`COINS.dailyBonusTimeZone`), à l'ouverture du jeu et au retour sur l'onglet (`lastDailyBonus` = dernier jour pris, AAAA-MM-JJ). Une notification « +20 pièces · bonus du jour » s'affiche sous l'en-tête.
 - Les pièces **se gagnent** (bonus quotidien, défausse) mais **ne se dépensent encore nulle part** : l'usage des pièces sera décidé plus tard.
+
+### Market (`js/market.js`) — SIMULATION locale, sans serveur
+
+Onglet **Market** (4e onglet) pour voir à quoi ressemblera le marché entre joueurs. **Il n'y a pas de backend** : les offres des « autres joueurs » et les acheteurs sont simulés par le jeu ; le front est prévu pour être branché plus tard sur un vrai serveur.
+- **Prix fixes**, pas d'enchères. **Une seule offre par carte** (coloris + rareté) : la **moins chère** ; le nombre d'offres n'est jamais affiché. Quand elle est achetée, l'offre suivante la moins chère prend sa place.
+- **Limite de 10 ventes en même temps** (`MARKET.maxListings`) ; au-delà, « Limite de 10 ventes atteinte ». Une carte **verrouillée** ne peut pas être vendue.
+- **Acheter** : grille des meilleures offres (prix en pastille dorée), recherche, filtres Rareté / Type, tri (Prix ↑↓, Rareté, Marque). Toucher une offre ouvre la fiche : « Acheter · N pièces » (grisé avec « Il te manque N pièces »), carte ajoutée à la collection. Si l'offre la moins chère est la tienne : badge « Ton offre » et bouton « Retirer mon offre ».
+- **Vendre** : choisir une carte de la collection, fixer son prix (− / champ / +, « Prix conseillé », « Moins cher » = meilleure offre − 1). La carte quitte la collection pendant la vente. **Mes ventes** : liste avec « Retirer » (la carte revient).
+- **Simulation** (valeurs dans `MARKET`, `js/economy-config.js`) : offres générées avec une graine fixe (`mockSeed`, mêmes offres pour tout le monde, ≈ 100 cartes) autour d'un prix de référence par rareté (`referencePrice`, provisoire : Commune 8 · Rare 40 · Épique 160 · Légendaire 600, au-dessus des valeurs de défausse) ; tes ventes sont « achetées » après 1 à 8 minutes, avec une chance qui dépend de ton prix par rapport à la référence (`simSaleChance`) ; les pièces sont versées d'elles-mêmes (vérifié à l'ouverture, toutes les 15 s et au retour sur l'onglet), avec notification et pièces qui volent. Pas de taxe ni de frais pour l'instant.
+- **Sauvegarde** : `market: { listings, sold, nextId }` (mes ventes ; offres simulées déjà achetées). Fonctions atomiques dans `js/inventory.js` : `listCard`, `cancelListing`, `buyOffer` (cartes + pièces en une sauvegarde), `settleSales`.
 
 ### Défausse (`js/discard.js`)
 

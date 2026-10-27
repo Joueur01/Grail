@@ -7,13 +7,13 @@
 // On peut l'ouvrir depuis la fiche d'une carte, une ligne de l'Atelier ou le
 // bouton « Sélectionner » de la Collection (createSelection, plus bas).
 
-import { RARITIES, getRarity } from "./data.js?v=32";
-import { DISCARD_VALUES, DISCARD_CONFIRM_FROM, DISCARD_KEEP } from "./economy-config.js?v=32";
-import { getOwnedCards, getEquipped, discardCards, cardKey } from "./inventory.js?v=32";
-import { SLOTS } from "./avatar.js?v=32";
-import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=32";
-import { playSound, vibrate } from "./effects.js?v=32";
-import { flyCoins, showToast } from "./wallet.js?v=32";
+import { RARITIES, getRarity } from "./data.js?v=34";
+import { DISCARD_VALUES, DISCARD_CONFIRM_FROM, DISCARD_KEEP } from "./economy-config.js?v=34";
+import { getOwnedCards, getEquipped, discardCards, cardKey } from "./inventory.js?v=34";
+import { SLOTS } from "./avatar.js?v=34";
+import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=34";
+import { playSound, vibrate } from "./effects.js?v=34";
+import { flyCoins, showToast } from "./wallet.js?v=34";
 
 /** Pièces gagnées pour une carte de cette rareté. */
 export function discardValue(rarity) {

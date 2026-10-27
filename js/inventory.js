@@ -12,23 +12,24 @@
 //   freeOpened: 0,         // boosters gratuits ouverts depuis le début (compteur Signature)
 //   coins: 0,              // solde de pièces (entier ≥ 0)
 //   lastDailyBonus: "AAAA-MM-JJ" | null,  // dernier jour (heure de Paris) du bonus de connexion
+//   market: { listings: [...], sold: {...}, nextId: 1 },  // ventes du joueur + offres simulées déjà achetées
 //   pity: 0,      // boosters ouverts d'affilée sans Légendaire (jauge « Légendaire garantie »)
 //   pityEpic: 0,  // boosters ouverts d'affilée sans Épique ou mieux
 //   tutorialDone: false  // true après le 1er booster (tuto « glisse, ne touche pas »)
 // }
 // Si le format change un jour, on crée "grail_save_v2" et on migre depuis v1.
 
-import { RARITIES, matchesSearch, getRarity } from "./data.js?v=32";
-import { BOOSTER, COINS, DISCARD_VALUES } from "./economy-config.js?v=32";
-import { refillStock, msUntilNextBooster, isSignatureNext, freeUntilSignature } from "./distribution.js?v=32";
-import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=32";
+import { RARITIES, matchesSearch, getRarity } from "./data.js?v=34";
+import { BOOSTER, COINS, DISCARD_VALUES, MARKET } from "./economy-config.js?v=34";
+import { refillStock, msUntilNextBooster, isSignatureNext, freeUntilSignature } from "./distribution.js?v=34";
+import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=34";
 
 const SAVE_KEY = "grail_save_v1";
 
 function emptySave() {
   return { version: 1, cards: {}, equipped: {}, locked: {},
     boosterStock: BOOSTER.startStock, stockUpdatedAt: null, freeOpened: 0,
-    coins: COINS.startBalance, lastDailyBonus: null, pity: 0, pityEpic: 0, tutorialDone: false };
+    market: { listings: [], sold: {}, nextId: 1 }, coins: COINS.startBalance, lastDailyBonus: null, pity: 0, pityEpic: 0, tutorialDone: false };
 }
 
 // Sauvegarde en mémoire : c'est elle qu'on lit/modifie, puis on persiste.
@@ -250,6 +251,87 @@ export function takeBooster(now = Date.now(), testMode = false) {
   save.freeOpened = freeOpenedCount() + 1;
   persist();
   return { source: state.source, signature: state.signature };
+}
+
+// --- Market (simulation locale : pas de serveur) ---
+
+function marketState() {
+  if (!save.market || typeof save.market !== "object") save.market = {};
+  const m = save.market;
+  if (!Array.isArray(m.listings)) m.listings = [];
+  if (!m.sold || typeof m.sold !== "object") m.sold = {};
+  if (!Number.isInteger(m.nextId)) m.nextId = 1;
+  return m;
+}
+
+/** Mes ventes en cours : [{ id, colorwayId, rarity, price, listedAt, sellAt }]. */
+export function getMyListings() {
+  return marketState().listings.map((l) => ({ ...l }));
+}
+
+/** Identifiants des offres simulées déjà achetées. */
+export function getSoldOffers() {
+  return new Set(Object.keys(marketState().sold));
+}
+
+/**
+ * Met une carte en vente (1 exemplaire, prix fixe). La carte quitte la collection
+ * jusqu'à la vente ou jusqu'au retrait. Renvoie la vente créée, ou null si c'est
+ * refusé : prix invalide, limite atteinte, carte absente ou verrouillée.
+ */
+export function listCard(colorwayId, rarity, price, sellAt = null) {
+  const m = marketState();
+  const key = cardKey(colorwayId, rarity);
+  if (!Number.isInteger(price) || price < MARKET.minPrice || price > MARKET.maxPrice) return null;
+  if (m.listings.length >= MARKET.maxListings) return null;
+  if (!save.cards[key] || save.locked?.[key] === true) return null;
+  takeAway([{ colorwayId, rarity }]);
+  const listing = { id: `p${m.nextId++}`, colorwayId, rarity, price, listedAt: Date.now(), sellAt };
+  m.listings.push(listing);
+  persist();
+  return listing;
+}
+
+/** Retire une vente : la carte revient dans la collection. */
+export function cancelListing(id) {
+  const m = marketState();
+  const i = m.listings.findIndex((l) => l.id === id);
+  if (i < 0) return false;
+  const [l] = m.listings.splice(i, 1);
+  const key = cardKey(l.colorwayId, l.rarity);
+  save.cards[key] = (save.cards[key] || 0) + 1;
+  persist();
+  return true;
+}
+
+/**
+ * Achète une offre simulée { id, colorwayId, rarity, price }. Refuse (false) si le
+ * solde est insuffisant. Carte, offre vendue et pièces sont enregistrées ensemble.
+ */
+export function buyOffer({ id, colorwayId, rarity, price }) {
+  const m = marketState();
+  const key = cardKey(colorwayId, rarity);
+  if (m.sold[id]) return false;
+  const before = save.cards[key];
+  save.cards[key] = (before || 0) + 1;
+  m.sold[id] = true;
+  if (changeCoins(-price)) return true; // enregistre tout en même temps que le solde
+  if (before) save.cards[key] = before; else delete save.cards[key];
+  delete m.sold[id];
+  return false;
+}
+
+/**
+ * Encaisse les ventes dont l'heure est passée (acheteurs simulés).
+ * Renvoie [{ colorwayId, rarity, price }] des cartes vendues.
+ */
+export function settleSales(now = Date.now()) {
+  const m = marketState();
+  const done = m.listings.filter((l) => l.sellAt && l.sellAt <= now);
+  if (!done.length) return [];
+  m.listings = m.listings.filter((l) => !done.includes(l));
+  changeCoins(done.reduce((sum, l) => sum + l.price, 0)); // enregistre aussi le retrait des ventes
+  return done.map(({ colorwayId, rarity, price }) => ({ colorwayId, rarity, price }));
 }
 
 // --- Pièces (monnaie du jeu) ---

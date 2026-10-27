@@ -17,7 +17,7 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=32">
+  <link rel="stylesheet" href="style.css?v=34">
 </head>
 <body>
   <header class="topbar">
@@ -153,6 +153,54 @@
       </div>
     </section>
 
+    <!-- Market entre joueurs : prix fixes, une seule offre (la moins chère) par carte (market.js).
+         SIMULATION locale en attendant un serveur. -->
+    <section class="screen" data-screen="market" id="screen-market" hidden>
+      <h2 class="screen-title">Market</h2>
+      <p class="muted" id="market-summary">—</p>
+      <div class="view-switch" role="tablist" aria-label="Market">
+        <button class="view-tab" role="tab" data-view="market-buy" aria-selected="true">Acheter</button>
+        <button class="view-tab" role="tab" data-view="market-sell" aria-selected="false">Vendre</button>
+        <button class="view-tab" role="tab" data-view="market-mine" aria-selected="false">Mes ventes</button>
+      </div>
+
+      <!-- Acheter : l'offre la moins chère de chaque carte -->
+      <div class="collection-view" id="market-buy-view">
+        <div class="filters">
+          <input class="search" id="search-market" type="search" placeholder="Rechercher une carte" aria-label="Rechercher une carte à acheter" autocomplete="off" enterkeyhint="search">
+          <select id="market-rarity" aria-label="Filtrer par rareté"><option value="">Rareté</option></select>
+          <select id="market-type" aria-label="Filtrer par catégorie"><option value="">Type</option></select>
+          <select id="market-sort" aria-label="Trier les offres">
+            <option value="price">Prix ↑</option>
+            <option value="priceDesc">Prix ↓</option>
+            <option value="rarity">Rareté</option>
+            <option value="catalogue">Marque</option>
+          </select>
+        </div>
+        <p class="muted collection-empty" id="market-empty" hidden>Aucune offre ne correspond à ta recherche.</p>
+        <div class="card-grid" id="market-grid"></div>
+      </div>
+
+      <!-- Vendre : choisir une carte de ta collection, fixer ton prix -->
+      <div class="collection-view" id="market-sell-view" hidden>
+        <div class="filters">
+          <input class="search" id="search-sell" type="search" placeholder="Rechercher une carte à vendre" aria-label="Rechercher une carte à vendre" autocomplete="off" enterkeyhint="search">
+          <select id="sell-rarity" aria-label="Filtrer par rareté"><option value="">Rareté</option></select>
+          <select id="sell-type" aria-label="Filtrer par catégorie"><option value="">Type</option></select>
+        </div>
+        <p class="muted atelier-intro">Touche une carte pour la mettre en vente à prix fixe. Les cartes verrouillées ne peuvent pas être vendues.</p>
+        <p class="muted collection-empty" id="sell-empty" hidden></p>
+        <div class="card-grid" id="sell-grid"></div>
+      </div>
+
+      <!-- Mes ventes -->
+      <div class="collection-view" id="market-mine-view" hidden>
+        <p class="muted collection-empty" id="market-mine-empty" hidden>Tu n'as rien en vente. Va dans « Vendre » pour mettre une carte au market.</p>
+        <div class="atelier-list" id="market-mine-list"></div>
+        <p class="muted atelier-intro">Simulation : en attendant le serveur, des acheteurs fictifs achètent tes cartes après quelques minutes, plus vite quand le prix est raisonnable.</p>
+      </div>
+    </section>
+
     <section class="screen" data-screen="avatar" id="screen-avatar" hidden>
       <h2 class="screen-title">Ma tenue</h2>
       <p class="muted" id="outfit-summary">—</p>
@@ -208,9 +256,10 @@
   <nav class="tabbar" aria-label="Navigation">
     <a class="tab" href="#booster" data-tab="booster">Booster</a>
     <a class="tab" href="#collection" data-tab="collection">Collection</a>
+    <a class="tab" href="#market" data-tab="market">Market</a>
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=32"></script>
+  <script type="module" src="js/main.js?v=34"></script>
 </body>
 </html>

@@ -10,9 +10,9 @@
 //   - dans le navigateur : ouvrir tools/simulation.html (sur GitHub Pages :
 //     https://joueur01.github.io/Grail/tools/simulation.html, ou via un serveur local).
 
-import { RARITIES } from "../js/data.js?v=32";
-import { BOOSTER, DROP_RATES, PITY } from "../js/economy-config.js?v=32";
-import { drawBooster, drawRarity, revealOrder, isSignatureNext } from "../js/distribution.js?v=32";
+import { RARITIES } from "../js/data.js?v=34";
+import { BOOSTER, DROP_RATES, PITY } from "../js/economy-config.js?v=34";
+import { drawBooster, drawRarity, revealOrder, isSignatureNext } from "../js/distribution.js?v=34";
 
 const IDS = RARITIES.map((r) => r.id);
 const NAMES = Object.fromEntries(RARITIES.map((r) => [r.id, r.name]));

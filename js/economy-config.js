@@ -62,6 +62,25 @@ export const DISCARD_CONFIRM_FROM = "epique";
 // « Garder les doublons » : nombre d'exemplaires gardés de chaque carte.
 export const DISCARD_KEEP = 1;
 
+// --- Market entre joueurs (SIMULATION locale, sans serveur) ------------------------
+// Prix fixes (pas d'enchères). Pour l'instant les offres des « autres joueurs » sont
+// générées par le jeu ; ces valeurs disparaîtront avec le vrai serveur.
+export const MARKET = {
+  maxListings: 10,        // nombre maximum de cartes qu'un joueur peut mettre en vente en même temps
+  minPrice: 1,
+  maxPrice: 99999,
+  // Prix de référence (conseillé quand personne ne vend la carte). PROVISOIRES.
+  referencePrice: { commun: 8, rare: 40, epique: 160, legendaire: 600 },
+  // --- Simulation des autres joueurs ---
+  mockSeed: 20261027,     // même graine = mêmes offres pour tout le monde
+  mockCoverage: { commun: 0.6, rare: 0.4, epique: 0.2, legendaire: 0.08 }, // part des cartes qui ont des offres
+  mockOffersMax: 4,       // offres par carte (de 1 à N) : on n'en montre que la moins chère
+  mockPriceSpread: [0.6, 2.0],        // prix des offres = référence × (entre ces deux valeurs)
+  // Simulation des acheteurs : ta vente est « achetée » après un délai, plus ou moins sûrement selon ton prix.
+  simSaleDelayMs: [60000, 480000],    // entre 1 et 8 minutes
+  simSaleChance: [[1, 0.95], [1.5, 0.6], [2.5, 0.25], [1e9, 0.05]], // [prix ÷ référence au plus, chance de vente]
+};
+
 // --- Monnaie du jeu (« pièces ») ----------------------------------------------------
 export const COINS = {
   startBalance: 0,          // solde d'un nouveau joueur

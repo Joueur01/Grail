@@ -3,22 +3,23 @@
 // ?v=… sur les imports : même numéro que dans index.html, et le même partout
 // (un module importé sous deux adresses différentes serait chargé deux fois).
 
-import { loadCatalogue } from "./data.js?v=32";
-import { loadSave, setupCollection } from "./inventory.js?v=32";
-import { initAvatar, setupOutfit } from "./avatar.js?v=32";
-import { setupBooster } from "./booster.js?v=32";
-import { setupShare } from "./share.js?v=32";
-import { setupUpgrade } from "./upgrade.js?v=32";
-import { setupAtelier, setupViewSwitch } from "./atelier.js?v=32";
-import { setupWallet } from "./wallet.js?v=32";
-import { setupDiscard, createSelection } from "./discard.js?v=32";
-import { BOOSTER } from "./economy-config.js?v=32";
+import { loadCatalogue } from "./data.js?v=34";
+import { loadSave, setupCollection } from "./inventory.js?v=34";
+import { initAvatar, setupOutfit } from "./avatar.js?v=34";
+import { setupBooster } from "./booster.js?v=34";
+import { setupShare } from "./share.js?v=34";
+import { setupUpgrade } from "./upgrade.js?v=34";
+import { setupAtelier, setupViewSwitch } from "./atelier.js?v=34";
+import { setupWallet } from "./wallet.js?v=34";
+import { setupDiscard, createSelection } from "./discard.js?v=34";
+import { setupMarket } from "./market.js?v=34";
+import { BOOSTER } from "./economy-config.js?v=34";
 
 // ?debug=1 dans l'URL : boosters illimités pendant les tests.
 export const DEBUG = new URLSearchParams(location.search).get("debug") === "1";
 
 
-const SCREENS = ["booster", "collection", "avatar"];
+const SCREENS = ["booster", "collection", "market", "avatar"];
 
 /** Affiche l'écran demandé et met à jour l'onglet actif. */
 function showScreen(name) {
@@ -81,8 +82,11 @@ async function start() {
     });
     setupViewSwitch();
     // Collection et Atelier sont redessinés après chaque booster ou amélioration.
-    const refreshCards = () => { refreshCollection(); refreshAtelier(); };
+    let market = null; // Market (créé en dernier) : redessiné avec la collection
+    const refreshCards = () => { refreshCollection(); refreshAtelier(); market?.render(); };
     setupBooster({ catalogue, debug: DEBUG || BOOSTER.unlimited, onOpened: refreshCards });
+    // Market entre joueurs (simulation locale, sans serveur) : acheter, vendre, mes ventes.
+    market = setupMarket({ catalogue, onChange });
   } catch (err) {
     // Arrive surtout si on ouvre index.html en double-cliquant (file://) :
     // fetch() a besoin d'un serveur (GitHub Pages, ou python3 -m http.server).
