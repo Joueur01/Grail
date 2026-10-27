@@ -1,21 +1,18 @@
-// market.js — Market entre joueurs (SIMULATION locale : il n'y a pas encore de serveur).
+// market.js — Market entre joueurs (écran Acheter / Vendre / Mes ventes).
 //
-// Règles :
-//   - prix FIXES, pas d'enchères ;
-//   - pour une même carte (coloris + rareté), on ne montre que l'offre la MOINS CHÈRE :
-//     le nombre d'offres n'est jamais affiché ;
-//   - un joueur peut avoir 10 ventes en même temps (MARKET.maxListings) ;
-//   - une carte verrouillée ne peut pas être vendue.
-// En attendant le serveur, les offres des « autres joueurs » sont générées par le jeu
-// (graine fixe) et les acheteurs de tes ventes sont simulés. Les valeurs sont dans
-// economy-config.js (MARKET).
+// ⚠️ Le Market est géré par le SERVEUR : prix fixes, limite de 10 ventes, cartes verrouillées
+// non vendables, paiement du vendeur à l'achat… Ce fichier affiche les offres reçues
+// (market_best_offers : UNE seule offre par carte, la moins chère, jamais le nombre d'offres)
+// et envoie les actions (market_list / market_cancel / market_buy / market_ack_sales).
+// Aucune règle du Market n'est calculée ici ; les messages d'erreur viennent du serveur.
 
-import { RARITIES, getRarity, matchesSearch } from "./data.js?v=34";
-import { MARKET } from "./economy-config.js?v=34";
-import { getOwnedCards, getCoins, getMyListings, getSoldOffers, listCard, cancelListing, buyOffer, settleSales, cardKey } from "./inventory.js?v=34";
-import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=34";
-import { playSound, vibrate } from "./effects.js?v=34";
-import { flyCoins, showToast } from "./wallet.js?v=34";
+import { RARITIES, getRarity, matchesSearch } from "./data.js?v=35";
+import { MARKET } from "./economy-config.js?v=35";
+import { getOwnedCards, getCoins, getMyListings, refreshState } from "./inventory.js?v=35";
+import { getBestOffers, marketList, marketCancel, marketBuy, marketAckSales } from "./api.js?v=35";
+import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=35";
+import { playSound, vibrate } from "./effects.js?v=35";
+import { flyCoins, showToast, reportError } from "./wallet.js?v=35";
 
 const CATEGORIES = [
   { id: "haut", name: "Haut" },
@@ -24,43 +21,10 @@ const CATEGORIES = [
   { id: "accessoire", name: "Accessoire" },
 ];
 
-// --- Offres simulées des autres joueurs -------------------------------------------
-
-/** Petit générateur aléatoire à graine : mêmes offres à chaque lancement. */
-function seededRandom(seed) {
-  let a = seed | 0;
-  return () => {
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-/** Toutes les offres simulées : [{ id, colorwayId, rarity, price }]. */
-function mockOffers(catalogue) {
-  const rng = seededRandom(MARKET.mockSeed);
-  const [lo, hi] = MARKET.mockPriceSpread;
-  const offers = [];
-  for (const colorway of catalogue.colorways) {
-    for (const r of RARITIES) {
-      if (rng() >= (MARKET.mockCoverage[r.id] || 0)) continue;
-      const n = 1 + Math.floor(rng() * MARKET.mockOffersMax);
-      for (let i = 0; i < n; i++) {
-        const price = Math.max(MARKET.minPrice, Math.round(MARKET.referencePrice[r.id] * (lo + rng() * (hi - lo))));
-        offers.push({ id: `m:${cardKey(colorway.id, r.id)}:${i}`, colorwayId: colorway.id, rarity: r.id, price, mine: false });
-      }
-    }
-  }
-  return offers;
-}
-
-/** Chance (0 → 1) que ta vente soit « achetée », selon ton prix par rapport au prix de référence. */
-function saleChance(rarity, price) {
-  const ratio = price / MARKET.referencePrice[rarity];
-  return MARKET.simSaleChance.find(([max]) => ratio <= max)[1];
-}
-
+/**
+ * Branche l'écran Market. Renvoie { render } pour le redessiner quand la collection change.
+ * - onChange : appelé quand la collection ou les pièces ont changé (pour tout redessiner)
+ */
 export function setupMarket({ catalogue, onChange }) {
   const sheet = document.getElementById("card-sheet");
   const title = document.getElementById("card-sheet-title");
@@ -69,30 +33,37 @@ export function setupMarket({ catalogue, onChange }) {
 
   const rank = new Map(RARITIES.map((r, i) => [r.id, i]));
   const order = new Map(catalogue.colorways.map((c, i) => [c.id, i]));
-  const mocks = mockOffers(catalogue);
+  let offers = []; // meilleures offres reçues du serveur : { id, colorwayId, rarity, price, mine }
 
-  // --- Offres visibles : UNE seule par carte, la moins chère ---------------------
+  // --- Offres : UNE seule par carte (la moins chère), choisie par le serveur ------------
 
-  /** Map clé de carte → offre la moins chère { id, colorwayId, rarity, price, mine }. */
-  function bestOffers() {
-    const sold = getSoldOffers();
-    const best = new Map();
-    const consider = (offer) => {
-      const key = cardKey(offer.colorwayId, offer.rarity);
-      const current = best.get(key);
-      // À prix égal, une offre d'un autre joueur passe avant la tienne (tu peux l'acheter).
-      if (!current || offer.price < current.price || (offer.price === current.price && current.mine && !offer.mine)) best.set(key, offer);
-    };
-    for (const o of mocks) if (!sold.has(o.id)) consider(o);
-    for (const l of getMyListings()) consider({ id: l.id, colorwayId: l.colorwayId, rarity: l.rarity, price: l.price, mine: true });
-    return best;
+  /** Offre affichée pour une carte, ou undefined. */
+  const offerFor = (colorwayId, rarity) => offers.find((o) => o.colorwayId === colorwayId && o.rarity === rarity);
+
+  /** Relit les offres du serveur et redessine. */
+  async function loadOffers() {
+    try {
+      offers = (await getBestOffers()).map((o) => ({
+        id: o.id, colorwayId: o.colorway_id, rarity: o.rarity, price: o.price, mine: o.is_mine,
+      }));
+      renderBuy();
+    } catch (err) {
+      reportError(err);
+    }
   }
 
-  /** Meilleur prix pour une carte, sans compter mes propres ventes (null s'il n'y en a pas). */
-  function bestOtherPrice(colorwayId, rarity) {
-    const sold = getSoldOffers();
-    const prices = mocks.filter((o) => o.colorwayId === colorwayId && o.rarity === rarity && !sold.has(o.id)).map((o) => o.price);
-    return prices.length ? Math.min(...prices) : null;
+  /** Relit tout (collection, pièces, ventes, offres) après une action, et prévient le reste du jeu. */
+  async function reloadAll() {
+    try {
+      await refreshState({ booster: false });
+    } catch (err) {
+      reportError(err);
+    }
+    await loadOffers();
+    renderSell();
+    renderMine();
+    renderSummary();
+    onChange?.();
   }
 
   // --- Petits éléments d'interface -----------------------------------------------
@@ -170,7 +141,7 @@ export function setupMarket({ catalogue, onChange }) {
       rarity: (a, b) => (rank.get(b.rarity) - rank.get(a.rarity)) || (a.price - b.price),
       catalogue: (a, b) => order.get(a.colorwayId) - order.get(b.colorwayId),
     };
-    const offers = [...bestOffers().values()]
+    const visible = offers
       .filter((o) => {
         const cw = catalogue.colorwayById.get(o.colorwayId);
         return cw
@@ -180,7 +151,7 @@ export function setupMarket({ catalogue, onChange }) {
       })
       .sort((a, b) => (sorters[buySort.value] || sorters.price)(a, b) || (order.get(a.colorwayId) - order.get(b.colorwayId)));
 
-    buyGrid.replaceChildren(...offers.map((o) => {
+    buyGrid.replaceChildren(...visible.map((o) => {
       const el = gridCard(o.colorwayId, o.rarity, () => openOffer(o), `${o.price} pièces${o.mine ? ", ton offre" : ""}`);
       const badge = document.createElement("span");
       badge.className = o.mine ? "price-badge mine" : "price-badge";
@@ -194,7 +165,7 @@ export function setupMarket({ catalogue, onChange }) {
       }
       return el;
     }));
-    buyEmpty.hidden = offers.length > 0;
+    buyEmpty.hidden = visible.length > 0;
   }
 
   /** Fiche d'une offre : acheter, ou retirer si c'est la mienne. */
@@ -209,7 +180,7 @@ export function setupMarket({ catalogue, onChange }) {
 
     if (offer.mine) {
       actions.append(
-        button("Retirer mon offre", { primary: true, onClick: () => { cancelListing(offer.id); refresh(); close(); showToast("Offre retirée : la carte revient dans ta collection."); } }),
+        button("Retirer mon offre", { primary: true, onClick: () => cancelOffer(offer.id) }),
       );
       open(colorway.piece.name, bigCard(offer.colorwayId, offer.rarity), price, para("C'est ton offre : c'est la moins chère du market pour cette carte."), actions);
       return;
@@ -225,17 +196,38 @@ export function setupMarket({ catalogue, onChange }) {
       actions);
   }
 
-  function confirmBuy(offer) {
-    if (!buyOffer(offer)) { openOffer(offer); return; } // solde insuffisant ou offre déjà partie
-    playSound(offer.rarity);
+  /** Achète l'offre : le serveur vérifie le solde et le prix affiché (« Le prix a changé »). */
+  async function confirmBuy(offer) {
+    let bought;
+    try {
+      bought = await marketBuy(offer.id, offer.price);
+    } catch (err) {
+      reportError(err);       // « Le prix a changé », « Offre indisponible », « Il te manque N pièces »…
+      close();
+      await reloadAll();      // on repart d'offres et d'un solde à jour
+      return;
+    }
+    playSound(bought.rarity);
     vibrate([30]);
-    refresh();
+    await reloadAll();
     const actions = document.createElement("div");
     actions.className = "sheet-actions";
     actions.append(button("Super", { primary: true, onClick: close }));
-    const card = bigCard(offer.colorwayId, offer.rarity);
+    const card = bigCard(bought.colorway_id, bought.rarity);
     card.classList.add("upgrade-win");
-    open("Acheté !", para(`−${offer.price} pièces · la carte est dans ta collection.`, "sheet-subtitle"), card, actions);
+    open("Acheté !", para(`−${bought.price} pièces · la carte est dans ta collection.`, "sheet-subtitle"), card, actions);
+  }
+
+  /** Retire une de mes ventes : la carte revient dans la collection. */
+  async function cancelOffer(id) {
+    try {
+      await marketCancel(id);
+      showToast("Offre retirée : la carte revient dans ta collection.");
+    } catch (err) {
+      reportError(err);
+    }
+    close();
+    await reloadAll();
   }
 
   // --- 2. Vendre --------------------------------------------------------------------
@@ -284,15 +276,17 @@ export function setupMarket({ catalogue, onChange }) {
   function openSell(card) {
     const { colorwayId, rarity } = card;
     const colorway = catalogue.colorwayById.get(colorwayId);
-    const other = bestOtherPrice(colorwayId, rarity);
-    const advised = other ?? MARKET.referencePrice[rarity];
+    // Offre la moins chère du market pour cette carte (peut être la mienne), ou null s'il n'y en a pas.
+    const best = offerFor(colorwayId, rarity);
+    const other = best ? best.price : null;
+    const advised = other ?? MARKET.referencePrice[rarity]; // prix de référence : affichage seulement
     let price = advised;
     const used = getMyListings().length;
     const full = used >= MARKET.maxListings;
 
     const info = para(other === null
       ? `Personne ne vend cette carte pour l'instant. Prix conseillé : ${advised} pièces.`
-      : `Offre la moins chère du market : ${other} pièces.`);
+      : `Offre la moins chère du market : ${other} pièces${best.mine ? " (c'est la tienne)" : ""}.`);
 
     // Prix : − / champ / +
     const input = document.createElement("input");
@@ -342,17 +336,24 @@ export function setupMarket({ catalogue, onChange }) {
       refreshButton();
     }
 
-    function sell() {
-      if (full || !valid()) return;
-      // Simulation : cette vente sera-t-elle « achetée » ? Et quand ? (décidé une fois pour toutes ici)
-      const [min, max] = MARKET.simSaleDelayMs;
-      const sellAt = Math.random() < saleChance(rarity, price) ? Date.now() + min + Math.random() * (max - min) : null;
-      if (!listCard(colorwayId, rarity, price, sellAt)) { close(); refresh(); return; }
+    /** Envoie la mise en vente : le serveur vérifie le prix, la limite et le verrou, et retire la carte. */
+    async function sell() {
+      if (full || !valid() || confirm.disabled && confirm.dataset.busy) return;
+      confirm.dataset.busy = "1";
+      confirm.disabled = true; // pas de double envoi
+      try {
+        await marketList(colorwayId, rarity, price);
+      } catch (err) {
+        reportError(err); // « Limite de 10 ventes atteinte », « Carte verrouillée », « Prix invalide »…
+        close();
+        await reloadAll();
+        return;
+      }
       playSound("flip");
       vibrate([20]);
       close();
-      refresh();
       showToast(`En vente : ${colorway.piece.name} · ${price} pièces`);
+      await reloadAll();
     }
 
     open("Vendre", bigCard(colorwayId, rarity), info, row, quick, limit, confirm);
@@ -365,7 +366,9 @@ export function setupMarket({ catalogue, onChange }) {
   const mineEmpty = document.getElementById("market-mine-empty");
 
   function renderMine() {
-    const listings = getMyListings().sort((a, b) => b.listedAt - a.listedAt);
+    const listings = getMyListings()
+      .map((l) => ({ id: l.id, colorwayId: l.colorway_id, rarity: l.rarity, price: l.price, listedAt: l.created_at }))
+      .sort((a, b) => String(b.listedAt).localeCompare(String(a.listedAt)));
     mineList.replaceChildren(...listings.map((l) => {
       const colorway = catalogue.colorwayById.get(l.colorwayId);
       const row = document.createElement("div");
@@ -395,7 +398,7 @@ export function setupMarket({ catalogue, onChange }) {
       remove.className = "market-row-remove";
       remove.textContent = "Retirer";
       remove.setAttribute("aria-label", `Retirer l'offre : ${colorway.piece.name}`);
-      remove.addEventListener("click", () => { cancelListing(l.id); refresh(); });
+      remove.addEventListener("click", () => cancelOffer(l.id));
       row.append(tile, info, price, remove);
       return row;
     }));
@@ -409,22 +412,20 @@ export function setupMarket({ catalogue, onChange }) {
     summary.textContent = `Ventes en cours : ${n} / ${MARKET.maxListings}`;
   }
 
-  /** Redessine les trois vues et prévient le reste du jeu (collection, Atelier, tenue). */
-  function refresh() {
-    renderBuy();
-    renderSell();
-    renderMine();
-    renderSummary();
-    onChange?.();
-  }
-
-  /** Encaisse les ventes simulées arrivées à échéance. */
-  function settle() {
-    const sold = settleSales(Date.now());
+  /** Demande au serveur les ventes terminées que je n'ai pas encore vues : notification « Vendu ! ». */
+  async function ackSales() {
+    let sold;
+    try {
+      sold = await marketAckSales();
+    } catch (err) {
+      console.warn("Market :", err);
+      return;
+    }
     if (!sold.length) return;
-    const total = sold.reduce((sum, s) => sum + s.price, 0);
-    refresh();
-    const first = catalogue.colorwayById.get(sold[0].colorwayId);
+    const total = sold.reduce((sum, x) => sum + x.price, 0);
+    const first = catalogue.colorwayById.get(sold[0].colorway_id);
+    // Les pièces sont déjà versées par le serveur (au moment de l'achat) : on relit le solde.
+    await reloadAll();
     showToast(sold.length === 1
       ? `Vendu : ${first.piece.name} · +${total} pièces`
       : `${sold.length} cartes vendues · +${total} pièces`);
@@ -432,13 +433,25 @@ export function setupMarket({ catalogue, onChange }) {
     flyCoins(summary, total);
   }
 
+  /** À l'arrivée sur l'écran Market (et régulièrement) : offres à jour + ventes terminées. */
+  async function sync() {
+    await loadOffers();
+    await ackSales();
+  }
+
   for (const el of [buySearch, buyRarity, buyType, buySort]) el.addEventListener(el === buySearch ? "input" : "change", renderBuy);
   for (const el of [sellSearch, sellRarity, sellType]) el.addEventListener(el === sellSearch ? "input" : "change", renderSell);
 
-  refresh();
-  settle();
-  setInterval(settle, 15000);
-  document.addEventListener("visibilitychange", () => { if (!document.hidden) settle(); });
+  renderBuy();
+  renderSell();
+  renderMine();
+  renderSummary();
+  sync();
+  // Les offres des autres joueurs changent : on les relit quand on revient sur l'écran Market,
+  // au retour sur l'onglet du navigateur et toutes les 30 secondes tant qu'il est affiché.
+  window.addEventListener("hashchange", () => { if (location.hash === "#market") sync(); });
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) sync(); });
+  setInterval(() => { if (!document.hidden && location.hash === "#market") sync(); }, 30000);
 
   /** Redessine les vues quand la collection a changé ailleurs (booster, défausse…). */
   return { render: () => { renderBuy(); renderSell(); renderMine(); renderSummary(); } };

@@ -1,4 +1,7 @@
-// booster.js — tirage des cartes, ouverture du paquet et révélation carte par carte.
+// booster.js — ouverture du paquet et révélation carte par carte.
+//
+// ⚠️ Le TIRAGE se fait sur le serveur (open_booster) : ce fichier ne décide d'aucune carte, il
+// affiche le résultat reçu, dans l'ordre de révélation donné par le serveur.
 //
 // Tout se fait en GLISSANT le doigt (ou la souris), comme avec un vrai booster :
 //   1. glisser sur le paquet le DÉCHIRE (un simple toucher ne l'ouvre pas) ;
@@ -12,14 +15,14 @@
 // Effets de révélation, du plus discret au plus fort : Rare (reflet + particules),
 // Épique (éclair violet, gerbe de particules, titre), Légendaire (plein écran).
 
-import { RARITIES, getRarity } from "./data.js?v=34";
-import { BOOSTER, DROP_RATES, PITY } from "./economy-config.js?v=34";
-import { addCards, getOwnedCards, cardKey, getPity, getPityEpic, setPity, isTutorialDone, setTutorialDone,
-  getBoosterState, takeBooster } from "./inventory.js?v=34";
-import { drawBooster, revealOrder } from "./distribution.js?v=34";
-import { createCardFace, createCardShell } from "./cards.js?v=34";
-import { playSound, vibrate, burst } from "./effects.js?v=34";
-import { attachGesture } from "./gestures.js?v=34";
+import { RARITIES, getRarity } from "./data.js?v=35";
+import { BOOSTER, DROP_RATES, PITY } from "./economy-config.js?v=35";
+import { getPity, getPityEpic, isTutorialDone, markTutorialDone, getBoosterState, refreshState } from "./inventory.js?v=35";
+import { openBooster } from "./api.js?v=35";
+import { reportError } from "./wallet.js?v=35";
+import { createCardFace, createCardShell } from "./cards.js?v=35";
+import { playSound, vibrate, burst } from "./effects.js?v=35";
+import { attachGesture } from "./gestures.js?v=35";
 
 // Durées (en millisecondes), faciles à ajuster.
 const TEAR_TIME = 550;    // la bande s'envole, le paquet descend
@@ -59,17 +62,15 @@ function formatDuration(ms) {
   return `${h}:${m}:${sec}`;
 }
 
-// Rareté minimale de la carte Signature (« Rare ou mieux »), lue dans la config.
+// Rareté minimale de la carte Signature (« Rare ou mieux »), pour l'AFFICHAGE (valeur du serveur).
 const SIGNATURE_MIN = RARITIES.find((r) => DROP_RATES.signatureLast[r.id] > 0);
 
 /**
  * Branche tout l'écran Booster.
- * - catalogue : résultat de loadCatalogue()
- * - debug : true = mode test : stock vide → on peut quand même ouvrir (?debug=1
- *   ou BOOSTER.unlimited dans la config)
- * - onOpened : appelé après chaque ouverture (pour rafraîchir la collection)
+ * - catalogue : résultat de loadCatalogue() (pour dessiner les cartes)
+ * - onOpened : appelé après chaque ouverture, une fois l'état relu (pour rafraîchir la collection)
  */
-export function setupBooster({ catalogue, debug, onOpened }) {
+export function setupBooster({ catalogue, onOpened }) {
   const closedView = document.getElementById("booster-closed");
   const openedView = document.getElementById("booster-opened");
   const pack = document.getElementById("btn-open-booster");
@@ -122,13 +123,13 @@ export function setupBooster({ catalogue, debug, onOpened }) {
     if (text) container.append(swipeHint(text));
   }
 
-  let packSource = null; // booster affiché sur le paquet : "free", "test" ou null
+  let packCanOpen = null; // le paquet affiché est-il ouvrable ? (pour savoir quand le redessiner)
 
-  // Met le paquet dans le bon état (disponible ou non, standard ou Signature).
+  // Met le paquet dans le bon état (disponible ou non, standard ou Signature), d'après le serveur.
   function refreshPack() {
-    const state = getBoosterState(Date.now(), debug);
-    const available = state.source !== null;
-    packSource = state.source;
+    const state = getBoosterState();
+    const available = state.canOpen;
+    packCanOpen = available;
     pack.disabled = !available;
     pack.dataset.locked = "0";
     pack.classList.remove("nudge", "torn", "dragging");
@@ -138,9 +139,7 @@ export function setupBooster({ catalogue, debug, onOpened }) {
     eyebrow.classList.toggle("signature", state.signature);
     status.textContent = !available
       ? "Plus de booster pour l'instant."
-      : state.source === "test"
-        ? "Mode test : stock vide, booster offert. Glisse pour le déchirer."
-        : "Glisse ton doigt sur le booster pour le déchirer.";
+      : "Glisse ton doigt sur le booster pour le déchirer.";
     // 1er booster : le doigt montre qu'il faut GLISSER sur le paquet (pas toucher).
     showTutorial(pack.querySelector(".pack-art"), available && !isTutorialDone() ? "Glisse pour déchirer" : "");
     renderStock(state);
@@ -148,7 +147,7 @@ export function setupBooster({ catalogue, debug, onOpened }) {
   }
 
   /** Stock gratuit (pastilles), minuteur, compteur Signature. */
-  function renderStock(state = getBoosterState(Date.now(), debug)) {
+  function renderStock(state = getBoosterState()) {
     stockPips.replaceChildren(...Array.from({ length: state.max }, (_, i) => {
       const pip = document.createElement("span");
       pip.className = i < state.stock ? "stock-pip full" : "stock-pip";
@@ -168,13 +167,25 @@ export function setupBooster({ catalogue, debug, onOpened }) {
     return state;
   }
 
-  // Minuteur : chaque seconde, on met à jour le stock ; si un booster vient d'arriver
-  // pendant que le paquet fermé est affiché (et pas en train d'être déchiré), on le rend disponible.
-  function tick() {
+  // Minuteur : chaque seconde on redessine le décompte (calculé depuis l'échéance donnée par le
+  // serveur). Quand il arrive à zéro, on redemande l'état au serveur : c'est lui qui ajoute le booster.
+  let refetching = false;
+  async function tick() {
     if (closedView.hidden || pack.dataset.locked === "1") return;
     const state = renderStock();
-    // Le booster à ouvrir a changé (arrivée d'un gratuit, fin du stock…) : on redessine le paquet.
-    if (state.source !== packSource || state.signature !== pack.classList.contains("signature")) refreshPack();
+    if (state.nextInMs === 0 && !refetching) {
+      refetching = true;
+      try {
+        await refreshState();
+        refreshPack();
+      } catch (err) {
+        console.warn("Minuteur :", err);
+        await new Promise((r) => setTimeout(r, 10000)); // serveur injoignable : on réessaie plus tard
+      } finally {
+        refetching = false;
+      }
+    }
+    if (state.canOpen !== packCanOpen) refreshPack();
   }
   setInterval(tick, 1000);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) tick(); });
@@ -222,39 +233,32 @@ export function setupBooster({ catalogue, debug, onOpened }) {
     },
   });
 
-  /** Tirage + sauvegarde immédiats, puis déchirure et première carte. */
-  function open() {
+  /** Demande le booster au serveur (tirage + sauvegarde chez lui), puis déchirure et première carte. */
+  async function open() {
     if (pack.disabled || pack.dataset.locked === "1") return;
     pack.dataset.locked = "1";
     tutorial = !isTutorialDone();
     showTutorial(pack.querySelector(".pack-art"), "");
+    status.textContent = "Ouverture…";
 
-    // Cartes déjà possédées AVANT ce booster (pour le badge « NOUVEAU »).
-    const owned = new Set(getOwnedCards().map((c) => cardKey(c.colorwayId, c.rarity)));
-    // Le booster est pris dans le stock AVANT le tirage.
-    const taken = takeBooster(Date.now(), debug);
-    if (!taken) {
+    let result;
+    try {
+      result = await openBooster();
+    } catch (err) {
+      // « Aucun booster disponible », connexion perdue… : on le dit, l'écran reste utilisable.
+      reportError(err);
       pack.dataset.locked = "0";
+      try { await refreshState(); } catch { /* sans importance */ }
       refreshPack();
       return;
     }
-    const result = drawBooster(catalogue.colorways, {
-      signature: taken.signature, pityLegendary: getPity(), pityEpic: getPityEpic(),
-    });
-    cards = result.cards.map((card) => {
-      const key = cardKey(card.colorwayId, card.rarity);
-      const isNew = !owned.has(key);
-      owned.add(key); // la même carte deux fois dans un booster : la 2e n'est pas « nouvelle »
-      return { ...card, isNew };
-    });
-    // La plus rare en dernier (et la carte Signature toujours en dernier) : le meilleur pour la fin.
-    cards = revealOrder(cards);
-
-    // Le tirage est SAUVEGARDÉ tout de suite, avant l'animation :
-    // recharger la page pendant la révélation ne permet pas de retirer.
-    addCards(cards);
-    setPity(result.pityLegendary, result.pityEpic); // compteurs remis à 0 si la rareté est sortie
-    onOpened?.();
+    // Les cartes arrivent déjà dans l'ordre de révélation (la plus rare en dernier, Signature en dernier).
+    cards = result.cards.map((c) => ({
+      colorwayId: c.colorway_id, rarity: c.rarity, forced: c.forced, signature: c.signature, isNew: c.is_new,
+    }));
+    // Le tirage est déjà enregistré par le serveur : recharger la page ne permet pas de retirer.
+    // On relit l'état (collection, stock, pity) pendant l'animation.
+    refreshState().then(() => onOpened?.()).catch(reportError);
 
     playSound("tear");
     vibrate([15]);
@@ -466,7 +470,7 @@ export function setupBooster({ catalogue, debug, onOpened }) {
     current = null;
     // 1er booster terminé : le tuto ne s'affichera plus.
     if (tutorial) {
-      setTutorialDone();
+      markTutorialDone().catch(() => {}); // pas grave si ça échoue : le tuto reviendra
       tutorial = false;
     }
     stage.replaceChildren();

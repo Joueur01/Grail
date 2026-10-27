@@ -1,31 +1,20 @@
 // wallet.js — affichage du solde de pièces (en haut de toutes les pages),
 // bonus de connexion quotidien et petite notification.
 //
-// Le solde lui-même et la fonction changeCoins() sont dans inventory.js
-// (c'est lui qui possède la sauvegarde) ; les montants viennent de economy-config.js.
+// Le solde vient du SERVEUR (lu via inventory.js) ; ce fichier ne fait que l'afficher.
+// Le bonus quotidien est décidé et versé par le serveur (claim_daily_bonus).
 
-import { COINS } from "./economy-config.js?v=34";
-import { getCoins, onCoinsChange, getLastDailyBonus, claimDailyBonus } from "./inventory.js?v=34";
-
-/** Jour calendaire AAAA-MM-JJ dans le fuseau du bonus (heure de Paris). */
-function todayForBonus() {
-  try {
-    // La locale « en-CA » écrit la date au format AAAA-MM-JJ.
-    return new Intl.DateTimeFormat("en-CA", {
-      timeZone: COINS.dailyBonusTimeZone, year: "numeric", month: "2-digit", day: "2-digit",
-    }).format(new Date());
-  } catch {
-    return new Date().toISOString().slice(0, 10); // fuseau inconnu : jour UTC, mieux que rien
-  }
-}
+import { getCoins, onCoinsChange, refreshState } from "./inventory.js?v=35";
+import { claimDailyBonus } from "./api.js?v=35";
 
 let toastTimer = null;
 
 /** Notification discrète sous l'en-tête, qui disparaît seule. */
-export function showToast(text) {
+export function showToast(text, { error = false } = {}) {
   const toast = document.getElementById("toast");
   if (!toast) return;
   toast.textContent = text;
+  toast.classList.toggle("error", error);
   toast.hidden = false;
   toast.classList.remove("show");
   void toast.offsetWidth; // relance l'animation
@@ -34,12 +23,22 @@ export function showToast(text) {
   toastTimer = setTimeout(() => { toast.hidden = true; toast.classList.remove("show"); }, 3600);
 }
 
-/** Verse le bonus du jour s'il n'a pas encore été pris (une fois par jour à Paris). */
-function checkDailyBonus() {
-  const today = todayForBonus();
-  if (getLastDailyBonus() === today) return;
-  if (claimDailyBonus(today, COINS.dailyLoginBonus)) {
-    showToast(`+${COINS.dailyLoginBonus} pièces · bonus du jour`);
+/** Affiche un message d'erreur lisible (celui du serveur, en français) sans casser l'écran. */
+export function reportError(err) {
+  console.error(err);
+  showToast(err?.message || "Une erreur est survenue. Réessaie dans un instant.", { error: true });
+}
+
+/** Demande le bonus du jour au serveur (une fois par jour à Paris : il renvoie 0 s'il est déjà pris). */
+async function checkDailyBonus() {
+  try {
+    const gained = await claimDailyBonus();
+    if (gained > 0) {
+      showToast(`+${gained} pièces · bonus du jour`);
+      await refreshState({ booster: false }); // le solde change : l'animation du solde se déclenche
+    }
+  } catch (err) {
+    console.warn("Bonus quotidien :", err);
   }
 }
 

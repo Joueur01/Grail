@@ -1,5 +1,8 @@
 // upgrade.js — fiche d'une carte (depuis la Collection) et amélioration par la roue.
 //
+// ⚠️ La roue est TIRÉE PAR LE SERVEUR (upgrade_cards) : ce fichier envoie la mise, puis affiche
+// le résultat reçu (réussite, chance, position de la roue, carte obtenue). Les règles ci-dessous
+// sont appliquées par le serveur ; le front n'en garde que l'affichage (chance annoncée).
 // Règles (section 6 du CLAUDE.md) :
 //   - on mise de 1 à 5 cartes du MÊME modèle et de la MÊME rareté (coloris libres) ;
 //   - chaque carte misée = 20 % de réussite (5 cartes = 100 %) ;
@@ -9,15 +12,17 @@
 //   - les cartes misées sont perdues dans tous les cas ; une Légendaire ne s'améliore pas.
 // La défausse est dans discard.js (le bouton de la fiche l'ouvre).
 
-import { RARITIES, getRarity } from "./data.js?v=34";
-import { UPGRADE, DISCARD_VALUES } from "./economy-config.js?v=34";
-import { getOwnedCards, addCards, removeCards, countCard, isLocked, setLocked } from "./inventory.js?v=34";
-import { createCardFace, createCardShell } from "./cards.js?v=34";
-import { playSound, vibrate, burst } from "./effects.js?v=34";
+import { RARITIES, getRarity } from "./data.js?v=35";
+import { UPGRADE, DISCARD_VALUES } from "./economy-config.js?v=35";
+import { getOwnedCards, countCard, isLocked, setLocked, refreshState } from "./inventory.js?v=35";
+import { upgradeCards } from "./api.js?v=35";
+import { reportError } from "./wallet.js?v=35";
+import { createCardFace, createCardShell } from "./cards.js?v=35";
+import { playSound, vibrate, burst } from "./effects.js?v=35";
 
 const SPIN_TIME = 3200; // durée de la roue (identique au CSS)
 
-// --- Règles (sans affichage : faciles à tester) -----------------------------
+// --- Aides d'affichage -------------------------------------------------------
 
 /** Rareté juste au-dessus, ou null pour une Légendaire. */
 export function nextRarity(rarityId) {
@@ -25,28 +30,9 @@ export function nextRarity(rarityId) {
   return i >= 0 && i < RARITIES.length - 1 ? RARITIES[i + 1].id : null;
 }
 
-/** Chance de réussite (en %) pour un nombre de cartes misées. */
+/** Chance de réussite ANNONCÉE (en %) pour un nombre de cartes misées : la vraie est calculée par le serveur. */
 export function upgradeChance(count) {
   return Math.min(UPGRADE.maxChance, count * UPGRADE.chancePerCard);
-}
-
-/**
- * Résout une amélioration.
- * - piece : la pièce du catalogue (avec ses colorways)
- * - rarity : rareté des cartes misées
- * - stake : liste des coloris misés, un élément par carte (ex. ["id_a", "id_a", "id_b"])
- * Renvoie { success, roll, result } — result = { colorwayId, rarity } si réussite.
- * roll (0 → 100) sert aussi à placer la roue là où le tirage est tombé.
- */
-export function resolveUpgrade(piece, rarity, stake) {
-  const chance = upgradeChance(stake.length);
-  const roll = Math.random() * 100;
-  if (roll >= chance) return { success: false, roll, result: null };
-  const sameColorway = stake.every((id) => id === stake[0]);
-  const colorwayId = sameColorway
-    ? stake[0]
-    : piece.colorways[Math.floor(Math.random() * piece.colorways.length)].id;
-  return { success: true, roll, result: { colorwayId, rarity: nextRarity(rarity) } };
 }
 
 // --- Affichage --------------------------------------------------------------
@@ -116,7 +102,13 @@ export function setupUpgrade({ catalogue, onChange, onDiscard }) {
         : button("Rareté maximale", { primary: true, disabled: true }),
       // Verrou : une carte verrouillée n'est jamais proposée à l'amélioration.
       button(locked ? "Déverrouiller" : "Verrouiller", {
-        onClick: () => { setLocked(colorwayId, rarity, !locked); onChange?.(); openCard({ colorwayId, rarity }); },
+        onClick: async () => {
+          try {
+            await setLocked(colorwayId, rarity, !locked);
+            onChange?.();
+            openCard({ colorwayId, rarity });
+          } catch (err) { reportError(err); }
+        },
       }),
       // Défausse : plusieurs cartes d'un coup (discard.js) ; impossible si la carte est verrouillée.
       locked
@@ -239,16 +231,36 @@ export function setupUpgrade({ catalogue, onChange, onDiscard }) {
       }));
     }
 
-    function spin() {
+    async function spin() {
       if (spinning || stake.length < UPGRADE.minCards) return;
       spinning = true;
+      spinBtn.disabled = true;
       render();
-      const outcome = resolveUpgrade(piece, rarity, stake);
-      const spent = stake.map((colorwayId) => ({ colorwayId, rarity }));
+      // La mise part au serveur sous la forme { "coloris": nombre } ; c'est lui qui tire.
+      const counts = {};
+      for (const id of stake) counts[id] = (counts[id] || 0) + 1;
+      const spent = stake.length;
+
+      let reply;
+      try {
+        reply = await upgradeCards(rarity, counts);
+      } catch (err) {
+        // « Carte verrouillée », cartes en moins… : on le dit et on rouvre l'écran avec l'état à jour.
+        spinning = false;
+        reportError(err);
+        try { await refreshState(); } catch { /* sans importance */ }
+        onChange?.();
+        openUpgrade(piece, rarity, null, true);
+        return;
+      }
+      const outcome = {
+        success: reply.success, chance: reply.chance, roll: reply.roll,
+        result: reply.result ? { colorwayId: reply.result.colorway_id, rarity: reply.result.rarity, isNew: reply.result.is_new } : null,
+      };
 
       // La part colorée va de 0° à chance × 3,6° (sens horaire, depuis le haut).
       // On fait tourner la roue pour que la flèche (en haut) tombe sur l'angle
-      // correspondant au tirage : dans la part colorée si réussite, sinon dans le gris.
+      // du tirage reçu : dans la part colorée si réussite, sinon dans le gris.
       const landing = outcome.roll * 3.6;
       const current = ((wheelTurn % 360) + 360) % 360;
       wheelTurn += 360 * 5 + ((360 - landing - current + 720) % 360);
@@ -257,15 +269,15 @@ export function setupUpgrade({ catalogue, onChange, onDiscard }) {
       // Petits « clics » qui ralentissent avec la roue
       for (let i = 0; i < 18; i++) setTimeout(() => playSound("tick"), SPIN_TIME * (1 - Math.pow(1 - i / 18, 1.8)));
 
-      // La collection est mise à jour TOUT DE SUITE (recharger ne permet pas de rejouer).
-      removeCards(spent);
-      if (outcome.success) addCards([outcome.result]);
-      onChange?.();
+      // Le serveur a déjà tout enregistré : recharger la page ne permet pas de rejouer.
+      // On relit la collection pendant que la roue tourne.
+      const refreshed = refreshState({ booster: false }).then(() => onChange?.()).catch(reportError);
 
-      setTimeout(() => {
+      setTimeout(async () => {
+        await refreshed;
         spinning = false;
         wheel.classList.remove("spinning");
-        showResult(outcome, piece, rarity, spent.length);
+        showResult(outcome, piece, rarity, spent);
       }, SPIN_TIME + 250);
     }
 

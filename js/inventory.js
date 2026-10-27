@@ -1,388 +1,155 @@
-// inventory.js — collection du joueur, sauvegarde localStorage, écran Collection
-// et tenue équipée.
+// inventory.js — état du joueur (copie LOCALE de ce que dit le serveur) et écran Collection.
 //
-// Format de sauvegarde (version 1) :
-// {
-//   version: 1,
-//   cards: { "<colorwayId>|<rarete>": nombreExemplaires, ... },
-//   equipped: { tete: "<colorwayId>|<rarete>", haut: ..., ... },
-//   locked: { "<colorwayId>|<rarete>": true },  // cartes verrouillées (jamais proposées à l'amélioration)
-//   boosterStock: 3,       // boosters gratuits en stock (0 → BOOSTER.maxStock)
-//   stockUpdatedAt: 1730000000000, // début de la recharge en cours (ms, heure réelle)
-//   freeOpened: 0,         // boosters gratuits ouverts depuis le début (compteur Signature)
-//   coins: 0,              // solde de pièces (entier ≥ 0)
-//   lastDailyBonus: "AAAA-MM-JJ" | null,  // dernier jour (heure de Paris) du bonus de connexion
-//   market: { listings: [...], sold: {...}, nextId: 1 },  // ventes du joueur + offres simulées déjà achetées
-//   pity: 0,      // boosters ouverts d'affilée sans Légendaire (jauge « Légendaire garantie »)
-//   pityEpic: 0,  // boosters ouverts d'affilée sans Épique ou mieux
-//   tutorialDone: false  // true après le 1er booster (tuto « glisse, ne touche pas »)
-// }
-// Si le format change un jour, on crée "grail_save_v2" et on migre depuis v1.
+// ⚠️ Le serveur (Supabase) est la source de vérité. Ce fichier ne fait que :
+//   - LIRE le profil, l'inventaire et les ventes du joueur (refreshState) ;
+//   - les garder en mémoire pour que l'affichage soit instantané ;
+//   - relayer les actions simples (verrou, tenue) vers le serveur, puis relire l'état.
+// Il ne calcule rien d'important : pas de tirage, de gain ni de règle de jeu.
 
-import { RARITIES, matchesSearch, getRarity } from "./data.js?v=34";
-import { BOOSTER, COINS, DISCARD_VALUES, MARKET } from "./economy-config.js?v=34";
-import { refillStock, msUntilNextBooster, isSignatureNext, freeUntilSignature } from "./distribution.js?v=34";
-import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=34";
+import { RARITIES, matchesSearch, getRarity } from "./data.js?v=35";
+import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=35";
+import * as api from "./api.js?v=35";
 
-const SAVE_KEY = "grail_save_v1";
+// --- État en mémoire (rempli par refreshState) ---
 
-function emptySave() {
-  return { version: 1, cards: {}, equipped: {}, locked: {},
-    boosterStock: BOOSTER.startStock, stockUpdatedAt: null, freeOpened: 0,
-    market: { listings: [], sold: {}, nextId: 1 }, coins: COINS.startBalance, lastDailyBonus: null, pity: 0, pityEpic: 0, tutorialDone: false };
-}
-
-// Sauvegarde en mémoire : c'est elle qu'on lit/modifie, puis on persiste.
-let save = emptySave();
-
-/** Lit la sauvegarde. Si rien n'existe ou si le stockage est bloqué, on part à vide. */
-export function loadSave() {
-  try {
-    const text = localStorage.getItem(SAVE_KEY);
-    if (text) {
-      const data = JSON.parse(text);
-      // On complète avec les valeurs par défaut au cas où un champ manque.
-      save = { ...emptySave(), ...data };
-      // Ancien système (1 booster par jour) : remplacé par le stock qui se recharge.
-      delete save.lastFreeBooster;
-      delete save.freeBoostersUsed;
-    }
-  } catch (err) {
-    // Navigation privée, stockage plein, JSON corrompu… le jeu continue quand même.
-    console.warn("Sauvegarde illisible, on repart de zéro :", err);
-    save = emptySave();
-  }
-  return save;
-}
-
-/** Écrit la sauvegarde. Un échec n'empêche pas de jouer (juste pas de persistance). */
-export function persist() {
-  try {
-    localStorage.setItem(SAVE_KEY, JSON.stringify(save));
-    return true;
-  } catch (err) {
-    console.warn("Impossible d'enregistrer la sauvegarde :", err);
-    return false;
-  }
-}
+const state = {
+  profile: null,                 // ligne « profiles » du joueur
+  cards: new Map(),              // "coloris|rareté" → { colorwayId, rarity, count, locked }
+  listings: [],                  // mes ventes en cours
+  booster: null,                 // dernier get_booster_state() + échéance du minuteur
+};
+const coinListeners = [];
 
 /** Clé unique d'une carte : un coloris + une rareté. */
 export function cardKey(colorwayId, rarityId) {
   return `${colorwayId}|${rarityId}`;
 }
 
-/** Ajoute des cartes [{ colorwayId, rarity }] à la collection et sauvegarde. */
-export function addCards(cards) {
-  for (const { colorwayId, rarity } of cards) {
-    const key = cardKey(colorwayId, rarity);
-    save.cards[key] = (save.cards[key] || 0) + 1;
+/** L'ancienne sauvegarde du navigateur n'est plus utilisée : on la supprime. */
+export function clearLocalSave() {
+  try {
+    localStorage.removeItem("grail_save_v1");
+  } catch {
+    // stockage indisponible : sans importance
   }
-  persist();
 }
 
-/** Retire des cartes (une par élément) SANS sauvegarder : les fonctions publiques s'en chargent. */
-function takeAway(cards) {
-  for (const { colorwayId, rarity } of cards) {
-    const key = cardKey(colorwayId, rarity);
-    if (!save.cards[key]) continue;
-    save.cards[key] -= 1;
-    if (save.cards[key] <= 0) {
-      delete save.cards[key];
-      delete save.locked[key]; // plus d'exemplaire : le verrou disparaît aussi
-      for (const [slot, worn] of Object.entries(save.equipped)) {
-        if (worn === key) delete save.equipped[slot];
-      }
+let queue = Promise.resolve();
+
+/**
+ * Relit le profil, l'inventaire, mes ventes (et l'état des boosters) depuis le serveur.
+ * Les appels s'enchaînent : une relecture demandée après une action voit toujours cette action.
+ * - booster : false pour sauter get_booster_state (si on n'a pas besoin du stock)
+ */
+export function refreshState({ booster = true } = {}) {
+  const run = async () => {
+    const [profile, inventory, listings, boosterState] = await Promise.all([
+      api.getProfile(), api.getInventory(), api.getMyListings(), booster ? api.getBoosterState() : null,
+    ]);
+    if (!profile) throw new api.ApiError("Profil introuvable. Reconnecte-toi.");
+    const before = state.profile ? state.profile.coins : null;
+    state.profile = profile;
+    state.cards = new Map(inventory.map((r) => [cardKey(r.colorway_id, r.rarity),
+      { colorwayId: r.colorway_id, rarity: r.rarity, count: r.count, locked: r.locked }]));
+    state.listings = listings;
+    if (boosterState) {
+      // Le minuteur est calculé à partir d'une échéance : il continue de défiler sans rappeler le serveur.
+      const next = boosterState.next_in_seconds;
+      state.booster = { ...boosterState, deadline: next === null || next === undefined ? null : Date.now() + next * 1000 };
     }
-  }
+    if (before !== null && profile.coins !== before) for (const fn of coinListeners) fn(profile.coins);
+  };
+  const result = queue.then(run);
+  queue = result.catch(() => {}); // une erreur ne bloque pas les relectures suivantes
+  return result;
 }
 
-/**
- * Retire des cartes de la collection (une par élément de la liste).
- * Si le dernier exemplaire d'une carte portée disparaît, elle quitte la tenue.
- */
-export function removeCards(cards) {
-  takeAway(cards);
-  persist();
-}
+// --- Lectures (instantanées : elles lisent la copie en mémoire) ---
 
-/**
- * Défausse des cartes [{ colorwayId, rarity }, …] (une par élément) contre des pièces
- * (DISCARD_VALUES). Tout ou rien : renvoie le nombre de pièces gagnées, ou null si
- * une carte est verrouillée, absente, ou demandée en trop d'exemplaires.
- * Cartes et pièces sont enregistrées ensemble, en une seule sauvegarde.
- */
-export function discardCards(cards) {
-  if (!cards.length) return null;
-  const wanted = {};
-  let coins = 0;
-  for (const { colorwayId, rarity } of cards) {
-    const key = cardKey(colorwayId, rarity);
-    wanted[key] = (wanted[key] || 0) + 1;
-    if (save.locked?.[key] === true || (save.cards[key] || 0) < wanted[key]) return null;
-    coins += DISCARD_VALUES[rarity] || 0;
-  }
-  takeAway(cards);
-  changeCoins(coins); // enregistre les cartes retirées en même temps que le solde
-  return coins;
+/** Liste des cartes possédées : [{ colorwayId, rarity, count, locked }, ...]. */
+export function getOwnedCards() {
+  return [...state.cards.values()].map((c) => ({ ...c }));
 }
 
 /** Nombre d'exemplaires possédés d'une carte (0 si aucun). */
 export function countCard(colorwayId, rarity) {
-  return save.cards[cardKey(colorwayId, rarity)] || 0;
+  return state.cards.get(cardKey(colorwayId, rarity))?.count || 0;
 }
 
-// --- Verrouillage : une carte verrouillée n'est jamais proposée à l'amélioration ---
-
-/** true si la carte (tous ses exemplaires) est verrouillée. */
 export function isLocked(colorwayId, rarity) {
-  return save.locked?.[cardKey(colorwayId, rarity)] === true;
+  return state.cards.get(cardKey(colorwayId, rarity))?.locked === true;
 }
 
-/** Verrouille ou déverrouille une carte, et sauvegarde. */
-export function setLocked(colorwayId, rarity, locked) {
-  save.locked = save.locked || {};
-  const key = cardKey(colorwayId, rarity);
-  if (locked) save.locked[key] = true;
-  else delete save.locked[key];
-  persist();
-}
-
-// --- Tenue équipée (une carte par emplacement) ---
-
-/** Carte équipée sur un emplacement ("tete", "haut"…) : { colorwayId, rarity } ou null. */
-export function getEquipped(slot) {
-  const key = save.equipped[slot];
-  // On ne garde que les cartes réellement possédées (sauvegarde abîmée, etc.).
-  if (!key || !save.cards[key]) return null;
-  const [colorwayId, rarity] = key.split("|");
-  return { colorwayId, rarity };
-}
-
-/** Équipe une carte sur un emplacement, ou vide l'emplacement si card = null. */
-export function equip(slot, card) {
-  if (card) save.equipped[slot] = cardKey(card.colorwayId, card.rarity);
-  else delete save.equipped[slot];
-  persist();
-}
-
-// --- Jauge « Légendaire garantie » (pity) ---
-
-/** Nombre de boosters ouverts d'affilée sans Légendaire. */
-export function getPity() {
-  return Number.isInteger(save.pity) ? save.pity : 0; // sauvegarde ancienne ou abîmée : 0
-}
-
-/** Nombre de boosters ouverts d'affilée sans Épique ou mieux. */
-export function getPityEpic() {
-  return Number.isInteger(save.pityEpic) ? save.pityEpic : 0;
-}
-
-/** Enregistre les deux compteurs de pity après un booster. */
-export function setPity(legendary, epic) {
-  save.pity = legendary;
-  save.pityEpic = epic;
-  persist();
-}
-
-// --- Tutoriel du 1er booster ---
-
-/** true si le joueur a déjà terminé un booster (le tuto ne s'affiche plus). */
-export function isTutorialDone() {
-  return save.tutorialDone === true;
-}
-
-export function setTutorialDone() {
-  save.tutorialDone = true;
-  persist();
-}
-
-// --- Boosters : stock gratuit qui se recharge, Signature ---
-// Les règles (calcul du stock, Signature) sont dans distribution.js ; ici on ne
-// fait que lire et écrire la sauvegarde.
-
-/** Stock gratuit mis à jour à l'heure réelle (et sauvegardé s'il a changé). */
-function currentStock(now) {
-  const next = refillStock({ stock: save.boosterStock, updatedAt: save.stockUpdatedAt }, now);
-  if (next.stock !== save.boosterStock || next.updatedAt !== save.stockUpdatedAt) {
-    save.boosterStock = next.stock;
-    save.stockUpdatedAt = next.updatedAt;
-    persist();
-  }
-  return next;
-}
-
-function freeOpenedCount() {
-  return Number.isInteger(save.freeOpened) && save.freeOpened > 0 ? save.freeOpened : 0;
-}
-
-/**
- * État des boosters à l'instant `now` :
- * { stock, max, nextInMs, source, signature, untilSignature }
- * - source : booster qui serait ouvert maintenant — "free" (stock), "test"
- *   (stock vide mais mode test) ou null (rien à ouvrir)
- * - signature : true si ce booster-là est un Signature
- * - untilSignature : boosters GRATUITS avant le prochain Signature (1 = le prochain)
- */
-export function getBoosterState(now = Date.now(), testMode = false) {
-  const stock = currentStock(now);
-  const source = stock.stock > 0 ? "free" : testMode ? "test" : null;
-  return {
-    stock: stock.stock,
-    max: BOOSTER.maxStock,
-    nextInMs: msUntilNextBooster(stock, now),
-    source,
-    signature: source !== null && isSignatureNext(freeOpenedCount()),
-    untilSignature: freeUntilSignature(freeOpenedCount()),
-  };
-}
-
-/**
- * Prend le booster à ouvrir dans le stock gratuit (ou le booster « test »).
- * Renvoie { source, signature } ou null s'il n'y a rien à ouvrir.
- */
-export function takeBooster(now = Date.now(), testMode = false) {
-  const state = getBoosterState(now, testMode);
-  if (!state.source) return null;
-  if (state.source === "free") {
-    // Stock plein : le minuteur était arrêté, il démarre maintenant.
-    if (save.boosterStock >= BOOSTER.maxStock) save.stockUpdatedAt = now;
-    save.boosterStock -= 1;
-  }
-  save.freeOpened = freeOpenedCount() + 1;
-  persist();
-  return { source: state.source, signature: state.signature };
-}
-
-// --- Market (simulation locale : pas de serveur) ---
-
-function marketState() {
-  if (!save.market || typeof save.market !== "object") save.market = {};
-  const m = save.market;
-  if (!Array.isArray(m.listings)) m.listings = [];
-  if (!m.sold || typeof m.sold !== "object") m.sold = {};
-  if (!Number.isInteger(m.nextId)) m.nextId = 1;
-  return m;
-}
-
-/** Mes ventes en cours : [{ id, colorwayId, rarity, price, listedAt, sellAt }]. */
-export function getMyListings() {
-  return marketState().listings.map((l) => ({ ...l }));
-}
-
-/** Identifiants des offres simulées déjà achetées. */
-export function getSoldOffers() {
-  return new Set(Object.keys(marketState().sold));
-}
-
-/**
- * Met une carte en vente (1 exemplaire, prix fixe). La carte quitte la collection
- * jusqu'à la vente ou jusqu'au retrait. Renvoie la vente créée, ou null si c'est
- * refusé : prix invalide, limite atteinte, carte absente ou verrouillée.
- */
-export function listCard(colorwayId, rarity, price, sellAt = null) {
-  const m = marketState();
-  const key = cardKey(colorwayId, rarity);
-  if (!Number.isInteger(price) || price < MARKET.minPrice || price > MARKET.maxPrice) return null;
-  if (m.listings.length >= MARKET.maxListings) return null;
-  if (!save.cards[key] || save.locked?.[key] === true) return null;
-  takeAway([{ colorwayId, rarity }]);
-  const listing = { id: `p${m.nextId++}`, colorwayId, rarity, price, listedAt: Date.now(), sellAt };
-  m.listings.push(listing);
-  persist();
-  return listing;
-}
-
-/** Retire une vente : la carte revient dans la collection. */
-export function cancelListing(id) {
-  const m = marketState();
-  const i = m.listings.findIndex((l) => l.id === id);
-  if (i < 0) return false;
-  const [l] = m.listings.splice(i, 1);
-  const key = cardKey(l.colorwayId, l.rarity);
-  save.cards[key] = (save.cards[key] || 0) + 1;
-  persist();
-  return true;
-}
-
-/**
- * Achète une offre simulée { id, colorwayId, rarity, price }. Refuse (false) si le
- * solde est insuffisant. Carte, offre vendue et pièces sont enregistrées ensemble.
- */
-export function buyOffer({ id, colorwayId, rarity, price }) {
-  const m = marketState();
-  const key = cardKey(colorwayId, rarity);
-  if (m.sold[id]) return false;
-  const before = save.cards[key];
-  save.cards[key] = (before || 0) + 1;
-  m.sold[id] = true;
-  if (changeCoins(-price)) return true; // enregistre tout en même temps que le solde
-  if (before) save.cards[key] = before; else delete save.cards[key];
-  delete m.sold[id];
-  return false;
-}
-
-/**
- * Encaisse les ventes dont l'heure est passée (acheteurs simulés).
- * Renvoie [{ colorwayId, rarity, price }] des cartes vendues.
- */
-export function settleSales(now = Date.now()) {
-  const m = marketState();
-  const done = m.listings.filter((l) => l.sellAt && l.sellAt <= now);
-  if (!done.length) return [];
-  m.listings = m.listings.filter((l) => !done.includes(l));
-  changeCoins(done.reduce((sum, l) => sum + l.price, 0)); // enregistre aussi le retrait des ventes
-  return done.map(({ colorwayId, rarity, price }) => ({ colorwayId, rarity, price }));
-}
-
-// --- Pièces (monnaie du jeu) ---
-
-const coinListeners = [];
-
-/** Solde actuel (toujours un entier ≥ 0, même si la sauvegarde est abîmée). */
+/** Solde de pièces. */
 export function getCoins() {
-  return Number.isInteger(save.coins) && save.coins > 0 ? save.coins : 0;
+  return state.profile?.coins ?? 0;
 }
 
-/** Appelle fn(solde) à chaque changement du solde (sert à l'affichage). */
+/** Appelle fn(solde) quand le solde change après une relecture (sert à l'animation du solde). */
 export function onCoinsChange(fn) {
   coinListeners.push(fn);
 }
 
-/**
- * LA fonction centrale pour ajouter (delta > 0) ou retirer (delta < 0) des pièces.
- * Refuse un delta qui n'est pas un entier, et tout retrait qui ferait passer le
- * solde sous 0 : dans ces cas rien ne change et elle renvoie false.
- */
-export function changeCoins(delta) {
-  if (!Number.isInteger(delta)) return false;
-  const next = getCoins() + delta;
-  if (next < 0) return false;
-  save.coins = next;
-  persist();
-  for (const fn of coinListeners) fn(next);
-  return true;
+/** Boosters : { stock, max, nextInMs, signature, untilSignature, canOpen } (nextInMs = null : stock plein). */
+export function getBoosterState() {
+  const b = state.booster;
+  if (!b) return { stock: 0, max: 0, nextInMs: null, signature: false, untilSignature: 0, canOpen: false };
+  return {
+    stock: b.stock,
+    max: b.max_stock,
+    nextInMs: b.deadline === null ? null : Math.max(0, b.deadline - Date.now()),
+    signature: b.signature_next,
+    untilSignature: b.until_signature,
+    canOpen: b.stock > 0,
+  };
 }
 
-/** Dernier jour (AAAA-MM-JJ, heure de Paris) où le bonus de connexion a été pris. */
-export function getLastDailyBonus() {
-  return save.lastDailyBonus || null;
+export function getPity() {
+  return state.profile?.pity_legendary ?? 0;
 }
 
-/** Enregistre le jour du bonus ET verse les pièces en une seule sauvegarde. */
-export function claimDailyBonus(day, amount) {
-  save.lastDailyBonus = day;
-  return changeCoins(amount);
+export function getPityEpic() {
+  return state.profile?.pity_epic ?? 0;
+}
+
+export function isTutorialDone() {
+  return state.profile?.tutorial_done === true;
+}
+
+/** Mes ventes en cours : [{ id, colorway_id, rarity, price, created_at }]. */
+export function getMyListings() {
+  return state.listings.map((l) => ({ ...l }));
+}
+
+/** Carte équipée sur un emplacement ("tete", "haut"…) : { colorwayId, rarity } ou null. */
+export function getEquipped(slot) {
+  const key = state.profile?.equipped?.[slot];
+  if (!key || !state.cards.has(key)) return null; // on ne garde que les cartes réellement possédées
+  const [colorwayId, rarity] = key.split("|");
+  return { colorwayId, rarity };
+}
+
+// --- Actions simples : le serveur vérifie et écrit, puis on relit l'état ---
+
+/** Verrouille ou déverrouille une carte (tous ses exemplaires). */
+export async function setLocked(colorwayId, rarity, locked) {
+  await api.setLocked(colorwayId, rarity, locked);
+  await refreshState({ booster: false });
+}
+
+/** Équipe une carte sur un emplacement, ou vide l'emplacement si card = null. */
+export async function equip(slot, card) {
+  await api.setEquipped(slot, card ? card.colorwayId : null, card ? card.rarity : null);
+  await refreshState({ booster: false });
+}
+
+/** Le tuto du 1er booster est terminé. */
+export async function markTutorialDone() {
+  await api.setTutorialDone();
+  if (state.profile) state.profile.tutorial_done = true;
 }
 
 // --- Écran Collection ---
-
-/** Liste des cartes possédées : [{ colorwayId, rarity, count, locked }, ...]. */
-export function getOwnedCards() {
-  return Object.entries(save.cards).map(([key, count]) => {
-    const [colorwayId, rarity] = key.split("|");
-    return { colorwayId, rarity, count, locked: save.locked?.[key] === true };
-  });
-}
 
 // Libellés des catégories (les identifiants viennent de pieces.json).
 const CATEGORIES = [

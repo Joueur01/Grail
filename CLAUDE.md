@@ -23,22 +23,22 @@ Inspiration : WikiMasters (boosters quotidiens, collection, rareté), mais avec 
 
 Contraintes de la bêta :
 - **Budget : GitHub Pages reste gratuit** ; le développeur loue aussi 2 serveurs Hetzner (voir section 12) pour la suite. Aucune API payante.
-- **Aucun serveur, aucune base de données, aucun compte.** Tout tourne dans le navigateur ; les données du joueur sont en `localStorage`.
-- Hébergement : **GitHub Pages** (site statique, branche `main`, racine du dépôt).
+- **Le jeu a des comptes et un back end Supabase** (voir section 13). **Le serveur est la source de vérité** : le front affiche ce que le serveur renvoie et ne contient **aucune logique de jeu** (tirages, gains, chances, règles du Market). Plus de le serveur pour la sauvegarde du joueur.
+- Hébergement du site : **GitHub Pages** (site statique, branche `main`, racine du dépôt).
 - **Mobile d'abord** : le test se fait sur téléphone. Tout doit marcher au doigt, en portrait, sur un écran de ~375 px de large.
 - Le développeur y passe 1 à 2 h par jour. Chaque tâche doit produire **quelque chose de visible qui marche**.
 
 ### Fonctionnalités de la bêta, dans l'ordre
 
-1. **Booster** : un bouton « Ouvrir un booster » qui tire 3 pièces selon les taux de rareté (section 6), avec une petite animation de révélation carte par carte. ✅ Fait.
-2. **Inventaire** : la collection du joueur, sauvegardée en `localStorage`, avec filtres simples (marque, catégorie, rareté) et le nombre d'exemplaires de chaque carte. ✅ Fait : progression « X / 300 », filtres Marque / Type / Rareté (menus natifs, collés en haut), grille triée de la plus rare à la plus commune, badge « ×N » pour les doublons.
+1. **Booster** : un bouton « Ouvrir un booster » qui ouvre un booster de 3 cartes **tiré par le serveur** selon les taux de rareté (section 6), avec une petite animation de révélation carte par carte. ✅ Fait.
+2. **Inventaire** : la collection du joueur, sauvegardée **sur le serveur**, avec filtres simples (marque, catégorie, rareté) et le nombre d'exemplaires de chaque carte. ✅ Fait : progression « X / 300 », filtres Marque / Type / Rareté (menus natifs, collés en haut), grille triée de la plus rare à la plus commune, badge « ×N » pour les doublons.
 3. **Avatar** : un personnage en pixel art sur lequel on équipe une pièce par emplacement (section 7). ✅ Fait pour la bêta (fiche de tenue, tenue « à plat »).
 4. **Partager ma tenue** : exporter l'avatar habillé en **image PNG** (canvas → PNG), avec le nom des pièces et leur rareté, puis partage natif (`navigator.share` avec fichier si disponible, sinon téléchargement). ✅ Fait : PNG 1080 × 1350 (tenue à plat ×6 + liste tête → pieds : nom, marque, coloris, rareté + adresse du jeu), **préparé à l'avance** à chaque changement de tenue (Safari n'ouvre le partage que juste après un toucher), repli téléchargement ; bouton désactivé tant que rien n'est porté.
 5. **Mise en ligne** sur GitHub Pages et test sur iPhone/Android.
 
 ### Hors périmètre de la bêta (ne pas coder pour l'instant)
 
-Comptes, serveur, **vrai** marché entre joueurs en ligne (seule une simulation locale existe, voir « Market »), échanges directs, achats en argent réel, abonnement, votes, défis de style, contenu créé librement par les joueurs (textes, images), notifications, 3D.
+Échanges directs entre joueurs, achats en argent réel, abonnement, comptes via réseaux sociaux, votes, défis de style, contenu créé librement par les joueurs (textes, images), notifications, 3D.
 
 Ces fonctionnalités viendront plus tard **seulement si le test est positif**. Le code peut rester simple et ne pas les anticiper.
 
@@ -49,7 +49,7 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 - Pixel art : toujours afficher les sprites agrandis par un **facteur entier** (×4, ×6, ×8…) avec `image-rendering: pixelated` (canvas : `imageSmoothingEnabled = false`). Jamais de flou ni de redimensionnement non entier.
 - Taille des sprites dans les cartes : choisie selon la **largeur réelle de la carte** (container queries `@container`), jamais selon la largeur de l'écran, pour qu'un sprite ne dépasse jamais de sa carte. Avant chaque mise en ligne, vérifier les écrans de 320 px (petit téléphone) à 1920 px (PC), iPad portrait et paysage compris.
 - Pas de dépendance externe sauf nécessité réelle ; si besoin, une police Google Fonts au maximum.
-- `localStorage` : toujours encapsuler lecture et écriture dans `try/catch`, et que le site marche même si le stockage est vide ou indisponible. Prévoir un numéro de version du format de sauvegarde (`grail_save_v1`) pour pouvoir le faire évoluer.
+- **Supabase** : `supabase-js` est chargé en module ES depuis le CDN jsdelivr, **version figée** (`@2.45.4`, dans `js/api.js`) ; pas de build. Le seul fichier qui parle au serveur est `js/api.js`. Clé **anon** (publique) dans `js/supabase-config.js` ; **jamais de clé `service_role`** ni de clé secrète dans le dépôt. L'ancienne sauvegarde `grail_save_v1` n'existe plus (supprimée du navigateur au démarrage).
 
 ### Arborescence visée
 
@@ -59,19 +59,20 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 ├── style.css
 ├── js/
 │   ├── main.js        # navigation entre écrans
+│   ├── api.js         # SEUL contact avec le serveur : connexion, lectures, une fonction par action
+│   ├── supabase-config.js # adresse du projet + clé anon (publique)
 │   ├── data.js        # chargement du catalogue, raretés, recherche
-│   ├── economy-config.js  # TOUTES les valeurs chiffrées de l'économie
+│   ├── economy-config.js  # valeurs de l'économie, pour l'AFFICHAGE seulement (le serveur décide)
 │   ├── wallet.js      # solde de pièces (en-tête), bonus quotidien, notification
 │   ├── booster.js     # écran Booster : stock, minuteur, déchirure, révélation
-│   ├── distribution.js # règles pures : tirage, Signature, pity, stock (partagé avec la simulation)
 │   ├── effects.js     # sons synthétisés, vibrations, particules
 │   ├── gestures.js    # gestes : glisser, rester appuyé, toucher
-│   ├── inventory.js   # collection + sauvegarde localStorage + écran Collection
+│   ├── inventory.js   # état du joueur lu sur le serveur (cache) + écran Collection
 │   ├── cards.js       # dessin d'une carte (partagé booster / collection)
 │   ├── upgrade.js     # fiche d'une carte + amélioration par la roue
 │   ├── discard.js     # défausse : sélection de plusieurs cartes contre des pièces
 │   ├── atelier.js     # vue « Atelier » : progression par modèle + rareté
-│   ├── market.js      # Market entre joueurs (SIMULATION locale, sans serveur)
+│   ├── market.js      # Market entre joueurs (offres et actions via le serveur)
 │   ├── avatar.js      # rendu de l'avatar en canvas
 │   └── share.js       # export PNG + partage
 ├── data/
@@ -84,9 +85,7 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 │   ├── pieces/        # un SVG 32×32 par coloris
 │   └── *_coloris_apercu.svg  # planches reconstruites en SVG
 ├── tools/
-│   ├── extraire_sprites.py   # découpe les planches → PNG + SVG (Python + Pillow)
-│   ├── simulation.js  # simulation hors jeu : 100 000 boosters (node tools/simulation.js)
-│   └── simulation.html # la même simulation dans le navigateur
+│   └── extraire_sprites.py   # découpe les planches → PNG + SVG (Python + Pillow)
 └── CLAUDE.md
 ```
 
@@ -180,7 +179,7 @@ Pièces à retoucher plus tard (ne pas bloquer la bêta) : Manteau « Atelier »
 
 ### Les 4 raretés et les taux
 
-Tous les chiffres sont dans **`js/economy-config.js`** (`DROP_RATES`, `BOOSTER`, `PITY`) ; les règles sont dans `js/distribution.js`.
+**Les taux et les règles sont appliqués par le serveur** (table `economy_config` et fonction `open_booster`, migrations SQL 0001 à 0004). `js/economy-config.js` n'en garde qu'une copie pour l'**affichage** (jauges, textes) : si une valeur change côté serveur, la mettre à jour aussi dans ce fichier.
 
 | Rareté | Booster standard + cartes 1-2 du Signature | Carte 3 du Signature | Couleur d'interface |
 | --- | --- | --- | --- |
@@ -195,25 +194,25 @@ Tous les chiffres sont dans **`js/economy-config.js`** (`DROP_RATES`, `BOOSTER`,
 - **Pity Épique** (`pityEpic`) : après **16** boosters d'affilée sans Épique ou mieux, le suivant en contient une.
 - Garantie forcée : la carte qui la reçoit est la carte Signature (booster Signature), sinon la carte la moins rare. Les deux compteurs comptent **tous** les boosters (gratuits, Signature) et repartent à 0 dès que la rareté (ou mieux pour l'Épique) sort, forcée ou non. Deux jauges sous le paquet (« Légendaire garantie · 12 / 60 », qui brille dès 40 ; « Épique garantie · 3 / 16 »).
 - L'ancienne garantie « jamais 3 Communes » est **supprimée** (remplacée par le Signature et la pity Épique).
-- **Simulation** (hors jeu) : `node tools/simulation.js` (Node 22+) ou la page `tools/simulation.html` (sur GitHub Pages : `/Grail/tools/simulation.html`). Elle ouvre 100 000 boosters avec le vrai code, affiche les taux obtenus par table et par position, la fréquence des pity, et vérifie les règles. Résultat avec les valeurs actuelles : ≈ 1 booster sur 27 contient une Légendaire, ≈ 1 sur 5,6 une Épique ou mieux ; pity Épique ≈ 0,6 % des boosters ; Légendaire forcée au 60e ≈ 0,003 % (la pity douce fait presque tout le travail).
+- **Vérification des taux** : l'ancienne simulation côté navigateur a été supprimée avec la logique de tirage. Pour vérifier les taux, il faudra une simulation côté serveur (SQL).
 - La rareté **n'apparaît pas sur le sprite**. Elle s'affiche dans l'interface : bordure et étiquette colorées sur la carte, mention dans l'inventaire et sur l'image partagée. Une révélation plus marquée (lueur, son, vibration `navigator.vibrate` si dispo) pour Épique et Légendaire est bienvenue.
 
 ### Boosters
 
 - Un booster = **3 cartes**.
-- **Stock gratuit** : **1 booster généré toutes les 6 h**, **stock maximum 3** (`BOOSTER.refillHours`, `maxStock`, `startStock` = 3 pour un nouveau joueur). Le calcul se fait sur **l'heure réelle** (`boosterStock` + `stockUpdatedAt` dans la sauvegarde) : on peut fermer le site et revenir plus tard. Stock plein = minuteur arrêté ; il repart à l'ouverture d'un booster. Si l'horloge du téléphone recule, la recharge en cours repart de zéro. Affichage au-dessus du paquet : 3 pastilles + « Prochain dans 5:12:08 » (ou « Stock plein »), mis à jour chaque seconde.
+- **Stock gratuit** : **1 booster généré toutes les 6 h**, **stock maximum 3** (`BOOSTER.refillHours`, `maxStock`, `startStock` = 3 pour un nouveau joueur). Le calcul se fait **sur le serveur, à l'heure du serveur** (`get_booster_state`) : on peut fermer le site et revenir plus tard, et changer l'heure du téléphone ne sert à rien. Stock plein = minuteur arrêté. Affichage au-dessus du paquet : 3 pastilles + « Prochain dans 5:12:08 » (ou « Stock plein »), décompte calculé depuis `next_in_seconds` et mis à jour chaque seconde ; à zéro, le front redemande l'état au serveur.
 - **Pas d'achat de booster, pas d'accélération** : les boosters ne s'obtiennent que par le stock gratuit (1 toutes les 6 h). Aucun moyen de payer pour en avoir plus ou pour avancer le minuteur.
-- ⚠️ **Actuellement : mode test** (`BOOSTER.unlimited = true` dans `js/economy-config.js`, ou `?debug=1`) : le stock et le minuteur fonctionnent normalement, mais quand il n'y a plus rien, on peut quand même ouvrir un booster « test » (compté comme gratuit, donc il fait avancer le Signature). **Remettre à `false` avant d'envoyer le lien aux amis.**
+- **Plus de mode test ni de `?debug=1`** : sans stock, `open_booster` répond « Aucun booster disponible ». Pour tester, créer un compte de test.
 - Ouverture (en place, `js/booster.js`) — **tout se fait en glissant le doigt (ou la souris)**, un simple toucher ne fait rien (le paquet sursaute, le texte d'aide rappelle le geste) :
   1. **Glisser sur le paquet le déchire** : la bande du haut suit le doigt puis s'arrache le long de la ligne pointillée (bord en dents de scie). Bruit de déchirure.
-  2. Les 3 cartes forment une **pile** ; **une seule carte à la fois** (« Carte 1 / 3 »), **la plus rare toujours en dernier**.
+  2. Les 3 cartes forment une **pile** ; **une seule carte à la fois** (« Carte 1 / 3 »), **la plus rare toujours en dernier** (l'ordre est donné par le serveur).
   3. Sur une carte face cachée : **glisser la retourne** directement ; **rester appuyé fait monter son aura palier par palier** (gris Commun → bleu Rare → violet Épique → or Légendaire, ~0,65 s par palier, une note de plus en plus aiguë) **jusqu'à la rareté de la carte**, puis s'arrête. Lâcher garde l'aura atteinte.
   4. Une fois retournée, **glisser à nouveau** fait partir la carte sur le côté et amène la suivante. Après la 3e : récapitulatif des 3 cartes + « Continuer ».
   - **Hiérarchie des effets** (du plus discret au plus fort) : Rare = halo bleu fixe + reflet + quelques particules ; Épique = halo violet qui respire + onde + gerbe de particules + titre « ÉPIQUE ! » (sur place) ; Légendaire = double halo doré rapide (la carte tremble face cachée) puis **plein écran** (éclair, rayons, grande carte, 3 vagues de particules, son), qu'on quitte **en glissant** (bloqué 0,9 s pour savourer) → carte suivante.
   - Badge « NOUVEAU » sur les cartes jamais obtenues.
   - **Tutoriel du 1er booster** : un « doigt » (point lumineux avec traînée, en CSS) glisse en boucle avec une étiquette — « Glisse pour déchirer » sur le paquet, « Glisse pour retourner » puis « Glisse pour la suivante » sur la 1re carte. Il s'efface dès que le joueur glisse. Fini (`tutorialDone` dans la sauvegarde) quand le récapitulatif du 1er booster s'affiche ; s'il est interrompu, il revient.
   - Halo limité à ~65 px de portée : au-delà, il est coupé par le bord de l'écran et forme un rectangle.
-- Les cartes sont sauvegardées **dès la déchirure** (recharger la page ne permet pas de retirer).
+- Les cartes sont enregistrées **par le serveur dès la déchirure** (`open_booster` est appelé quand le geste est validé ; recharger la page ne permet pas de retirer).
 - Sons synthétisés par le navigateur (Web Audio, aucun fichier) ; constante `SONS_ACTIFS` dans `js/effects.js` pour les couper.
 - Pièces du jeu : pas de dépense possible pour l'instant. Aucun argent réel.
 
@@ -223,7 +222,7 @@ Tous les chiffres sont dans **`js/economy-config.js`** (`DROP_RATES`, `BOOSTER`,
 - On **mise de 1 à 5 cartes du même modèle et de la même rareté** (coloris libres, plusieurs exemplaires d'un même coloris comptent chacun). **Chance = 20 % par carte misée** (`UPGRADE.chancePerCard`, `UPGRADE.maxCards` dans `js/economy-config.js`) : 5 cartes = 100 %.
 - **Réussite** : 1 carte du même modèle, **rareté au-dessus**. **Même coloris** si toutes les cartes misées ont le même coloris, sinon **coloris au hasard parmi tous ceux du modèle**.
 - **Les cartes misées sont perdues dans tous les cas** (réussite ou échec). Une Légendaire ne s'améliore pas (« Rareté maximale »). Une carte portée dont le dernier exemplaire est misé quitte la tenue.
-- Écran : 5 cases de mise (pré-remplies avec la carte touchée ; toucher une case la vide), cartes disponibles à ajouter, **roue** dont la part colorée (couleur de la rareté visée) = la chance, flèche en haut, avertissement si la réussite n'est pas sûre. La roue tourne ~3 s et s'arrête là où le tirage est tombé. La collection est mise à jour **dès le lancement** (recharger ne permet pas de rejouer).
+- Écran : 5 cases de mise (pré-remplies avec la carte touchée ; toucher une case la vide), cartes disponibles à ajouter, **roue** dont la part colorée (couleur de la rareté visée) = la chance, flèche en haut, avertissement si la réussite n'est pas sûre. La roue tourne ~3 s et s'arrête là où le tirage est tombé. Le **tirage est fait par le serveur** (`upgrade_cards` renvoie `success`, `chance`, `roll` et la carte obtenue) ; la roue s'arrête là où le serveur dit, et la collection est relue (recharger ne permet pas de rejouer). La chance affichée avant de lancer vient de la config d'affichage ; la vraie est celle du serveur.
 
 ### Atelier (`js/atelier.js`)
 
@@ -239,41 +238,41 @@ Tous les chiffres sont dans **`js/economy-config.js`** (`DROP_RATES`, `BOOSTER`,
 ### Recherche et verrouillage (Collection)
 
 - **Recherche** : champ « Rechercher une carte » en tête des filtres de la Collection ; chaque mot tapé doit se trouver dans le nom de la pièce, du coloris, de la marque ou de la rareté (sans tenir compte des majuscules ni des accents). Fonctions `normalizeText` / `matchesSearch` dans `js/data.js`.
-- **Verrou** : dans la fiche d'une carte, bouton « Verrouiller / Déverrouiller ». Il s'applique à **la carte entière** (coloris + rareté, tous ses exemplaires), se sauvegarde dans `locked` (`"colorwayId|rareté" → true`), et disparaît si le dernier exemplaire est perdu. Une carte verrouillée porte un cadenas doré dans la Collection, n'est **jamais proposée à la mise** (roue) ni comptée dans l'Atelier, et son bouton « Améliorer » est grisé (« Carte verrouillée »). Elle peut toujours être portée. Pensé aussi pour la future défausse.
+- **Verrou** : dans la fiche d'une carte, bouton « Verrouiller / Déverrouiller ». Il s'applique à **la carte entière** (coloris + rareté, tous ses exemplaires), est enregistré par le serveur (`set_locked`, colonne `locked` de l'inventaire) et disparaît avec le dernier exemplaire. Une carte verrouillée porte un cadenas doré dans la Collection, n'est **jamais proposée à la mise** (roue) ni comptée dans l'Atelier, et son bouton « Améliorer » est grisé (« Carte verrouillée »). Elle peut toujours être portée. Pensé aussi pour la future défausse.
 
-### Économie et pièces (`js/economy-config.js`, `js/wallet.js`)
+### Économie et pièces (`js/wallet.js`, serveur)
 
-- **Un seul fichier de configuration** : `js/economy-config.js` contient **toutes** les valeurs chiffrées (taux de drop `DROP_RATES`, boosters `BOOSTER` : mode test / cartes par booster / recharge et stock / Signature / prix, `PITY` (Légendaire douce + garantie, Épique), `UPGRADE` : mise min/max, chance par carte, plafond, `DISCARD_VALUES` / `DISCARD_CONFIRM_FROM` / `DISCARD_KEEP`, `COINS` : solde de départ, bonus quotidien, fuseau). **Aucune valeur d'économie ne s'écrit en dur ailleurs** : toute règle chiffrée nouvelle va dans ce fichier.
-- **Stock de boosters** : voir « Boosters » plus haut (1 toutes les 6 h, max 3).
-- **Pièces** : solde `coins` dans la sauvegarde (entier ≥ 0), affiché **en haut à droite de toutes les pages** (le solde « bondit » à chaque changement). **Une seule fonction centrale**, `changeCoins(delta)` dans `js/inventory.js` : elle refuse un delta non entier et tout retrait qui rendrait le solde négatif (renvoie `false`, rien ne change). Ne jamais modifier `save.coins` autrement.
-- **Bonus de connexion** : `COINS.dailyLoginBonus` (20) pièces, **une fois par jour calendaire à Paris** (`COINS.dailyBonusTimeZone`), à l'ouverture du jeu et au retour sur l'onglet (`lastDailyBonus` = dernier jour pris, AAAA-MM-JJ). Une notification « +20 pièces · bonus du jour » s'affiche sous l'en-tête.
-- Les pièces **se gagnent** (bonus quotidien, défausse) mais **ne se dépensent encore nulle part** : l'usage des pièces sera décidé plus tard.
+- **Les valeurs et les règles sont sur le serveur** (table `economy_config`, fonctions SQL). `js/economy-config.js` est une copie **pour l'affichage uniquement** (jauges, chance annoncée, prix conseillé, textes) : le front ne s'en sert jamais pour décider ou calculer un résultat.
+- **Pièces** : le solde (`profiles.coins`) est lu sur le serveur et affiché **en haut à droite de toutes les pages**. Il ne change que par les fonctions du serveur (bonus, défausse, Market). Quand il change après une relecture, le nombre « défile » et bondit (`wallet.js`).
+- **Bonus de connexion** : `claim_daily_bonus()` (une fois par jour calendaire à Paris, décidé par le serveur ; renvoie 0 s'il est déjà pris). Appelé à l'ouverture du jeu et au retour sur l'onglet ; notification « +20 pièces · bonus du jour ».
+- **Erreurs** : le serveur renvoie des messages déjà en français (« Aucun booster disponible », « Carte verrouillée », « Le prix a changé »…). `api.js` les transmet tels quels (messages techniques anglais remplacés par un message générique) et `reportError()` (wallet.js) les affiche dans la notification rouge, sans casser l'écran.
+- Les pièces servent à acheter au Market ; elles se gagnent par le bonus, la défausse et les ventes. Monnaie **virtuelle uniquement, jamais convertible en euros**.
 
-### Market (`js/market.js`) — SIMULATION locale, sans serveur
+### Market (`js/market.js`) — géré par le serveur
 
-Onglet **Market** (4e onglet) pour voir à quoi ressemblera le marché entre joueurs. **Il n'y a pas de backend** : les offres des « autres joueurs » et les acheteurs sont simulés par le jeu ; le front est prévu pour être branché plus tard sur un vrai serveur.
-- **Prix fixes**, pas d'enchères. **Une seule offre par carte** (coloris + rareté) : la **moins chère** ; le nombre d'offres n'est jamais affiché. Quand elle est achetée, l'offre suivante la moins chère prend sa place.
-- **Limite de 10 ventes en même temps** (`MARKET.maxListings`) ; au-delà, « Limite de 10 ventes atteinte ». Une carte **verrouillée** ne peut pas être vendue.
-- **Acheter** : grille des meilleures offres (prix en pastille dorée), recherche, filtres Rareté / Type, tri (Prix ↑↓, Rareté, Marque). Toucher une offre ouvre la fiche : « Acheter · N pièces » (grisé avec « Il te manque N pièces »), carte ajoutée à la collection. Si l'offre la moins chère est la tienne : badge « Ton offre » et bouton « Retirer mon offre ».
-- **Vendre** : choisir une carte de la collection, fixer son prix (− / champ / +, « Prix conseillé », « Moins cher » = meilleure offre − 1). La carte quitte la collection pendant la vente. **Mes ventes** : liste avec « Retirer » (la carte revient).
-- **Simulation** (valeurs dans `MARKET`, `js/economy-config.js`) : offres générées avec une graine fixe (`mockSeed`, mêmes offres pour tout le monde, ≈ 100 cartes) autour d'un prix de référence par rareté (`referencePrice`, provisoire : Commune 8 · Rare 40 · Épique 160 · Légendaire 600, au-dessus des valeurs de défausse) ; tes ventes sont « achetées » après 1 à 8 minutes, avec une chance qui dépend de ton prix par rapport à la référence (`simSaleChance`) ; les pièces sont versées d'elles-mêmes (vérifié à l'ouverture, toutes les 15 s et au retour sur l'onglet), avec notification et pièces qui volent. Pas de taxe ni de frais pour l'instant.
-- **Sauvegarde** : `market: { listings, sold, nextId }` (mes ventes ; offres simulées déjà achetées). Fonctions atomiques dans `js/inventory.js` : `listCard`, `cancelListing`, `buyOffer` (cartes + pièces en une sauvegarde), `settleSales`.
+Onglet **Market** : Acheter / Vendre / Mes ventes.
+- **Prix fixes**, pas d'enchères. **Une seule offre par carte** (coloris + rareté) : la **moins chère** (vue `market_best_offers`) ; le nombre d'offres n'est jamais exposé. Quand elle est achetée, la suivante prend sa place.
+- **Limite de 10 ventes en même temps** et carte **verrouillée** non vendable : règles appliquées par le serveur (`market_list`) ; le front affiche seulement leurs messages.
+- **Acheter** : grille des meilleures offres (prix en pastille), recherche, filtres Rareté / Type, tri. `market_buy(id, prix_affiché)` : refuse si le prix a changé (« Le prix a changé ») ou si le solde manque. Si l'offre la moins chère est la tienne : badge « Ton offre » et « Retirer mon offre ».
+- **Vendre** : choisir une carte, fixer son prix (− / champ / +, « Prix conseillé » = référence d'affichage, « Moins cher » = meilleure offre − 1). La carte quitte la collection pendant la vente. **Mes ventes** : liste avec « Retirer » (`market_cancel`, la carte revient).
+- **Vendeur payé à l'achat** (même hors ligne) : à l'ouverture du jeu, au retour sur l'écran Market, au retour sur l'onglet et toutes les 30 s, le front appelle `market_ack_sales()` qui renvoie les ventes terminées pas encore vues → notification « Vendu : … · +N pièces ».
+- Pas de taxe ni de frais pour l'instant.
 
 ### Défausse (`js/discard.js`)
 
-- **Valeurs** (`DISCARD_VALUES` dans `js/economy-config.js`) : Commune **3**, Rare **15**, Épique **60**, Légendaire **200** pièces par carte.
+- **Valeurs** (`DISCARD_VALUES` : valeur du serveur, copiée dans `js/economy-config.js` pour l'affichage) : Commune **3**, Rare **15**, Épique **60**, Légendaire **200** pièces par carte.
 - **Mode « Sélectionner » (Collection)** : bouton « Sélectionner » à côté de la recherche. En mode actif (le bouton devient « Terminer »), toucher une carte la **sélectionne** au lieu d'ouvrir sa fiche ; avec plusieurs exemplaires, chaque toucher en ajoute un (badge « 2/4 », puis retour à zéro). La recherche et les filtres restent utilisables, la sélection est conservée quand on change de filtre (la barre indique « dont N masquées par les filtres »). Barre collée en bas : total « N cartes · +X pièces », « Tout » (cartes affichées), « Doublons (garder 1) » (`DISCARD_KEEP`, cartes affichées), « Vider », « Défausser » (2e toucher dès l'Épique). Après confirmation : pièces qui volent, notification, sortie du mode. Code : `createSelection()` dans `js/discard.js`. Le bouton « Sélectionner des cartes » de l'Atelier y renvoie.
 - **Écran « cartes similaires »** (gardé, complémentaire) : le bouton « Défausser » de la **fiche d'une carte** (les cartes du même modèle, 1 exemplaire déjà sélectionné) et celui d'une **ligne de l'Atelier** (le modèle à cette rareté) ouvrent un écran plus ciblé, où l'on voit toutes les cartes similaires. Le mode « Sélectionner » sert à balayer toute la collection, cet écran à décider au cas par cas.
 - **Sélection dans l'écran « cartes similaires »** : on touche une carte pour ajouter un exemplaire (le badge « −n » montre ce qui est choisi, « ×n » ce qui reste), on touche une pastille de la sélection pour en retirer un. Raccourcis : « Tout sauf 1 exemplaire de chaque » (`DISCARD_KEEP`) et « Tout désélectionner ». Le total « N cartes · +X pièces » se met à jour en direct.
-- **Cartes verrouillées** : visibles mais grisées, impossibles à sélectionner ; sur la fiche, le bouton est grisé « Défausser · carte verrouillée ». Le contrôle est refait dans `discardCards()` (inventory.js).
+- **Cartes verrouillées** : visibles mais grisées, impossibles à sélectionner ; sur la fiche, le bouton est grisé « Défausser · carte verrouillée ». Le contrôle est refait par le serveur.
 - **Sécurités** : à partir de la rareté `DISCARD_CONFIRM_FROM` (Épique), un **2e toucher** « Confirmer : N cartes contre X pièces » est demandé ; un avertissement apparaît si une carte portée quitte la tenue.
-- **Tout ou rien** : `discardCards(cartes)` (inventory.js) retire les cartes et verse les pièces (via `changeCoins`) en **une seule sauvegarde** ; elle renvoie le gain ou `null` si une carte est verrouillée ou manque.
+- **Tout ou rien, côté serveur** : `discard_cards([{ colorway_id, rarity, count }])` retire les cartes et verse les pièces dans une seule transaction ; elle refuse l'ensemble si une carte est verrouillée ou manque. Les pièces gagnées sont celles **renvoyées par le serveur**.
 - **Animation** : des pièces dorées s'envolent du bouton vers le solde en haut (`flyCoins` dans `js/wallet.js`, 3 à 12 pièces selon le gain), puis le nombre du solde défile jusqu'à sa nouvelle valeur et « bondit » ; petit son de pièces. Désactivée si le téléphone réduit les animations. Le même défilement sert au bonus quotidien.
 - Monnaie **virtuelle uniquement, jamais convertible en euros** (section 9). Les pièces ne servent encore à rien d'autre.
 
 ## 7. Avatar — fiche de tenue (option validée)
 
-✅ **Bêta : la « fiche de tenue » avec tenue « à plat »** (choisie après un essai de bonhomme habillé jugé raté : les icônes catalogue ne se portent pas). Au centre (canvas 64 × 96, ×2 sur téléphone, ×4 sur tablette / PC), les sprites portés sont posés **tels quels**, comme une photo de fit au sol : pile centrale de haut en bas (tête → haut avec la veste par-dessus → bas → chaussures), 2 px d'espace (resserré seulement si la tenue est trop haute), écharpe puis sac posés à droite. Texte d'invitation tant que rien n'est porté. Autour : 7 cases (gauche : Tête, Cou, Haut, Veste ; droite : Sac, Bas, Chaussures). Toucher une case ouvre un panneau par le bas avec les cartes possédées pour cet emplacement (plus rare d'abord) ; toucher une carte l'équipe, « Retirer la pièce » vide la case. La case prend la couleur de rareté de la carte portée. Sauvegarde dans `equipped` (`emplacement → colorwayId|rareté`). Code : `drawAvatar()` dans `js/avatar.js` (réutilisable pour l'image partagée).
+✅ **Bêta : la « fiche de tenue » avec tenue « à plat »** (choisie après un essai de bonhomme habillé jugé raté : les icônes catalogue ne se portent pas). Au centre (canvas 64 × 96, ×2 sur téléphone, ×4 sur tablette / PC), les sprites portés sont posés **tels quels**, comme une photo de fit au sol : pile centrale de haut en bas (tête → haut avec la veste par-dessus → bas → chaussures), 2 px d'espace (resserré seulement si la tenue est trop haute), écharpe puis sac posés à droite. Texte d'invitation tant que rien n'est porté. Autour : 7 cases (gauche : Tête, Cou, Haut, Veste ; droite : Sac, Bas, Chaussures). Toucher une case ouvre un panneau par le bas avec les cartes possédées pour cet emplacement (plus rare d'abord) ; toucher une carte l'équipe, « Retirer la pièce » vide la case. La case prend la couleur de rareté de la carte portée. Enregistrée sur le serveur (`set_equipped`, qui vérifie que la carte est possédée et va dans cet emplacement ; colonne `equipped`). Code : `drawAvatar()` dans `js/avatar.js` (réutilisable pour l'image partagée).
 
 **Après la bêta (si le test est positif) : vrais calques « portés »**. Un corps de base unique (ex. 32 × 64, de face) + un calque « porté » par **forme** de pièce (20 dessins, pas 75), dessiné sur ce corps ; les 75 coloris générés automatiquement par recoloration à partir des couleurs de chaque icône. Les icônes actuelles restent pour les cartes. Claude fournit le gabarit, un calque d'exemple et le script de recoloration ; le développeur dessine les 20 formes.
 
@@ -329,4 +328,14 @@ Le développeur n'est pas juriste ; ces règles sont prudentes en attendant un a
 - **Accès** : clé SSH dédiée au déploiement, stockée dans les **réglages de l'environnement** (secret / variable d'environnement), **jamais collée dans le chat**. L'environnement doit autoriser le réseau vers le serveur (le SSH sortant est bloqué par défaut). Une nouvelle session récupère ces réglages.
 - **Plan du serveur front** : Ubuntu LTS, utilisateur dédié, connexion par clé uniquement, pare-feu (22, 80, 443), mises à jour automatiques, Caddy (ou nginx) avec HTTPS automatique, déploiement automatique de `main` vers le serveur. **GitHub Pages reste en secours** : ne basculer le lien envoyé aux amis qu'une fois le nouveau serveur testé.
 - **Règle de sécurité** : ne jamais effacer ni réinstaller un serveur sans la confirmation explicite du développeur ; sauvegarde (snapshot) avant toute réinstallation.
-- Le Market et les comptes en ligne (hors périmètre de la bêta) viendront avec l'étape 2 ; la validation des échanges se fera **côté serveur**.
+- Les comptes et le Market en ligne existent maintenant sur **Supabase** (section 13). L'étape 2 Hetzner (serveur back + base externe) reste à décider ; en attendant, Supabase est le back end.
+
+## 13. Back end Supabase (comptes + serveur de jeu) — le serveur est la source de vérité
+
+- Projet Supabase : `https://qsueqvsbhytqrotlxmak.supabase.co`. Les migrations SQL (**0001 à 0004**, exécutées par le développeur, **ne jamais les modifier depuis le front**) créent : catalogue (`brands`, `pieces`, `colorways`), `economy_config`, `profiles`, `inventory`, `transactions`, `market_listings`, la vue `market_best_offers` et toutes les fonctions du jeu.
+- **Règle d'or : ne jamais remettre de logique de jeu côté client.** Le front ne tire pas de carte, ne calcule ni gain ni chance réelle, ne vérifie pas de règle (limite de ventes, verrou, solde…). Il appelle une fonction, affiche le résultat, et relit l'état. Toute nouvelle règle ou nouvelle valeur d'économie se code **dans une migration SQL** (puis, si besoin d'affichage, dans `js/economy-config.js`).
+- **Le jeu n'est accessible que connecté** : e-mail + mot de passe (écran de connexion / création de compte dans `index.html`, géré par `main.js`). À l'inscription, le message « Confirme ton e-mail » s'affiche : le compte ne peut se connecter qu'après avoir cliqué le lien reçu. Un profil (3 boosters, 0 pièce) est créé automatiquement par le serveur. Bouton « Se déconnecter » en bas de l'écran Tenue.
+- **Écritures interdites en direct** : le front ne fait que des **lectures** (`profiles`, `inventory`, `market_listings` = ses propres ventes, `market_best_offers`) et des **appels de fonctions** (`rpc`). Les fonctions : `get_booster_state`, `open_booster`, `upgrade_cards`, `discard_cards`, `claim_daily_bonus`, `set_locked`, `set_equipped`, `set_tutorial_done`, `market_list`, `market_cancel`, `market_buy`, `market_ack_sales` (wrappers dans `js/api.js`).
+- **Cache local** (`js/inventory.js`) : après chaque action, `refreshState()` relit profil, inventaire, ventes et état des boosters ; l'affichage lit cette copie (instantané). Ce n'est qu'un cache d'affichage, jamais une source de vérité.
+- Le catalogue affiché vient toujours de `data/pieces.json` (mêmes identifiants que la table `colorways`, vérifiés identiques : 75 coloris).
+- **Tests** : sans compte de test, on teste les écrans contre un faux serveur (format de réponses des fonctions SQL) ; un test réel demande un compte de test confirmé (jamais de mot de passe réel dans le dépôt).

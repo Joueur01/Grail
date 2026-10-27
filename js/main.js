@@ -1,23 +1,23 @@
-// main.js — point d'entrée : navigation entre écrans et initialisation.
+// main.js — point d'entrée : connexion, navigation entre écrans et initialisation.
+//
+// ⚠️ Le jeu n'est accessible que connecté. Les données et les règles sont sur le SERVEUR
+// (Supabase) : le front affiche ce que le serveur renvoie. Ne jamais remettre de logique de
+// jeu côté client.
 //
 // ?v=… sur les imports : même numéro que dans index.html, et le même partout
 // (un module importé sous deux adresses différentes serait chargé deux fois).
 
-import { loadCatalogue } from "./data.js?v=34";
-import { loadSave, setupCollection } from "./inventory.js?v=34";
-import { initAvatar, setupOutfit } from "./avatar.js?v=34";
-import { setupBooster } from "./booster.js?v=34";
-import { setupShare } from "./share.js?v=34";
-import { setupUpgrade } from "./upgrade.js?v=34";
-import { setupAtelier, setupViewSwitch } from "./atelier.js?v=34";
-import { setupWallet } from "./wallet.js?v=34";
-import { setupDiscard, createSelection } from "./discard.js?v=34";
-import { setupMarket } from "./market.js?v=34";
-import { BOOSTER } from "./economy-config.js?v=34";
-
-// ?debug=1 dans l'URL : boosters illimités pendant les tests.
-export const DEBUG = new URLSearchParams(location.search).get("debug") === "1";
-
+import { loadCatalogue } from "./data.js?v=35";
+import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=35";
+import { initAvatar, setupOutfit } from "./avatar.js?v=35";
+import { setupBooster } from "./booster.js?v=35";
+import { setupShare } from "./share.js?v=35";
+import { setupUpgrade } from "./upgrade.js?v=35";
+import { setupAtelier, setupViewSwitch } from "./atelier.js?v=35";
+import { setupWallet, reportError } from "./wallet.js?v=35";
+import { setupDiscard, createSelection } from "./discard.js?v=35";
+import { setupMarket } from "./market.js?v=35";
+import { getSession, signIn, signUp, signOut, supabase } from "./api.js?v=35";
 
 const SCREENS = ["booster", "collection", "market", "avatar"];
 
@@ -45,28 +45,86 @@ function blockPinchZoom() {
   document.addEventListener("gesturestart", (e) => e.preventDefault());
 }
 
-async function start() {
-  document.getElementById("debug-badge").hidden = !DEBUG;
-  blockPinchZoom();
+// --- Écran de connexion / création de compte ---------------------------------------
 
-  window.addEventListener("hashchange", () => showScreen(currentScreenFromHash()));
-  showScreen(currentScreenFromHash());
+/** Montre l'écran de connexion (le jeu reste caché tant qu'on n'est pas connecté). */
+function showAuth({ message = "", tab = "signin" } = {}) {
+  document.body.dataset.auth = "out";
+  const form = document.getElementById("auth-form");
+  const tabs = document.querySelectorAll(".auth-tab");
+  const submit = document.getElementById("auth-submit");
+  const note = document.getElementById("auth-message");
+  const password = document.getElementById("auth-password");
+  let mode = tab;
 
-  loadSave();
-  setupWallet(); // solde en haut de l'écran + bonus de connexion quotidien
+  const setMode = (m) => {
+    mode = m;
+    for (const t of tabs) t.setAttribute("aria-selected", String(t.dataset.mode === m));
+    submit.textContent = m === "signin" ? "Se connecter" : "Créer mon compte";
+    password.autocomplete = m === "signin" ? "current-password" : "new-password";
+  };
+  const say = (text, kind = "") => { note.textContent = text; note.dataset.kind = kind; note.hidden = !text; };
+
+  setMode(mode);
+  say(message, "ok");
+  for (const t of tabs) t.onclick = () => { setMode(t.dataset.mode); say(""); };
+
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const email = document.getElementById("auth-email").value.trim();
+    const pass = password.value;
+    submit.disabled = true;
+    say("");
+    try {
+      if (mode === "signup") {
+        const { needsConfirmation } = await signUp(email, pass);
+        if (needsConfirmation) {
+          // Compte créé : il faut cliquer le lien reçu par e-mail avant de pouvoir se connecter.
+          setMode("signin");
+          password.value = "";
+          say("Compte créé. Confirme ton e-mail : clique sur le lien que tu viens de recevoir, puis connecte-toi ici.", "ok");
+          return;
+        }
+      } else {
+        await signIn(email, pass);
+      }
+      // Connecté : le jeu démarre (onAuthStateChange ci-dessous).
+    } catch (err) {
+      say(err.message, "error");
+    } finally {
+      submit.disabled = false;
+    }
+  };
+}
+
+// --- Le jeu --------------------------------------------------------------------------
+
+let booted = false;
+
+/** Démarre le jeu : relit l'état du joueur sur le serveur, puis branche tous les écrans. */
+async function boot() {
+  if (booted) return;
+  booted = true;
+  delete document.body.dataset.auth;
+  clearLocalSave(); // l'ancienne sauvegarde du navigateur n'est plus utilisée
   initAvatar(document.getElementById("avatar-canvas"));
+  document.getElementById("btn-signout").addEventListener("click", async () => {
+    await signOut();
+    location.reload();
+  });
+  const statusEl = document.getElementById("booster-status");
 
   try {
-    const catalogue = await loadCatalogue();
+    statusEl.textContent = "Chargement…";
+    const [catalogue] = await Promise.all([loadCatalogue(), refreshState()]);
+    setupWallet(); // solde en haut de l'écran + bonus de connexion quotidien (décidé par le serveur)
     // La tenue prévient le partage à chaque changement (image préparée à l'avance).
     const refreshOutfit = setupOutfit({ catalogue, onChange: setupShare() });
-    // Fiche de carte + roue : après une amélioration, collection et tenue sont
-    // redessinées (une carte portée a pu être misée).
+    // Après une action (roue, défausse, vente…), collection, Atelier, Market et tenue sont redessinés.
     const onChange = () => { refreshCards(); refreshOutfit(); };
     // Défausse (plusieurs cartes contre des pièces) : ouverte depuis la fiche ou l'Atelier.
     const discard = setupDiscard({ catalogue, onChange });
     const upgrade = setupUpgrade({ catalogue, onChange, onDiscard: (colorwayId, rarity) => discard.openCard(colorwayId, rarity) });
-    // Collection (une carte par coloris) : toucher une carte ouvre sa fiche.
     // Mode « Sélectionner » : choisir plusieurs cartes parmi toute la collection, puis défausser.
     const selection = createSelection({ catalogue, onChange });
     const refreshCollection = setupCollection({ catalogue, onCardTap: (card) => upgrade.openCard(card), selection });
@@ -81,18 +139,37 @@ async function start() {
       },
     });
     setupViewSwitch();
-    // Collection et Atelier sont redessinés après chaque booster ou amélioration.
     let market = null; // Market (créé en dernier) : redessiné avec la collection
     const refreshCards = () => { refreshCollection(); refreshAtelier(); market?.render(); };
-    setupBooster({ catalogue, debug: DEBUG || BOOSTER.unlimited, onOpened: refreshCards });
-    // Market entre joueurs (simulation locale, sans serveur) : acheter, vendre, mes ventes.
+    setupBooster({ catalogue, onOpened: refreshCards });
+    // Market entre joueurs (géré par le serveur) : acheter, vendre, mes ventes.
     market = setupMarket({ catalogue, onChange });
   } catch (err) {
-    // Arrive surtout si on ouvre index.html en double-cliquant (file://) :
-    // fetch() a besoin d'un serveur (GitHub Pages, ou python3 -m http.server).
     console.error(err);
-    document.getElementById("booster-status").textContent = "Impossible de charger le catalogue.";
+    statusEl.textContent = err?.message || "Impossible de charger le jeu. Recharge la page.";
+    reportError(err);
   }
+}
+
+async function start() {
+  blockPinchZoom();
+  window.addEventListener("hashchange", () => showScreen(currentScreenFromHash()));
+  showScreen(currentScreenFromHash());
+
+  let session = null;
+  try {
+    session = await getSession();
+  } catch (err) {
+    console.warn("Session :", err);
+  }
+  if (session) boot();
+  else showAuth();
+
+  // Connexion réussie (ou retour du lien de confirmation e-mail) : le jeu démarre.
+  supabase.auth.onAuthStateChange((event, newSession) => {
+    if (newSession && !booted) boot();
+    if (event === "SIGNED_OUT" && booted) location.reload();
+  });
 }
 
 start();
