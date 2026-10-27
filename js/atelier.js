@@ -6,10 +6,10 @@
 // rareté visée. Toucher une ligne ouvre la roue avec ces cartes déjà misées.
 // Les Légendaires (non améliorables) n'apparaissent pas.
 
-import { RARITIES, getRarity, matchesSearch } from "./data.js?v=32";
-import { UPGRADE, DISCARD_VALUES } from "./economy-config.js?v=32";
-import { getOwnedCards } from "./inventory.js?v=32";
-import { nextRarity, upgradeChance } from "./upgrade.js?v=32";
+import { RARITIES, getRarity, matchesSearch } from "./data.js?v=34";
+import { UPGRADE, DISCARD_VALUES } from "./economy-config.js?v=34";
+import { getOwnedCards } from "./inventory.js?v=34";
+import { nextRarity, upgradeChance } from "./upgrade.js?v=34";
 
 /**
  * Regroupe les cartes possédées par modèle + rareté.
@@ -212,17 +212,19 @@ export function setupAtelier({ catalogue, onRowTap, onRowDiscard, onDiscardAll }
   return render;
 }
 
-/** Sélecteur « Collection / Atelier » en haut de l'onglet Collection. */
+/** Sélecteurs de vue en pilules (Collection / Atelier, Acheter / Vendre / Mes ventes) : un par bloc .view-switch. */
 export function setupViewSwitch() {
-  const tabs = document.querySelectorAll(".view-tab");
-  for (const tab of tabs) {
-    tab.addEventListener("click", () => {
-      for (const t of tabs) {
-        const on = t === tab;
-        t.setAttribute("aria-selected", String(on));
-        document.getElementById(`${t.dataset.view}-view`).hidden = !on;
-      }
-    });
+  for (const group of document.querySelectorAll(".view-switch")) {
+    const tabs = group.querySelectorAll(".view-tab");
+    for (const tab of tabs) {
+      tab.addEventListener("click", () => {
+        for (const t of tabs) {
+          const on = t === tab;
+          t.setAttribute("aria-selected", String(on));
+          document.getElementById(`${t.dataset.view}-view`).hidden = !on;
+        }
+      });
+    }
   }
 }
 

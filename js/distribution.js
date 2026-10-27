@@ -6,8 +6,8 @@
 // d'utiliser EXACTEMENT le même code que le jeu.
 // Toutes les valeurs chiffrées viennent de economy-config.js.
 
-import { RARITIES } from "./data.js?v=32";
-import { BOOSTER, DROP_RATES, PITY } from "./economy-config.js?v=32";
+import { RARITIES } from "./data.js?v=34";
+import { BOOSTER, DROP_RATES, PITY } from "./economy-config.js?v=34";
 
 const RANK = new Map(RARITIES.map((r, i) => [r.id, i])); // commun 0 → legendaire 3
 const IDS = RARITIES.map((r) => r.id);
