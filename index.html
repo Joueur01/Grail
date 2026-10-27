@@ -17,21 +17,30 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=25">
+  <link rel="stylesheet" href="style.css?v=26">
 </head>
 <body>
   <header class="topbar">
     <h1 class="logo">GRAIL</h1>
-    <!-- Visible seulement avec ?debug=1 -->
-    <span class="debug-badge" id="debug-badge" hidden>Debug</span>
+    <div class="topbar-right">
+      <!-- Visible seulement avec ?debug=1 -->
+      <span class="debug-badge" id="debug-badge" hidden>Debug</span>
+      <!-- Solde de pièces, visible sur toutes les pages (wallet.js) -->
+      <span class="coins" id="coins" role="status" aria-label="Solde : 0 pièce">
+        <svg class="coin-icon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="currentColor"/><circle cx="8" cy="8" r="4.2" fill="none" stroke="#0b0b0d" stroke-opacity=".45" stroke-width="1.4"/></svg>
+        <span class="coins-amount" id="coins-amount">0</span>
+      </span>
+    </div>
   </header>
+  <!-- Notification (bonus quotidien…) -->
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
   <main>
     <!-- Chaque écran est une <section data-screen="…">. main.js n'en affiche qu'un à la fois. -->
     <section class="screen" data-screen="booster" id="screen-booster">
       <!-- Vue 1 : le paquet fermé -->
       <div class="booster-view" id="booster-closed">
-        <span class="eyebrow booster-eyebrow">Drop du jour · 3 pièces</span>
+        <span class="eyebrow booster-eyebrow">Drop du jour</span>
         <!-- Le booster lui-même : on glisse le doigt dessus pour le déchirer
              (un simple toucher ne l'ouvre pas). Le même dessin (32×48, agrandi d'un facteur entier)
              est affiché deux fois, découpé en dents de scie : la bande du haut qui
@@ -48,7 +57,7 @@
         <div class="pity" id="pity" role="img">
           <div class="pity-head">
             <span class="pity-label">Légendaire garantie</span>
-            <span class="pity-count" id="pity-count">0 / 30</span>
+            <span class="pity-count" id="pity-count">—</span>
           </div>
           <div class="pity-bar"><div class="pity-fill" id="pity-fill"></div></div>
         </div>
@@ -101,7 +110,7 @@
             <option value="catalogue">Marque</option>
           </select>
         </div>
-        <p class="muted atelier-intro">5 exemplaires d'un même modèle à la même rareté, tous coloris confondus = amélioration garantie. Moins de 5 : tente ta chance à la roue.</p>
+        <p class="muted atelier-intro" id="atelier-intro"></p>
         <p class="muted atelier-locked-note" id="atelier-locked-note" hidden></p>
         <div class="atelier-list" id="atelier-list"></div>
         <p class="muted collection-empty" id="atelier-empty" hidden>Rien à améliorer pour l'instant. Ouvre des boosters !</p>
@@ -171,6 +180,6 @@
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=25"></script>
+  <script type="module" src="js/main.js?v=26"></script>
 </body>
 </html>

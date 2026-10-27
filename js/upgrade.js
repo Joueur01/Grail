@@ -9,10 +9,11 @@
 //   - les cartes misées sont perdues dans tous les cas ; une Légendaire ne s'améliore pas.
 // La défausse (contre de la monnaie du jeu) n'est pas encore codée : bouton grisé.
 
-import { RARITIES, UPGRADE_MAX_CARDS, UPGRADE_CHANCE_PER_CARD, getRarity } from "./data.js?v=25";
-import { getOwnedCards, addCards, removeCards, countCard, isLocked, setLocked } from "./inventory.js?v=25";
-import { createCardFace, createCardShell } from "./cards.js?v=25";
-import { playSound, vibrate, burst } from "./effects.js?v=25";
+import { RARITIES, getRarity } from "./data.js?v=26";
+import { UPGRADE } from "./economy-config.js?v=26";
+import { getOwnedCards, addCards, removeCards, countCard, isLocked, setLocked } from "./inventory.js?v=26";
+import { createCardFace, createCardShell } from "./cards.js?v=26";
+import { playSound, vibrate, burst } from "./effects.js?v=26";
 
 const SPIN_TIME = 3200; // durée de la roue (identique au CSS)
 
@@ -26,7 +27,7 @@ export function nextRarity(rarityId) {
 
 /** Chance de réussite (en %) pour un nombre de cartes misées. */
 export function upgradeChance(count) {
-  return Math.min(100, count * UPGRADE_CHANCE_PER_CARD);
+  return Math.min(UPGRADE.maxChance, count * UPGRADE.chancePerCard);
 }
 
 /**
@@ -145,14 +146,14 @@ export function setupUpgrade({ catalogue, onChange }) {
       // Depuis l'Atelier : si un coloris a au moins 5 exemplaires, on ne mise que
       // lui (le coloris est alors conservé) ; sinon les coloris les plus nombreux d'abord.
       const sorted = [...owned].sort((a, b) => b.count - a.count);
-      const pool = sorted[0]?.count >= UPGRADE_MAX_CARDS ? [sorted[0]] : sorted;
+      const pool = sorted[0]?.count >= UPGRADE.maxCards ? [sorted[0]] : sorted;
       for (const c of pool) {
-        for (let i = 0; i < c.count && stake.length < UPGRADE_MAX_CARDS; i++) stake.push(c.colorwayId);
+        for (let i = 0; i < c.count && stake.length < UPGRADE.maxCards; i++) stake.push(c.colorwayId);
       }
     } else {
       // Depuis la fiche : les exemplaires de la carte touchée (jusqu'à 5).
       const first = owned.find((c) => c.colorwayId === firstColorwayId);
-      for (let i = 0; i < Math.min(first?.count || 0, UPGRADE_MAX_CARDS); i++) stake.push(firstColorwayId);
+      for (let i = 0; i < Math.min(first?.count || 0, UPGRADE.maxCards); i++) stake.push(firstColorwayId);
     }
 
     title.textContent = "Améliorer";
@@ -183,7 +184,7 @@ export function setupUpgrade({ catalogue, onChange }) {
     function render() {
       const chance = upgradeChance(stake.length);
       // Cases de mise
-      slots.replaceChildren(...Array.from({ length: UPGRADE_MAX_CARDS }, (_, i) => {
+      slots.replaceChildren(...Array.from({ length: UPGRADE.maxCards }, (_, i) => {
         const slot = document.createElement("button");
         slot.className = "stake-slot";
         const id = stake[i];
@@ -209,10 +210,10 @@ export function setupUpgrade({ catalogue, onChange }) {
       chanceLabel.textContent = `${chance} %`;
       warning.textContent = stake.length === 0
         ? "Touche tes cartes ci-dessous pour les miser."
-        : chance >= 100
+        : chance >= UPGRADE.maxChance
           ? `Réussite assurée : tes ${stake.length} cartes deviennent 1 carte ${getRarity(target).name}.`
           : `Si la roue s'arrête sur le gris, tu perds ${stake.length > 1 ? `les ${stake.length} cartes misées` : "la carte misée"}.`;
-      spinBtn.disabled = stake.length === 0 || spinning;
+      spinBtn.disabled = stake.length < UPGRADE.minCards || spinning;
       spinBtn.textContent = stake.length ? `Lancer la roue · ${chance} %` : "Lancer la roue";
       // Cartes disponibles (exemplaires pas encore misés)
       pool.replaceChildren(...owned.map((c) => {
@@ -220,14 +221,14 @@ export function setupUpgrade({ catalogue, onChange }) {
         const colorway = catalogue.colorwayById.get(c.colorwayId);
         const el = createCardShell(colorway, rarity);
         el.classList.add("owned", "tappable");
-        if (left === 0 || stake.length >= UPGRADE_MAX_CARDS) el.classList.add("used");
+        if (left === 0 || stake.length >= UPGRADE.maxCards) el.classList.add("used");
         el.append(createCardFace(colorway, rarity));
         const badge = document.createElement("span");
         badge.className = "count-badge";
         badge.textContent = `×${left}`;
         el.append(badge);
         el.addEventListener("click", () => {
-          if (spinning || left === 0 || stake.length >= UPGRADE_MAX_CARDS) return;
+          if (spinning || left === 0 || stake.length >= UPGRADE.maxCards) return;
           stake.push(c.colorwayId);
           render();
         });
@@ -236,7 +237,7 @@ export function setupUpgrade({ catalogue, onChange }) {
     }
 
     function spin() {
-      if (spinning || stake.length === 0) return;
+      if (spinning || stake.length < UPGRADE.minCards) return;
       spinning = true;
       render();
       const outcome = resolveUpgrade(piece, rarity, stake);

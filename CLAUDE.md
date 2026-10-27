@@ -38,7 +38,7 @@ Contraintes de la bêta :
 
 ### Hors périmètre de la bêta (ne pas coder pour l'instant)
 
-Comptes, serveur, marché entre joueurs, échanges, monnaie du jeu, achats, abonnement, votes, défis de style, contenu créé librement par les joueurs (textes, images), notifications, 3D.
+Comptes, serveur, marché entre joueurs, échanges, dépenses de la monnaie du jeu (le solde et le bonus quotidien existent), achats, abonnement, votes, défis de style, contenu créé librement par les joueurs (textes, images), notifications, 3D.
 
 Ces fonctionnalités viendront plus tard **seulement si le test est positif**. Le code peut rester simple et ne pas les anticiper.
 
@@ -59,7 +59,9 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 ├── style.css
 ├── js/
 │   ├── main.js        # navigation entre écrans
-│   ├── data.js        # chargement du catalogue
+│   ├── data.js        # chargement du catalogue, raretés, recherche
+│   ├── economy-config.js  # TOUTES les valeurs chiffrées de l'économie
+│   ├── wallet.js      # solde de pièces (en-tête), bonus quotidien, notification
 │   ├── booster.js     # tirage, déchirure du paquet, révélation carte par carte
 │   ├── effects.js     # sons synthétisés, vibrations, particules
 │   ├── gestures.js    # gestes : glisser, rester appuyé, toucher
@@ -180,17 +182,17 @@ Pièces à retoucher plus tard (ne pas bloquer la bêta) : Manteau « Atelier »
 | Épique | 7 % | violet |
 | Légendaire | 1 % | or |
 
-- Les taux sont **provisoires** : les garder dans **une seule constante** facile à modifier.
+- Les taux sont **provisoires** : ils sont dans **`js/economy-config.js`** (`DROP_WEIGHTS`), avec toutes les autres valeurs chiffrées de l'économie (voir « Économie et pièces » plus bas).
 - Tirage : on tire d'abord la rareté selon les taux, puis un coloris au hasard parmi les 75 (uniforme pour la bêta).
 - **Garantie « Rare minimum »** : jamais 3 Communes dans un booster. Si les autres cartes sont toutes Communes, la dernière est tirée parmi Rare / Épique / Légendaire en gardant leurs proportions (22 : 7 : 1).
-- **Pity « Légendaire garantie »** : après `PITY_LEGENDAIRE` − 1 boosters d'affilée sans Légendaire (constante dans `js/data.js`, **30** par défaut), le suivant (le 30e) en contient forcément une : la carte la moins rare devient Légendaire. Le compteur (`pity` dans la sauvegarde) repart à **0** dès qu'une Légendaire sort, forcée ou non. **Jauge visible sous le paquet** (« Légendaire garantie · 12 / 30 », barre dorée qui brille sur les 5 derniers, « Prochain booster ! » à 29).
+- **Pity « Légendaire garantie »** : après `PITY_LEGENDAIRE` − 1 boosters d'affilée sans Légendaire (`PITY.legendaryEvery` dans `js/economy-config.js`, **30** par défaut), le suivant (le 30e) en contient forcément une : la carte la moins rare devient Légendaire. Le compteur (`pity` dans la sauvegarde) repart à **0** dès qu'une Légendaire sort, forcée ou non. **Jauge visible sous le paquet** (« Légendaire garantie · 12 / 30 », barre dorée qui brille sur les 5 derniers, « Prochain booster ! » à 29).
 - Effet mesuré par simulation (200 000 boosters) avec ces deux garanties : par carte ≈ 58 % Commun · 30 % Rare · 9,7 % Épique · 1,9 % Légendaire ; ≈ 1 booster sur 17 contient une Légendaire (dont ~28 % offertes par la jauge).
 - La rareté **n'apparaît pas sur le sprite**. Elle s'affiche dans l'interface : bordure et étiquette colorées sur la carte, mention dans l'inventaire et sur l'image partagée. Une révélation plus marquée (lueur, son, vibration `navigator.vibrate` si dispo) pour Épique et Légendaire est bienvenue.
 
 ### Boosters
 
 - Un booster = **3 cartes**.
-- ⚠️ **Actuellement : boosters illimités pour les tests** (`BOOSTERS_ILLIMITES = true` dans `js/main.js`). **Remettre à `false` avant d'envoyer le lien aux amis.**
+- ⚠️ **Actuellement : boosters illimités pour les tests** (`BOOSTER.unlimited = true` dans `js/economy-config.js`). **Remettre à `false` avant d'envoyer le lien aux amis.**
 - Bêta : **1 booster gratuit par jour** (remise à zéro à minuit, heure locale), plus un bouton de test caché ou un paramètre d'URL (`?debug=1`) pour en ouvrir autant que voulu pendant les tests.
 - Ouverture (en place, `js/booster.js`) — **tout se fait en glissant le doigt (ou la souris)**, un simple toucher ne fait rien (le paquet sursaute, le texte d'aide rappelle le geste) :
   1. **Glisser sur le paquet le déchire** : la bande du haut suit le doigt puis s'arrache le long de la ligne pointillée (bord en dents de scie). Bruit de déchirure.
@@ -203,12 +205,12 @@ Pièces à retoucher plus tard (ne pas bloquer la bêta) : Manteau « Atelier »
   - Halo limité à ~65 px de portée : au-delà, il est coupé par le bord de l'écran et forme un rectangle.
 - Les cartes sont sauvegardées **dès la déchirure** (recharger la page ne permet pas de retirer).
 - Sons synthétisés par le navigateur (Web Audio, aucun fichier) ; constante `SONS_ACTIFS` dans `js/effects.js` pour les couper.
-- Pas de monnaie, pas d'achat dans la bêta.
+- Pas d'achat dans la bêta ; les pièces servent seulement de solde pour l'instant.
 
 ### Amélioration par la roue (`js/upgrade.js`)
 
 - Dans la Collection, **toucher une carte ouvre sa fiche** : carte en grand, nombre d'exemplaires, « Améliorer en [rareté suivante] » et « Défausser · bientôt » (grisé).
-- On **mise de 1 à 5 cartes du même modèle et de la même rareté** (coloris libres, plusieurs exemplaires d'un même coloris comptent chacun). **Chance = 20 % par carte misée** (`UPGRADE_CHANCE_PER_CARD`, `UPGRADE_MAX_CARDS` dans `js/data.js`) : 5 cartes = 100 %.
+- On **mise de 1 à 5 cartes du même modèle et de la même rareté** (coloris libres, plusieurs exemplaires d'un même coloris comptent chacun). **Chance = 20 % par carte misée** (`UPGRADE.chancePerCard`, `UPGRADE.maxCards` dans `js/economy-config.js`) : 5 cartes = 100 %.
 - **Réussite** : 1 carte du même modèle, **rareté au-dessus**. **Même coloris** si toutes les cartes misées ont le même coloris, sinon **coloris au hasard parmi tous ceux du modèle**.
 - **Les cartes misées sont perdues dans tous les cas** (réussite ou échec). Une Légendaire ne s'améliore pas (« Rareté maximale »). Une carte portée dont le dernier exemplaire est misé quitte la tenue.
 - Écran : 5 cases de mise (pré-remplies avec la carte touchée ; toucher une case la vide), cartes disponibles à ajouter, **roue** dont la part colorée (couleur de la rareté visée) = la chance, flèche en haut, avertissement si la réussite n'est pas sûre. La roue tourne ~3 s et s'arrête là où le tirage est tombé. La collection est mise à jour **dès le lancement** (recharger ne permet pas de rejouer).
@@ -229,10 +231,18 @@ Pièces à retoucher plus tard (ne pas bloquer la bêta) : Manteau « Atelier »
 - **Recherche** : champ « Rechercher une carte » en tête des filtres de la Collection ; chaque mot tapé doit se trouver dans le nom de la pièce, du coloris, de la marque ou de la rareté (sans tenir compte des majuscules ni des accents). Fonctions `normalizeText` / `matchesSearch` dans `js/data.js`.
 - **Verrou** : dans la fiche d'une carte, bouton « Verrouiller / Déverrouiller ». Il s'applique à **la carte entière** (coloris + rareté, tous ses exemplaires), se sauvegarde dans `locked` (`"colorwayId|rareté" → true`), et disparaît si le dernier exemplaire est perdu. Une carte verrouillée porte un cadenas doré dans la Collection, n'est **jamais proposée à la mise** (roue) ni comptée dans l'Atelier, et son bouton « Améliorer » est grisé (« Carte verrouillée »). Elle peut toujours être portée. Pensé aussi pour la future défausse.
 
+### Économie et pièces (`js/economy-config.js`, `js/wallet.js`)
+
+- **Un seul fichier de configuration** : `js/economy-config.js` contient **toutes** les valeurs chiffrées (taux de drop `DROP_WEIGHTS`, boosters `BOOSTER` : illimités / cartes par booster / stock gratuit par jour / rareté minimale de la dernière carte, `PITY`, `UPGRADE` : mise min/max, chance par carte, plafond, `DISCARD_VALUES`, `COINS` : solde de départ, bonus quotidien, fuseau). **Aucune valeur d'économie ne s'écrit en dur ailleurs** : toute règle chiffrée nouvelle va dans ce fichier.
+- **Stock de boosters** : `BOOSTER.freePerDay` (1) boosters gratuits par jour, remis à zéro à minuit **heure locale du téléphone** (compteur `freeBoostersUsed` dans la sauvegarde). Pas encore de compte à rebours affiché ni de minuteur plus fin.
+- **Pièces** : solde `coins` dans la sauvegarde (entier ≥ 0), affiché **en haut à droite de toutes les pages** (le solde « bondit » à chaque changement). **Une seule fonction centrale**, `changeCoins(delta)` dans `js/inventory.js` : elle refuse un delta non entier et tout retrait qui rendrait le solde négatif (renvoie `false`, rien ne change). Ne jamais modifier `save.coins` autrement.
+- **Bonus de connexion** : `COINS.dailyLoginBonus` (20) pièces, **une fois par jour calendaire à Paris** (`COINS.dailyBonusTimeZone`), à l'ouverture du jeu et au retour sur l'onglet (`lastDailyBonus` = dernier jour pris, AAAA-MM-JJ). Une notification « +20 pièces · bonus du jour » s'affiche sous l'en-tête.
+- Pour l'instant les pièces **ne se dépensent nulle part** (la défausse et les achats ne sont pas codés). Monnaie virtuelle uniquement, jamais convertible en euros (section 9).
+
 ### Défausse (prévue, PAS codée)
 
-- Défausser une carte contre de la **monnaie du jeu**, montant selon la rareté (`DISCARD_VALUES` dans `js/data.js`, valeurs provisoires). Bouton grisé « Défausser · bientôt » dans la fiche.
-- ⚠️ La monnaie du jeu est **hors périmètre de la bêta** (section 3) ; monnaie **virtuelle uniquement, jamais convertible en euros** (section 9). À valider avant de l'activer.
+- Défausser une carte contre de la **monnaie du jeu**, montant selon la rareté (`DISCARD_VALUES` dans `js/economy-config.js`, valeurs provisoires). Bouton grisé « Défausser · bientôt » dans la fiche.
+- Les pièces existent (voir ci-dessus) mais la défausse reste à coder. Monnaie **virtuelle uniquement, jamais convertible en euros** (section 9).
 
 ## 7. Avatar — fiche de tenue (option validée)
 
