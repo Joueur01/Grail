@@ -60,7 +60,8 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 ├── js/
 │   ├── main.js        # navigation entre écrans
 │   ├── data.js        # chargement du catalogue
-│   ├── booster.js     # tirage et animation
+│   ├── booster.js     # tirage, déchirure du paquet, révélation carte par carte
+│   ├── effects.js     # sons synthétisés, vibrations, particules
 │   ├── inventory.js   # collection + sauvegarde localStorage + écran Collection
 │   ├── cards.js       # dessin d'une carte (partagé booster / collection)
 │   ├── avatar.js      # rendu de l'avatar en canvas
@@ -185,7 +186,13 @@ Pièces à retoucher plus tard (ne pas bloquer la bêta) : Manteau « Atelier »
 - Un booster = **3 cartes**.
 - ⚠️ **Actuellement : boosters illimités pour les tests** (`BOOSTERS_ILLIMITES = true` dans `js/main.js`). **Remettre à `false` avant d'envoyer le lien aux amis.**
 - Bêta : **1 booster gratuit par jour** (remise à zéro à minuit, heure locale), plus un bouton de test caché ou un paramètre d'URL (`?debug=1`) pour en ouvrir autant que voulu pendant les tests.
-- Ouverture (en place) : on touche le paquet → il tremble et s'ouvre → 3 cartes face cachée se retournent seules une par une → bouton « Continuer ». Les cartes sont sauvegardées **dès le tirage** (recharger la page ne permet pas de retirer).
+- Ouverture (en place, `js/booster.js`) :
+  1. **On déchire le paquet** : glisser le doigt dessus (la bande du haut se soulève puis s'arrache le long de la ligne pointillée, bord en dents de scie) ou simple toucher (il tremble puis se déchire). Bruit de déchirure.
+  2. Les 3 cartes sortent **face cachée**, distribuées une par une, **la plus rare toujours en dernier**. Le dos d'une carte Rare et plus brille déjà de sa couleur (la Légendaire tremble un peu) : un indice qui donne envie.
+  3. **On touche chaque carte** pour la retourner, dans l'ordre qu'on veut. Commun : simple retournement. Rare : reflet + particules bleues. **Épique / Légendaire** : la carte tremble et se charge, puis **plein écran** (éclair, rayons qui tournent, grande carte, particules, son, vibration), plus long et plus fort en Légendaire. Badge « NOUVEAU » sur les cartes jamais obtenues.
+  4. Bouton « Continuer » quand tout est retourné.
+- Les cartes sont sauvegardées **dès la déchirure** (recharger la page ne permet pas de retirer).
+- Sons synthétisés par le navigateur (Web Audio, aucun fichier) ; constante `SONS_ACTIFS` dans `js/effects.js` pour les couper.
 - Pas de monnaie, pas d'achat dans la bêta.
 
 ## 7. Avatar — fiche de tenue (option validée)
