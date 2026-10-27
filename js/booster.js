@@ -12,14 +12,14 @@
 // Effets de révélation, du plus discret au plus fort : Rare (reflet + particules),
 // Épique (éclair violet, gerbe de particules, titre), Légendaire (plein écran).
 
-import { RARITIES, getRarity } from "./data.js?v=27";
-import { BOOSTER, DROP_RATES, PITY } from "./economy-config.js?v=27";
+import { RARITIES, getRarity } from "./data.js?v=28";
+import { BOOSTER, DROP_RATES, PITY } from "./economy-config.js?v=28";
 import { addCards, getOwnedCards, cardKey, getPity, getPityEpic, setPity, isTutorialDone, setTutorialDone,
-  getBoosterState, takeBooster, buyBooster, getCoins } from "./inventory.js?v=27";
-import { drawBooster, revealOrder } from "./distribution.js?v=27";
-import { createCardFace, createCardShell } from "./cards.js?v=27";
-import { playSound, vibrate, burst } from "./effects.js?v=27";
-import { attachGesture } from "./gestures.js?v=27";
+  getBoosterState, takeBooster } from "./inventory.js?v=28";
+import { drawBooster, revealOrder } from "./distribution.js?v=28";
+import { createCardFace, createCardShell } from "./cards.js?v=28";
+import { playSound, vibrate, burst } from "./effects.js?v=28";
+import { attachGesture } from "./gestures.js?v=28";
 
 // Durées (en millisecondes), faciles à ajuster.
 const TEAR_TIME = 550;    // la bande s'envole, le paquet descend
@@ -92,8 +92,6 @@ export function setupBooster({ catalogue, debug, onOpened }) {
   const stockPips = document.getElementById("stock-pips");
   const stockTimer = document.getElementById("stock-timer");
   const stockSignature = document.getElementById("stock-signature");
-  const stockBought = document.getElementById("stock-bought");
-  const buyBtn = document.getElementById("btn-buy-booster");
 
   packTop.style.clipPath = tearClip(true);
   packBody.style.clipPath = tearClip(false);
@@ -124,7 +122,7 @@ export function setupBooster({ catalogue, debug, onOpened }) {
     if (text) container.append(swipeHint(text));
   }
 
-  let packSource = null; // booster affiché sur le paquet : "free", "bought", "test" ou null
+  let packSource = null; // booster affiché sur le paquet : "free", "test" ou null
 
   // Met le paquet dans le bon état (disponible ou non, standard ou Signature).
   function refreshPack() {
@@ -136,8 +134,7 @@ export function setupBooster({ catalogue, debug, onOpened }) {
     pack.classList.remove("nudge", "torn", "dragging");
     pack.classList.toggle("signature", state.signature);
     packTop.style.transform = "";
-    eyebrow.textContent = state.signature ? "Booster Signature"
-      : state.source === "bought" ? "Booster acheté" : "Booster";
+    eyebrow.textContent = state.signature ? "Booster Signature" : "Booster";
     eyebrow.classList.toggle("signature", state.signature);
     status.textContent = !available
       ? "Plus de booster pour l'instant."
@@ -150,7 +147,7 @@ export function setupBooster({ catalogue, debug, onOpened }) {
     renderPity();
   }
 
-  /** Stock gratuit (pastilles), minuteur, compteur Signature et bouton d'achat. */
+  /** Stock gratuit (pastilles), minuteur, compteur Signature. */
   function renderStock(state = getBoosterState(Date.now(), debug)) {
     stockPips.replaceChildren(...Array.from({ length: state.max }, (_, i) => {
       const pip = document.createElement("span");
@@ -168,28 +165,8 @@ export function setupBooster({ catalogue, debug, onOpened }) {
         ? "Le prochain booster gratuit est un Signature !"
         : `Signature dans ${state.untilSignature} boosters gratuits`;
     stockSignature.classList.toggle("now", state.signature);
-
-    stockBought.hidden = state.bought === 0;
-    stockBought.textContent = `${state.bought} booster${state.bought > 1 ? "s" : ""} acheté${state.bought > 1 ? "s" : ""} à ouvrir`;
-
-    // Achat : seulement quand il n'y a plus rien à ouvrir (stock vide, aucun acheté en attente).
-    const canBuyNow = state.stock === 0 && state.bought === 0;
-    buyBtn.hidden = !canBuyNow;
-    if (canBuyNow) {
-      const missing = BOOSTER.price - getCoins();
-      buyBtn.disabled = missing > 0;
-      buyBtn.textContent = missing > 0
-        ? `Acheter un booster · ${BOOSTER.price} pièces (il en manque ${missing})`
-        : `Acheter un booster · ${BOOSTER.price} pièces`;
-    }
     return state;
   }
-
-  buyBtn.addEventListener("click", () => {
-    if (!buyBooster()) return;
-    refreshPack();
-    status.textContent = "Booster acheté ! Glisse ton doigt dessus pour le déchirer.";
-  });
 
   // Minuteur : chaque seconde, on met à jour le stock ; si un booster vient d'arriver
   // pendant que le paquet fermé est affiché (et pas en train d'être déchiré), on le rend disponible.
@@ -254,7 +231,7 @@ export function setupBooster({ catalogue, debug, onOpened }) {
 
     // Cartes déjà possédées AVANT ce booster (pour le badge « NOUVEAU »).
     const owned = new Set(getOwnedCards().map((c) => cardKey(c.colorwayId, c.rarity)));
-    // Le booster est pris dans le stock (ou parmi les achetés) AVANT le tirage.
+    // Le booster est pris dans le stock AVANT le tirage.
     const taken = takeBooster(Date.now(), debug);
     if (!taken) {
       pack.dataset.locked = "0";
