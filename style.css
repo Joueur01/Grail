@@ -44,6 +44,10 @@
 
 * { box-sizing: border-box; }
 
+/* L'attribut hidden cache TOUJOURS l'élément, même si une règle lui donne
+   un display (grid, flex…) : sinon il resterait affiché (ex. récap du booster). */
+[hidden] { display: none !important; }
+
 /* La page ne défile jamais (comme une appli) : seule la zone <main>
    peut défiler si son contenu dépasse. overscroll-behavior: none
    supprime l'effet « élastique » d'iOS quand on tire la page. */
@@ -121,8 +125,6 @@ main {
   justify-content: center;
 }
 
-/* L'attribut hidden doit gagner sur display:flex */
-.screen[hidden] { display: none; }
 
 .screen-title {
   margin: 8px 0 0;
@@ -338,7 +340,6 @@ main {
   font-weight: 600;
   color: #6e6c67;
 }
-.outfit-hint[hidden] { display: none; }
 
 /* Une case de la fiche. Taille de l'icône selon la largeur RÉELLE de la case :
    largeur nécessaire = 32 × facteur + 8 px (bordure 4 + marge 4). ×1 à ×4. */
@@ -407,7 +408,6 @@ main {
   align-items: flex-end;
   background: rgba(0, 0, 0, 0.6);
 }
-.picker[hidden] { display: none; }
 
 .picker-sheet {
   display: flex;
@@ -493,7 +493,6 @@ main {
   align-items: stretch;
   gap: 16px;
 }
-.booster-view[hidden] { display: none; }
 
 /* Déchirure : la bande du haut s'arrache et s'envole, puis le paquet descend */
 .booster-pack.torn,
@@ -872,7 +871,6 @@ main {
   cursor: grab;
   animation: fade-in 0.25s ease-out;
 }
-.reveal-overlay[hidden] { display: none; }
 
 /* Éclair blanc au début (plus fort en Légendaire) */
 .reveal-overlay::before {
