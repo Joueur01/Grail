@@ -66,6 +66,7 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 │   ├── inventory.js   # collection + sauvegarde localStorage + écran Collection
 │   ├── cards.js       # dessin d'une carte (partagé booster / collection)
 │   ├── upgrade.js     # fiche d'une carte + amélioration par la roue
+│   ├── atelier.js     # vue « Atelier » : progression par modèle + rareté
 │   ├── avatar.js      # rendu de l'avatar en canvas
 │   └── share.js       # export PNG + partage
 ├── data/
@@ -211,6 +212,14 @@ Pièces à retoucher plus tard (ne pas bloquer la bêta) : Manteau « Atelier »
 - **Réussite** : 1 carte du même modèle, **rareté au-dessus**. **Même coloris** si toutes les cartes misées ont le même coloris, sinon **coloris au hasard parmi tous ceux du modèle**.
 - **Les cartes misées sont perdues dans tous les cas** (réussite ou échec). Une Légendaire ne s'améliore pas (« Rareté maximale »). Une carte portée dont le dernier exemplaire est misé quitte la tenue.
 - Écran : 5 cases de mise (pré-remplies avec la carte touchée ; toucher une case la vide), cartes disponibles à ajouter, **roue** dont la part colorée (couleur de la rareté visée) = la chance, flèche en haut, avertissement si la réussite n'est pas sûre. La roue tourne ~3 s et s'arrête là où le tirage est tombé. La collection est mise à jour **dès le lancement** (recharger ne permet pas de rejouer).
+
+### Atelier (`js/atelier.js`)
+
+- Dans l'onglet Collection, un sélecteur en pilule bascule entre **« Collection »** (une carte par coloris, inchangée) et **« Atelier »**.
+- L'Atelier montre **une ligne par modèle + rareté possédés** (Légendaires exclues) : marque et nom du modèle, rareté actuelle, barre **« X/5 »** (tous coloris confondus ; au-delà de 5, la barre reste pleine et affiche le vrai total, ex. « 7/5 »), chance de la roue en % et rareté visée (« → Épique »), puis les coloris possédés en vignettes avec leur nombre.
+- Tri : du plus proche de 5 au plus éloigné (5 et plus = « prêt », bordure qui brille), puis la rareté la plus haute, puis l'ordre du catalogue.
+- Toucher une ligne ouvre directement la roue (`openModel` dans `js/upgrade.js`) avec la mise pré-remplie : si un coloris a 5 exemplaires ou plus, uniquement lui (pour garder le même coloris) ; sinon les coloris les plus nombreux d'abord, jusqu'à 5 cartes.
+- Emplacement réservé en bas : « Défausse · bientôt » (non codée).
 
 ### Défausse (prévue, PAS codée)
 

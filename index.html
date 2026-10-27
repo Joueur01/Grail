@@ -17,7 +17,7 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=22">
+  <link rel="stylesheet" href="style.css?v=23">
 </head>
 <body>
   <header class="topbar">
@@ -69,15 +69,36 @@
     <section class="screen" data-screen="collection" id="screen-collection" hidden>
       <h2 class="screen-title">Collection</h2>
       <p class="muted" id="collection-summary">—</p>
-      <!-- Filtres : menus natifs du téléphone, faciles au doigt. Restent collés en haut. -->
-      <div class="filters">
-        <select id="filter-brand" aria-label="Filtrer par marque"><option value="">Marque</option></select>
-        <select id="filter-category" aria-label="Filtrer par catégorie"><option value="">Type</option></select>
-        <select id="filter-rarity" aria-label="Filtrer par rareté"><option value="">Rareté</option></select>
+      <!-- Sélecteur de vue : Collection (une carte par coloris) / Atelier (par modèle) -->
+      <div class="view-switch" role="tablist" aria-label="Vue">
+        <button class="view-tab" role="tab" data-view="collection" aria-selected="true">Collection</button>
+        <button class="view-tab" role="tab" data-view="atelier" aria-selected="false">Atelier</button>
       </div>
-      <p class="muted collection-empty" id="collection-empty" hidden></p>
-      <!-- Grille des cartes possédées (inventory.js) -->
-      <div class="card-grid" id="collection-grid"></div>
+
+      <!-- Vue Collection (inchangée) -->
+      <div class="collection-view" id="collection-view">
+        <!-- Filtres : menus natifs du téléphone, faciles au doigt. Restent collés en haut. -->
+        <div class="filters">
+          <select id="filter-brand" aria-label="Filtrer par marque"><option value="">Marque</option></select>
+          <select id="filter-category" aria-label="Filtrer par catégorie"><option value="">Type</option></select>
+          <select id="filter-rarity" aria-label="Filtrer par rareté"><option value="">Rareté</option></select>
+        </div>
+        <p class="muted collection-empty" id="collection-empty" hidden></p>
+        <!-- Grille des cartes possédées (inventory.js) -->
+        <div class="card-grid" id="collection-grid"></div>
+      </div>
+
+      <!-- Vue Atelier : une ligne par modèle + rareté (atelier.js) -->
+      <div class="collection-view" id="atelier-view" hidden>
+        <p class="muted atelier-intro">5 exemplaires d'un même modèle à la même rareté, tous coloris confondus = amélioration garantie. Moins de 5 : tente ta chance à la roue.</p>
+        <div class="atelier-list" id="atelier-list"></div>
+        <p class="muted collection-empty" id="atelier-empty" hidden>Rien à améliorer pour l'instant. Ouvre des boosters !</p>
+        <!-- Emplacement réservé à la future défausse (pas encore codée) -->
+        <div class="atelier-discard" aria-disabled="true">
+          <span class="eyebrow">Défausse · bientôt</span>
+          <p class="muted">Bientôt : défausse tes cartes en trop contre de la monnaie du jeu.</p>
+        </div>
+      </div>
     </section>
 
     <section class="screen" data-screen="avatar" id="screen-avatar" hidden>
@@ -138,6 +159,6 @@
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=22"></script>
+  <script type="module" src="js/main.js?v=23"></script>
 </body>
 </html>

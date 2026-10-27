@@ -511,6 +511,92 @@ main {
 
 .share-status { text-align: center; min-height: 1.4em; }
 
+/* --- Onglet Collection : sélecteur Collection / Atelier --- */
+.view-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+}
+.view-tab {
+  min-height: 40px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.view-tab[aria-selected="true"] { background: var(--text); color: var(--bg); }
+
+.collection-view { display: flex; flex-direction: column; gap: 16px; }
+
+/* --- Atelier (atelier.js) : une ligne par modèle + rareté --- */
+.atelier-intro { margin: 0; font-size: 14px; }
+.atelier-list { display: flex; flex-direction: column; gap: 10px; }
+
+.atelier-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid var(--border);
+  border-left: 4px solid var(--rarity-color); /* liseré de la rareté actuelle */
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font);
+  text-align: left;
+  cursor: pointer;
+}
+.atelier-row:active { opacity: 0.85; }
+/* 5 exemplaires ou plus : amélioration garantie, la ligne s'allume */
+.atelier-row.ready { border-color: var(--rarity-color); box-shadow: 0 0 14px -4px var(--rarity-color); }
+
+.atelier-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.atelier-title { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-width: 0; }
+.atelier-name { font-size: 16px; font-weight: 800; line-height: 1.2; }
+.atelier-title .rarity-tag { margin-top: 2px; }
+.atelier-odds { display: flex; flex-direction: column; align-items: flex-end; flex: none; }
+.atelier-chance { font-size: 22px; font-weight: 900; line-height: 1; color: var(--rarity-color); }
+.atelier-target { font-size: 12px; font-weight: 700; color: var(--rarity-color); white-space: nowrap; }
+
+.atelier-progress { display: flex; align-items: center; gap: 10px; }
+.atelier-bar { flex: 1; height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.atelier-fill { height: 100%; border-radius: inherit; background: var(--rarity-color); transition: width 0.4s ease-out; }
+.atelier-count { font-size: 13px; font-weight: 800; min-width: 3ch; text-align: right; }
+
+/* Les coloris possédés : miniature + nom + nombre */
+.atelier-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.atelier-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 3px 8px 3px 3px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  font-size: 12px;
+}
+.atelier-chip-tile { display: grid; place-items: center; flex: none; padding: 1px; border-radius: 8px; background: #cccac4; } /* case claire */
+.atelier-chip-tile img { display: block; width: 32px; height: 32px; } /* ×1 */
+.atelier-chip-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+.atelier-chip-count { flex: none; font-weight: 800; }
+
+/* Emplacement réservé à la défausse (pas encore codée) */
+.atelier-discard {
+  padding: 12px 14px;
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+  opacity: 0.6;
+}
+.atelier-discard p { margin: 4px 0 0; font-size: 13px; }
+
 /* --- Fiche d'une carte et roue d'amélioration (upgrade.js) --- */
 .card.tappable { cursor: pointer; }
 .card.tappable:active .card-face { opacity: 0.85; }
@@ -899,9 +985,9 @@ main {
 }
 
 /* Couleur d'accent de chaque marque (section 5 du CLAUDE.md) */
-.card[data-brand="signal9"]            { --brand-color: var(--brand-signal9); }
-.card[data-brand="halvane"]            { --brand-color: var(--brand-halvane); }
-.card[data-brand="pigeon_social_club"] { --brand-color: var(--brand-pigeon_social_club); }
+[data-brand="signal9"]            { --brand-color: var(--brand-signal9); }
+[data-brand="halvane"]            { --brand-color: var(--brand-halvane); }
+[data-brand="pigeon_social_club"] { --brand-color: var(--brand-pigeon_social_club); }
 
 .card-brand {
   font-size: 10px;
