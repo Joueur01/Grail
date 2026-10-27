@@ -17,7 +17,7 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=28">
+  <link rel="stylesheet" href="style.css?v=29">
 </head>
 <body>
   <header class="topbar">
@@ -131,10 +131,12 @@
         <p class="muted atelier-locked-note" id="atelier-locked-note" hidden></p>
         <div class="atelier-list" id="atelier-list"></div>
         <p class="muted collection-empty" id="atelier-empty" hidden>Rien à améliorer pour l'instant. Ouvre des boosters !</p>
-        <!-- Emplacement réservé à la future défausse (pas encore codée) -->
-        <div class="atelier-discard" aria-disabled="true">
-          <span class="eyebrow">Défausse · bientôt</span>
-          <p class="muted">Bientôt : défausse tes cartes en trop contre de la monnaie du jeu.</p>
+        <!-- Défausse : échanger des cartes contre des pièces (discard.js) -->
+        <div class="atelier-discard">
+          <span class="eyebrow">Défausse</span>
+          <p class="muted" id="discard-values"></p>
+          <p class="muted">Les cartes verrouillées sont protégées.</p>
+          <button class="btn" id="btn-discard-all">Défausser des cartes</button>
         </div>
       </div>
     </section>
@@ -197,6 +199,6 @@
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=28"></script>
+  <script type="module" src="js/main.js?v=29"></script>
 </body>
 </html>

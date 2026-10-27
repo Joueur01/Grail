@@ -3,15 +3,16 @@
 // ?v=… sur les imports : même numéro que dans index.html, et le même partout
 // (un module importé sous deux adresses différentes serait chargé deux fois).
 
-import { loadCatalogue } from "./data.js?v=28";
-import { loadSave, setupCollection } from "./inventory.js?v=28";
-import { initAvatar, setupOutfit } from "./avatar.js?v=28";
-import { setupBooster } from "./booster.js?v=28";
-import { setupShare } from "./share.js?v=28";
-import { setupUpgrade } from "./upgrade.js?v=28";
-import { setupAtelier, setupViewSwitch } from "./atelier.js?v=28";
-import { setupWallet } from "./wallet.js?v=28";
-import { BOOSTER } from "./economy-config.js?v=28";
+import { loadCatalogue } from "./data.js?v=29";
+import { loadSave, setupCollection } from "./inventory.js?v=29";
+import { initAvatar, setupOutfit } from "./avatar.js?v=29";
+import { setupBooster } from "./booster.js?v=29";
+import { setupShare } from "./share.js?v=29";
+import { setupUpgrade } from "./upgrade.js?v=29";
+import { setupAtelier, setupViewSwitch } from "./atelier.js?v=29";
+import { setupWallet } from "./wallet.js?v=29";
+import { setupDiscard } from "./discard.js?v=29";
+import { BOOSTER } from "./economy-config.js?v=29";
 
 // ?debug=1 dans l'URL : boosters illimités pendant les tests.
 export const DEBUG = new URLSearchParams(location.search).get("debug") === "1";
@@ -60,11 +61,17 @@ async function start() {
     const refreshOutfit = setupOutfit({ catalogue, onChange: setupShare() });
     // Fiche de carte + roue : après une amélioration, collection et tenue sont
     // redessinées (une carte portée a pu être misée).
-    const upgrade = setupUpgrade({ catalogue, onChange: () => { refreshCards(); refreshOutfit(); } });
+    const onChange = () => { refreshCards(); refreshOutfit(); };
+    // Défausse (plusieurs cartes contre des pièces) : ouverte depuis la fiche ou l'Atelier.
+    const discard = setupDiscard({ catalogue, onChange });
+    const upgrade = setupUpgrade({ catalogue, onChange, onDiscard: (colorwayId, rarity) => discard.openCard(colorwayId, rarity) });
     // Collection (une carte par coloris) : toucher une carte ouvre sa fiche.
     const refreshCollection = setupCollection({ catalogue, onCardTap: (card) => upgrade.openCard(card) });
     // Atelier (par modèle + rareté) : toucher une ligne ouvre la roue, mise pré-remplie.
-    const refreshAtelier = setupAtelier({ catalogue, onRowTap: (piece, rarity) => upgrade.openModel(piece, rarity) });
+    const refreshAtelier = setupAtelier({ catalogue, onRowTap: (piece, rarity) => upgrade.openModel(piece, rarity),
+      onRowDiscard: (piece, rarity) => discard.openModel(piece, rarity),
+      onDiscardAll: () => discard.openAll(),
+    });
     setupViewSwitch();
     // Collection et Atelier sont redessinés après chaque booster ou amélioration.
     const refreshCards = () => { refreshCollection(); refreshAtelier(); };

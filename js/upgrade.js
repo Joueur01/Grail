@@ -7,13 +7,13 @@
 //     les cartes misées ont le même coloris, sinon coloris au hasard parmi TOUS
 //     ceux du modèle ;
 //   - les cartes misées sont perdues dans tous les cas ; une Légendaire ne s'améliore pas.
-// La défausse (contre de la monnaie du jeu) n'est pas encore codée : bouton grisé.
+// La défausse est dans discard.js (le bouton de la fiche l'ouvre).
 
-import { RARITIES, getRarity } from "./data.js?v=28";
-import { UPGRADE } from "./economy-config.js?v=28";
-import { getOwnedCards, addCards, removeCards, countCard, isLocked, setLocked } from "./inventory.js?v=28";
-import { createCardFace, createCardShell } from "./cards.js?v=28";
-import { playSound, vibrate, burst } from "./effects.js?v=28";
+import { RARITIES, getRarity } from "./data.js?v=29";
+import { UPGRADE, DISCARD_VALUES } from "./economy-config.js?v=29";
+import { getOwnedCards, addCards, removeCards, countCard, isLocked, setLocked } from "./inventory.js?v=29";
+import { createCardFace, createCardShell } from "./cards.js?v=29";
+import { playSound, vibrate, burst } from "./effects.js?v=29";
 
 const SPIN_TIME = 3200; // durée de la roue (identique au CSS)
 
@@ -55,8 +55,9 @@ export function resolveUpgrade(piece, rarity, stake) {
  * Branche la fiche de carte et la roue. Renvoie { openCard }.
  * - catalogue : résultat de loadCatalogue()
  * - onChange : appelé quand la collection a changé (pour tout redessiner)
+ * - onDiscard(colorwayId, rarity) : appelé par le bouton « Défausser » de la fiche
  */
-export function setupUpgrade({ catalogue, onChange }) {
+export function setupUpgrade({ catalogue, onChange, onDiscard }) {
   const sheet = document.getElementById("card-sheet");
   const title = document.getElementById("card-sheet-title");
   const body = document.getElementById("card-sheet-body");
@@ -117,8 +118,10 @@ export function setupUpgrade({ catalogue, onChange }) {
       button(locked ? "Déverrouiller" : "Verrouiller", {
         onClick: () => { setLocked(colorwayId, rarity, !locked); onChange?.(); openCard({ colorwayId, rarity }); },
       }),
-      // Défausse : prévue mais pas encore codée.
-      button("Défausser · bientôt", { disabled: true }),
+      // Défausse : plusieurs cartes d'un coup (discard.js) ; impossible si la carte est verrouillée.
+      locked
+        ? button("Défausser · carte verrouillée", { disabled: true })
+        : button(`Défausser · +${DISCARD_VALUES[rarity]} pièces par carte`, { onClick: () => onDiscard?.(colorwayId, rarity) }),
     );
     body.replaceChildren(
       bigCard(colorwayId, rarity),

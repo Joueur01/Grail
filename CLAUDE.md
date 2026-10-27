@@ -69,6 +69,7 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 │   ├── inventory.js   # collection + sauvegarde localStorage + écran Collection
 │   ├── cards.js       # dessin d'une carte (partagé booster / collection)
 │   ├── upgrade.js     # fiche d'une carte + amélioration par la roue
+│   ├── discard.js     # défausse : sélection de plusieurs cartes contre des pièces
 │   ├── atelier.js     # vue « Atelier » : progression par modèle + rareté
 │   ├── avatar.js      # rendu de l'avatar en canvas
 │   └── share.js       # export PNG + partage
@@ -217,7 +218,7 @@ Tous les chiffres sont dans **`js/economy-config.js`** (`DROP_RATES`, `BOOSTER`,
 
 ### Amélioration par la roue (`js/upgrade.js`)
 
-- Dans la Collection, **toucher une carte ouvre sa fiche** : carte en grand, nombre d'exemplaires, « Améliorer en [rareté suivante] » et « Défausser · bientôt » (grisé).
+- Dans la Collection, **toucher une carte ouvre sa fiche** : carte en grand, nombre d'exemplaires, « Améliorer en [rareté suivante] », « Verrouiller » et « Défausser · +N pièces par carte ».
 - On **mise de 1 à 5 cartes du même modèle et de la même rareté** (coloris libres, plusieurs exemplaires d'un même coloris comptent chacun). **Chance = 20 % par carte misée** (`UPGRADE.chancePerCard`, `UPGRADE.maxCards` dans `js/economy-config.js`) : 5 cartes = 100 %.
 - **Réussite** : 1 carte du même modèle, **rareté au-dessus**. **Même coloris** si toutes les cartes misées ont le même coloris, sinon **coloris au hasard parmi tous ceux du modèle**.
 - **Les cartes misées sont perdues dans tous les cas** (réussite ou échec). Une Légendaire ne s'améliore pas (« Rareté maximale »). Une carte portée dont le dernier exemplaire est misé quitte la tenue.
@@ -232,7 +233,7 @@ Tous les chiffres sont dans **`js/economy-config.js`** (`DROP_RATES`, `BOOSTER`,
 - Toucher une ligne ouvre directement la roue (`openModel` dans `js/upgrade.js`) avec la mise pré-remplie : si un coloris a 5 exemplaires ou plus, uniquement lui (pour garder le même coloris) ; sinon les coloris les plus nombreux d'abord, jusqu'à 5 cartes.
 - **Barre de filtres** (collée en haut, comme dans la Collection) : recherche « Rechercher un modèle » (nom du modèle, marque, coloris ou rareté), menus **Marque**, **Type** et **tri** (Progrès = défaut, Nom A→Z, Marque). La rareté reste toujours le premier critère de tri (séparateurs).
 - Les cartes **verrouillées** ne comptent pas dans l'Atelier (une note « N cartes verrouillées : non comptées ici » s'affiche).
-- Emplacement réservé en bas : « Défausse · bientôt » (non codée).
+- En bas : bloc **Défausse** (valeurs par rareté + bouton « Défausser des cartes »). Chaque ligne a aussi un petit bouton « Défausser » (le modèle à cette rareté).
 
 ### Recherche et verrouillage (Collection)
 
@@ -241,16 +242,22 @@ Tous les chiffres sont dans **`js/economy-config.js`** (`DROP_RATES`, `BOOSTER`,
 
 ### Économie et pièces (`js/economy-config.js`, `js/wallet.js`)
 
-- **Un seul fichier de configuration** : `js/economy-config.js` contient **toutes** les valeurs chiffrées (taux de drop `DROP_RATES`, boosters `BOOSTER` : mode test / cartes par booster / recharge et stock / Signature / prix, `PITY` (Légendaire douce + garantie, Épique), `UPGRADE` : mise min/max, chance par carte, plafond, `DISCARD_VALUES`, `COINS` : solde de départ, bonus quotidien, fuseau). **Aucune valeur d'économie ne s'écrit en dur ailleurs** : toute règle chiffrée nouvelle va dans ce fichier.
+- **Un seul fichier de configuration** : `js/economy-config.js` contient **toutes** les valeurs chiffrées (taux de drop `DROP_RATES`, boosters `BOOSTER` : mode test / cartes par booster / recharge et stock / Signature / prix, `PITY` (Légendaire douce + garantie, Épique), `UPGRADE` : mise min/max, chance par carte, plafond, `DISCARD_VALUES` / `DISCARD_CONFIRM_FROM` / `DISCARD_KEEP`, `COINS` : solde de départ, bonus quotidien, fuseau). **Aucune valeur d'économie ne s'écrit en dur ailleurs** : toute règle chiffrée nouvelle va dans ce fichier.
 - **Stock de boosters** : voir « Boosters » plus haut (1 toutes les 6 h, max 3).
 - **Pièces** : solde `coins` dans la sauvegarde (entier ≥ 0), affiché **en haut à droite de toutes les pages** (le solde « bondit » à chaque changement). **Une seule fonction centrale**, `changeCoins(delta)` dans `js/inventory.js` : elle refuse un delta non entier et tout retrait qui rendrait le solde négatif (renvoie `false`, rien ne change). Ne jamais modifier `save.coins` autrement.
 - **Bonus de connexion** : `COINS.dailyLoginBonus` (20) pièces, **une fois par jour calendaire à Paris** (`COINS.dailyBonusTimeZone`), à l'ouverture du jeu et au retour sur l'onglet (`lastDailyBonus` = dernier jour pris, AAAA-MM-JJ). Une notification « +20 pièces · bonus du jour » s'affiche sous l'en-tête.
-- Pour l'instant les pièces **ne se dépensent nulle part** (ni boosters, ni défausse). Le solde et le bonus quotidien existent ; l'usage des pièces sera décidé plus tard.
+- Les pièces **se gagnent** (bonus quotidien, défausse) mais **ne se dépensent encore nulle part** : l'usage des pièces sera décidé plus tard.
 
-### Défausse (prévue, PAS codée)
+### Défausse (`js/discard.js`)
 
-- Défausser une carte contre de la **monnaie du jeu**, montant selon la rareté (`DISCARD_VALUES` dans `js/economy-config.js`, valeurs provisoires). Bouton grisé « Défausser · bientôt » dans la fiche.
-- Les pièces existent (voir ci-dessus) mais la défausse reste à coder. Monnaie **virtuelle uniquement, jamais convertible en euros** (section 9).
+- **Valeurs** (`DISCARD_VALUES` dans `js/economy-config.js`) : Commune **3**, Rare **15**, Épique **60**, Légendaire **200** pièces par carte.
+- **Trois entrées** : le bouton « Défausser » de la **fiche d'une carte** (cartes du même modèle, 1 exemplaire déjà sélectionné), le bouton « Défausser » d'une **ligne de l'Atelier** (le modèle à cette rareté) et le bouton « Défausser des cartes » en bas de l'Atelier (toute la collection).
+- **Sélection de plusieurs cartes d'un coup** : on touche une carte pour ajouter un exemplaire (le badge « −n » montre ce qui est choisi, « ×n » ce qui reste), on touche une pastille de la sélection pour en retirer un. Raccourcis : « Tout sauf 1 exemplaire de chaque » (`DISCARD_KEEP`) et « Tout désélectionner ». Le total « N cartes · +X pièces » se met à jour en direct.
+- **Cartes verrouillées** : visibles mais grisées, impossibles à sélectionner ; sur la fiche, le bouton est grisé « Défausser · carte verrouillée ». Le contrôle est refait dans `discardCards()` (inventory.js).
+- **Sécurités** : à partir de la rareté `DISCARD_CONFIRM_FROM` (Épique), un **2e toucher** « Confirmer : N cartes contre X pièces » est demandé ; un avertissement apparaît si une carte portée quitte la tenue.
+- **Tout ou rien** : `discardCards(cartes)` (inventory.js) retire les cartes et verse les pièces (via `changeCoins`) en **une seule sauvegarde** ; elle renvoie le gain ou `null` si une carte est verrouillée ou manque.
+- **Animation** : des pièces dorées s'envolent du bouton vers le solde en haut (`flyCoins` dans `js/wallet.js`, 3 à 12 pièces selon le gain), puis le nombre du solde défile jusqu'à sa nouvelle valeur et « bondit » ; petit son de pièces. Désactivée si le téléphone réduit les animations. Le même défilement sert au bonus quotidien.
+- Monnaie **virtuelle uniquement, jamais convertible en euros** (section 9). Les pièces ne servent encore à rien d'autre.
 
 ## 7. Avatar — fiche de tenue (option validée)
 

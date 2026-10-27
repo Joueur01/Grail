@@ -54,9 +54,13 @@ export const UPGRADE = {
   maxChance: 100,         // plafond de la chance, en %
 };
 
-// --- Défausse — PAS ENCORE CODÉE ----------------------------------------------------
-// Gain en pièces pour une carte défaussée, selon sa rareté.
-export const DISCARD_VALUES = { commun: 5, rare: 20, epique: 80, legendaire: 400 };
+// --- Défausse -----------------------------------------------------------------------
+// Pièces gagnées pour chaque carte défaussée, selon sa rareté.
+export const DISCARD_VALUES = { commun: 3, rare: 15, epique: 60, legendaire: 200 };
+// À partir de cette rareté, la défausse demande une confirmation en plus (2e toucher).
+export const DISCARD_CONFIRM_FROM = "epique";
+// « Garder les doublons » : nombre d'exemplaires gardés de chaque carte.
+export const DISCARD_KEEP = 1;
 
 // --- Monnaie du jeu (« pièces ») ----------------------------------------------------
 export const COINS = {

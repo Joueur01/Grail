@@ -640,7 +640,35 @@ main {
   text-align: left;
   cursor: pointer;
 }
-.atelier-row:active { opacity: 0.85; }
+.atelier-main {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-family: var(--font);
+  text-align: left;
+  cursor: pointer;
+}
+.atelier-main:active { opacity: 0.85; }
+.atelier-row { cursor: default; }
+.atelier-discard-btn {
+  align-self: flex-end;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: none;
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.atelier-discard-btn:active { opacity: 0.7; }
 /* Séparateur de rareté : nom + nombre de modèles + filet coloré */
 .atelier-divider { display: flex; align-items: center; gap: 10px; margin-top: 10px; color: var(--rarity-color); }
 .atelier-divider:first-child { margin-top: 0; }
@@ -691,14 +719,17 @@ main {
 .atelier-chip-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
 .atelier-chip-count { flex: none; font-weight: 800; }
 
-/* Emplacement réservé à la défausse (pas encore codée) */
+/* Défausse : bloc en bas de l'Atelier */
 .atelier-discard {
-  padding: 12px 14px;
-  border: 1px dashed var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--border);
   border-radius: 14px;
-  opacity: 0.6;
+  background: var(--surface);
 }
-.atelier-discard p { margin: 4px 0 0; font-size: 13px; }
+.atelier-discard p { margin: 0; font-size: 13px; }
 
 /* --- Fiche d'une carte et roue d'amélioration (upgrade.js) --- */
 .card.tappable { cursor: pointer; }
@@ -716,6 +747,53 @@ main {
 .sheet-subtitle { font-weight: 700; }
 .sheet-eyebrow { margin: 6px 0 0; }
 .sheet-actions { display: flex; flex-direction: column; gap: 10px; }
+
+/* Défausse (discard.js) */
+.discard-summary { margin: 0; text-align: center; font-size: 22px; font-weight: 900; color: var(--muted); }
+.discard-summary.on { color: var(--rarity-legendaire); }
+.discard-warning { font-size: 13px; }
+.discard-tray { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.discard-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 12px 3px 3px;
+  border: 2px solid var(--rarity-color);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-family: var(--font);
+  cursor: pointer;
+}
+.discard-tools { display: flex; gap: 8px; }
+.discard-tools .btn { min-height: 44px; padding: 8px 10px; font-size: 13px; }
+.btn.armed { background: #e0503f; border-color: #e0503f; color: #fff; }
+.card.picked .card-face { outline: 3px solid var(--text); outline-offset: -3px; }
+.pick-badge {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  z-index: 1;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #fff;
+  background: #e0503f;
+}
+.discard-gain { margin: 8px 0 0; text-align: center; font-size: 44px; font-weight: 900; font-stretch: 125%; color: var(--rarity-legendaire); }
+
+/* Pièces qui volent vers le solde (wallet.js) */
+.fly-coin {
+  position: fixed;
+  z-index: 90;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffe27a, var(--rarity-legendaire) 60%, #b8860b);
+  box-shadow: 0 0 8px rgba(242, 194, 48, 0.8);
+  pointer-events: none;
+}
 
 /* Les 5 cases de mise */
 .stake-slots {

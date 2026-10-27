@@ -6,10 +6,10 @@
 // rareté visée. Toucher une ligne ouvre la roue avec ces cartes déjà misées.
 // Les Légendaires (non améliorables) n'apparaissent pas.
 
-import { RARITIES, getRarity, matchesSearch } from "./data.js?v=28";
-import { UPGRADE } from "./economy-config.js?v=28";
-import { getOwnedCards } from "./inventory.js?v=28";
-import { nextRarity, upgradeChance } from "./upgrade.js?v=28";
+import { RARITIES, getRarity, matchesSearch } from "./data.js?v=29";
+import { UPGRADE, DISCARD_VALUES } from "./economy-config.js?v=29";
+import { getOwnedCards } from "./inventory.js?v=29";
+import { nextRarity, upgradeChance } from "./upgrade.js?v=29";
 
 /**
  * Regroupe les cartes possédées par modèle + rareté.
@@ -49,8 +49,10 @@ export function atelierRows(catalogue, sort = "progress") {
 /**
  * Branche l'Atelier et renvoie une fonction pour le redessiner.
  * - onRowTap(piece, rarity) : appelé quand on touche une ligne (ouvre la roue)
+ * - onRowDiscard(piece, rarity) : bouton « Défausser » d'une ligne
+ * - onDiscardAll() : bouton « Défausser des cartes » en bas de l'Atelier
  */
-export function setupAtelier({ catalogue, onRowTap }) {
+export function setupAtelier({ catalogue, onRowTap, onRowDiscard, onDiscardAll }) {
   const list = document.getElementById("atelier-list");
   const empty = document.getElementById("atelier-empty");
   const lockedNote = document.getElementById("atelier-locked-note");
@@ -61,6 +63,11 @@ export function setupAtelier({ catalogue, onRowTap }) {
   const brandSelect = document.getElementById("atelier-brand");
   const categorySelect = document.getElementById("atelier-category");
   const sortSelect = document.getElementById("atelier-sort");
+
+  // Défausse : valeurs lues dans la config, bouton « toute la collection ».
+  document.getElementById("discard-values").textContent =
+    `Par carte : ${RARITIES.map((r) => `${r.name} ${DISCARD_VALUES[r.id]}`).join(" · ")} pièces.`;
+  document.getElementById("btn-discard-all").addEventListener("click", () => onDiscardAll?.());
 
   // Remplit les menus (même principe que la Collection).
   fillSelect(brandSelect, catalogue.brands);
@@ -116,12 +123,15 @@ export function setupAtelier({ catalogue, onRowTap }) {
     const chance = upgradeChance(count);
     const brand = colorways[0].colorway.brand;
 
-    const el = document.createElement("button");
+    // La ligne contient deux boutons (la roue, la défausse) : ce n'est donc pas elle le bouton.
+    const el = document.createElement("div");
     el.className = "atelier-row";
+    const main = document.createElement("button");
+    main.className = "atelier-main";
     el.dataset.rarity = rarity; // couleur de la rareté actuelle (bordure, étiquette)
     el.dataset.brand = brand.id;
     if (count >= UPGRADE.maxCards) el.classList.add("ready");
-    el.setAttribute("aria-label",
+    main.setAttribute("aria-label",
       `${piece.name} ${getRarity(rarity).name} : ${total} sur ${UPGRADE.maxCards}, ${chance} % vers ${getRarity(target).name}`);
 
     // En-tête : marque, nom du modèle, rareté | chances et rareté visée
@@ -185,8 +195,14 @@ export function setupAtelier({ catalogue, onRowTap }) {
       : `Tenter la roue · ${chance} %`;
     cta.append(text("span", "atelier-cta-arrow", "›"));
 
-    el.append(head, progress, chips, cta);
-    el.addEventListener("click", () => onRowTap?.(piece, rarity));
+    main.append(head, progress, chips, cta);
+    main.addEventListener("click", () => onRowTap?.(piece, rarity));
+    const discard = document.createElement("button");
+    discard.className = "atelier-discard-btn";
+    discard.textContent = "Défausser";
+    discard.setAttribute("aria-label", `Défausser des cartes : ${piece.name}, ${getRarity(rarity).name}`);
+    discard.addEventListener("click", () => onRowDiscard?.(piece, rarity));
+    el.append(main, discard);
     return el;
   }
 
