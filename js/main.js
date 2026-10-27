@@ -3,16 +3,16 @@
 // ?v=… sur les imports : même numéro que dans index.html, et le même partout
 // (un module importé sous deux adresses différentes serait chargé deux fois).
 
-import { loadCatalogue } from "./data.js?v=31";
-import { loadSave, setupCollection } from "./inventory.js?v=31";
-import { initAvatar, setupOutfit } from "./avatar.js?v=31";
-import { setupBooster } from "./booster.js?v=31";
-import { setupShare } from "./share.js?v=31";
-import { setupUpgrade } from "./upgrade.js?v=31";
-import { setupAtelier, setupViewSwitch } from "./atelier.js?v=31";
-import { setupWallet } from "./wallet.js?v=31";
-import { setupDiscard, createSelection } from "./discard.js?v=31";
-import { BOOSTER } from "./economy-config.js?v=31";
+import { loadCatalogue } from "./data.js?v=32";
+import { loadSave, setupCollection } from "./inventory.js?v=32";
+import { initAvatar, setupOutfit } from "./avatar.js?v=32";
+import { setupBooster } from "./booster.js?v=32";
+import { setupShare } from "./share.js?v=32";
+import { setupUpgrade } from "./upgrade.js?v=32";
+import { setupAtelier, setupViewSwitch } from "./atelier.js?v=32";
+import { setupWallet } from "./wallet.js?v=32";
+import { setupDiscard, createSelection } from "./discard.js?v=32";
+import { BOOSTER } from "./economy-config.js?v=32";
 
 // ?debug=1 dans l'URL : boosters illimités pendant les tests.
 export const DEBUG = new URLSearchParams(location.search).get("debug") === "1";

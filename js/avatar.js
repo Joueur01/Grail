@@ -6,9 +6,9 @@
 // bas, chaussures) avec un petit espace, et l'écharpe et le sac sont posés à côté.
 // Les sprites sont utilisés TELS QUELS, à leur taille réelle (×1 dans le canvas).
 
-import { RARITIES } from "./data.js?v=31";
-import { getOwnedCards, getEquipped, equip } from "./inventory.js?v=31";
-import { createCardFace, createCardShell } from "./cards.js?v=31";
+import { RARITIES } from "./data.js?v=32";
+import { getOwnedCards, getEquipped, equip } from "./inventory.js?v=32";
+import { createCardFace, createCardShell } from "./cards.js?v=32";
 
 // Les 7 emplacements, avec leur colonne sur la fiche.
 // Les identifiants correspondent au champ "slot" de pieces.json.

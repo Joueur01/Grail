@@ -18,10 +18,10 @@
 // }
 // Si le format change un jour, on crée "grail_save_v2" et on migre depuis v1.
 
-import { RARITIES, matchesSearch, getRarity } from "./data.js?v=31";
-import { BOOSTER, COINS, DISCARD_VALUES } from "./economy-config.js?v=31";
-import { refillStock, msUntilNextBooster, isSignatureNext, freeUntilSignature } from "./distribution.js?v=31";
-import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=31";
+import { RARITIES, matchesSearch, getRarity } from "./data.js?v=32";
+import { BOOSTER, COINS, DISCARD_VALUES } from "./economy-config.js?v=32";
+import { refillStock, msUntilNextBooster, isSignatureNext, freeUntilSignature } from "./distribution.js?v=32";
+import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=32";
 
 const SAVE_KEY = "grail_save_v1";
 
@@ -355,6 +355,9 @@ export function setupCollection({ catalogue, onCardTap, selection }) {
 
     selection?.update(visible); // le mode « Sélectionner » a besoin de savoir ce qui est affiché
     const selecting = selection?.active === true;
+    // En mode sélection, on garde la position de défilement quand la grille est redessinée.
+    const scroller = grid.closest("main");
+    const keepScroll = scroller ? scroller.scrollTop : 0;
 
     grid.replaceChildren(...visible.map((c) => {
       const colorway = catalogue.colorwayById.get(c.colorwayId);
@@ -371,22 +374,31 @@ export function setupCollection({ catalogue, onCardTap, selection }) {
       card.setAttribute("role", "button");
       if (selecting) {
         // Mode « Sélectionner » : toucher choisit la carte (les verrouillées sont protégées).
-        const n = selection.pickedCount(c);
+        // La carte est mise à jour SUR PLACE (sans redessiner la grille) : la page ne saute pas.
         if (c.locked) {
           card.classList.add("used");
           card.setAttribute("aria-label", `${colorway.piece.name}, ${colorway.name} : verrouillée, protégée de la défausse`);
         } else {
           card.classList.add("tappable");
-          if (n > 0) {
-            card.classList.add("picked");
-            const pick = document.createElement("span");
-            pick.className = "pick-badge";
-            pick.textContent = c.count > 1 ? `${n}/${c.count}` : "✓";
-            card.append(pick);
-          }
-          card.setAttribute("aria-pressed", String(n > 0));
           card.setAttribute("aria-label", `${colorway.piece.name}, ${colorway.name} : sélectionner`);
-          card.addEventListener("click", () => selection.toggle(c));
+          const paint = () => {
+            const n = selection.pickedCount(c);
+            card.classList.toggle("picked", n > 0);
+            card.setAttribute("aria-pressed", String(n > 0));
+            card.querySelector(".pick-badge")?.remove();
+            if (n > 0) {
+              const pick = document.createElement("span");
+              pick.className = "pick-badge";
+              pick.textContent = c.count > 1 ? `${n}/${c.count}` : "✓";
+              card.append(pick);
+            }
+          };
+          paint();
+          card.addEventListener("click", () => {
+            selection.toggle(c);
+            paint();
+            selection.update(visible); // barre du bas : total à jour
+          });
         }
         return card;
       }
@@ -396,6 +408,8 @@ export function setupCollection({ catalogue, onCardTap, selection }) {
       card.addEventListener("click", () => onCardTap?.(c));
       return card;
     }));
+
+    if (scroller && selecting) scroller.scrollTop = keepScroll;
 
     empty.hidden = visible.length > 0;
     empty.textContent = owned.length === 0
