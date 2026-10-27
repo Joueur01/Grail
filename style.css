@@ -274,9 +274,10 @@ main {
   gap: 8px;
 }
 
-/* Bonhomme 64×96 : facteur entier ×2 (128×192) sur téléphone, ×4 sur tablette / PC */
+/* Tenue à plat 64×96 : facteur entier ×2 (128×192) sur téléphone, ×4 sur tablette / PC */
 .outfit-body {
   --avatar-scale: 2;
+  position: relative;
   align-self: stretch;
   display: flex;
   align-items: center;
@@ -291,6 +292,22 @@ main {
   width: calc(64px * var(--avatar-scale));
   height: calc(96px * var(--avatar-scale));
 }
+
+/* Invitation posée sur la vitrine tant qu'aucune pièce n'est portée */
+.outfit-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 12px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6e6c67;
+}
+.outfit-hint[hidden] { display: none; }
 
 /* Une case de la fiche. Taille de l'icône selon la largeur RÉELLE de la case :
    largeur nécessaire = 32 × facteur + 8 px (bordure 4 + marge 4). ×1 à ×4. */
