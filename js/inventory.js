@@ -5,25 +5,31 @@
 // {
 //   version: 1,
 //   cards: { "<colorwayId>|<rarete>": nombreExemplaires, ... },
-//   lastFreeBooster: "AAAA-MM-JJ" | null,   // date locale du dernier booster gratuit
 //   equipped: { tete: "<colorwayId>|<rarete>", haut: ..., ... },
 //   locked: { "<colorwayId>|<rarete>": true },  // cartes verrouillées (jamais proposées à l'amélioration)
-//   freeBoostersUsed: 1,   // boosters gratuits pris le jour de lastFreeBooster
+//   boosterStock: 3,       // boosters gratuits en stock (0 → BOOSTER.maxStock)
+//   stockUpdatedAt: 1730000000000, // début de la recharge en cours (ms, heure réelle)
+//   boughtBoosters: 0,     // boosters achetés pas encore ouverts
+//   freeOpened: 0,         // boosters gratuits ouverts depuis le début (compteur Signature)
 //   coins: 0,              // solde de pièces (entier ≥ 0)
 //   lastDailyBonus: "AAAA-MM-JJ" | null,  // dernier jour (heure de Paris) du bonus de connexion
-//   pity: 0,  // boosters ouverts d'affilée sans Légendaire (jauge « Légendaire garantie »)
+//   pity: 0,      // boosters ouverts d'affilée sans Légendaire (jauge « Légendaire garantie »)
+//   pityEpic: 0,  // boosters ouverts d'affilée sans Épique ou mieux
 //   tutorialDone: false  // true après le 1er booster (tuto « glisse, ne touche pas »)
 // }
 // Si le format change un jour, on crée "grail_save_v2" et on migre depuis v1.
 
-import { RARITIES, matchesSearch, getRarity } from "./data.js?v=26";
-import { BOOSTER, COINS } from "./economy-config.js?v=26";
-import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=26";
+import { RARITIES, matchesSearch, getRarity } from "./data.js?v=27";
+import { BOOSTER, COINS } from "./economy-config.js?v=27";
+import { refillStock, msUntilNextBooster, isSignatureNext, freeUntilSignature } from "./distribution.js?v=27";
+import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=27";
 
 const SAVE_KEY = "grail_save_v1";
 
 function emptySave() {
-  return { version: 1, cards: {}, lastFreeBooster: null, equipped: {}, locked: {}, freeBoostersUsed: 0, coins: COINS.startBalance, lastDailyBonus: null, pity: 0, tutorialDone: false };
+  return { version: 1, cards: {}, equipped: {}, locked: {},
+    boosterStock: BOOSTER.startStock, stockUpdatedAt: null, boughtBoosters: 0, freeOpened: 0,
+    coins: COINS.startBalance, lastDailyBonus: null, pity: 0, pityEpic: 0, tutorialDone: false };
 }
 
 // Sauvegarde en mémoire : c'est elle qu'on lit/modifie, puis on persiste.
@@ -37,6 +43,9 @@ export function loadSave() {
       const data = JSON.parse(text);
       // On complète avec les valeurs par défaut au cas où un champ manque.
       save = { ...emptySave(), ...data };
+      // Ancien système (1 booster par jour) : remplacé par le stock qui se recharge.
+      delete save.lastFreeBooster;
+      delete save.freeBoostersUsed;
     }
   } catch (err) {
     // Navigation privée, stockage plein, JSON corrompu… le jeu continue quand même.
@@ -137,8 +146,15 @@ export function getPity() {
   return Number.isInteger(save.pity) ? save.pity : 0; // sauvegarde ancienne ou abîmée : 0
 }
 
-export function setPity(value) {
-  save.pity = value;
+/** Nombre de boosters ouverts d'affilée sans Épique ou mieux. */
+export function getPityEpic() {
+  return Number.isInteger(save.pityEpic) ? save.pityEpic : 0;
+}
+
+/** Enregistre les deux compteurs de pity après un booster. */
+export function setPity(legendary, epic) {
+  save.pity = legendary;
+  save.pityEpic = epic;
   persist();
 }
 
@@ -154,33 +170,78 @@ export function setTutorialDone() {
   persist();
 }
 
-// --- Booster gratuit quotidien (remise à zéro à minuit, heure locale) ---
+// --- Boosters : stock gratuit qui se recharge, boosters achetés, Signature ---
+// Les règles (calcul du stock, Signature) sont dans distribution.js ; ici on ne
+// fait que lire et écrire la sauvegarde.
 
-/** Date du jour au format AAAA-MM-JJ, en heure LOCALE (pas UTC). */
-function todayLocal() {
-  const d = new Date();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `${d.getFullYear()}-${mm}-${dd}`;
+/** Stock gratuit mis à jour à l'heure réelle (et sauvegardé s'il a changé). */
+function currentStock(now) {
+  const next = refillStock({ stock: save.boosterStock, updatedAt: save.stockUpdatedAt }, now);
+  if (next.stock !== save.boosterStock || next.updatedAt !== save.stockUpdatedAt) {
+    save.boosterStock = next.stock;
+    save.stockUpdatedAt = next.updatedAt;
+    persist();
+  }
+  return next;
 }
 
-/** Boosters gratuits encore disponibles aujourd'hui (le stock se remplit à minuit). */
-export function freeBoostersLeft() {
-  if (save.lastFreeBooster !== todayLocal()) return BOOSTER.freePerDay;
-  // Ancienne sauvegarde (avant le compteur) : un booster avait été pris ce jour-là.
-  const used = Number.isInteger(save.freeBoostersUsed) && save.freeBoostersUsed > 0 ? save.freeBoostersUsed : 1;
-  return Math.max(0, BOOSTER.freePerDay - used);
+function boughtCount() {
+  return Number.isInteger(save.boughtBoosters) && save.boughtBoosters > 0 ? save.boughtBoosters : 0;
 }
 
-export function canOpenFreeBooster() {
-  return freeBoostersLeft() > 0;
+function freeOpenedCount() {
+  return Number.isInteger(save.freeOpened) && save.freeOpened > 0 ? save.freeOpened : 0;
 }
 
-export function markFreeBoosterUsed() {
-  const used = BOOSTER.freePerDay - freeBoostersLeft();
-  save.lastFreeBooster = todayLocal();
-  save.freeBoostersUsed = used + 1;
+/**
+ * État des boosters à l'instant `now` :
+ * { stock, max, nextInMs, bought, source, signature, untilSignature }
+ * - source : booster qui serait ouvert maintenant — "free" (stock), "bought"
+ *   (acheté), "test" (stock vide mais mode test) ou null (rien à ouvrir)
+ * - signature : true si ce booster-là est un Signature (jamais pour un acheté)
+ * - untilSignature : boosters GRATUITS avant le prochain Signature (1 = le prochain)
+ */
+export function getBoosterState(now = Date.now(), testMode = false) {
+  const stock = currentStock(now);
+  const bought = boughtCount();
+  const source = stock.stock > 0 ? "free" : bought > 0 ? "bought" : testMode ? "test" : null;
+  return {
+    stock: stock.stock,
+    max: BOOSTER.maxStock,
+    nextInMs: msUntilNextBooster(stock, now),
+    bought,
+    source,
+    signature: source === "free" || source === "test" ? isSignatureNext(freeOpenedCount()) : false,
+    untilSignature: freeUntilSignature(freeOpenedCount()),
+  };
+}
+
+/**
+ * Prend le booster à ouvrir (le stock gratuit d'abord, puis les achetés).
+ * Renvoie { source, signature } ou null s'il n'y a rien à ouvrir.
+ * Seuls les boosters gratuits (et « test ») font avancer le compteur Signature.
+ */
+export function takeBooster(now = Date.now(), testMode = false) {
+  const state = getBoosterState(now, testMode);
+  if (!state.source) return null;
+  if (state.source === "free") {
+    // Stock plein : le minuteur était arrêté, il démarre maintenant.
+    if (save.boosterStock >= BOOSTER.maxStock) save.stockUpdatedAt = now;
+    save.boosterStock -= 1;
+  }
+  if (state.source === "bought") save.boughtBoosters = state.bought - 1;
+  else save.freeOpened = freeOpenedCount() + 1;
   persist();
+  return { source: state.source, signature: state.signature };
+}
+
+/** Achète un booster supplémentaire (BOOSTER.price pièces). Renvoie false si pas assez de pièces. */
+export function buyBooster() {
+  const before = boughtCount();
+  save.boughtBoosters = before + 1;          // enregistré par changeCoins, en même temps que le solde
+  if (changeCoins(-BOOSTER.price)) return true;
+  save.boughtBoosters = before;               // pas assez de pièces : rien ne change
+  return false;
 }
 
 // --- Pièces (monnaie du jeu) ---

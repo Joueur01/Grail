@@ -9,11 +9,11 @@
 //   - les cartes misées sont perdues dans tous les cas ; une Légendaire ne s'améliore pas.
 // La défausse (contre de la monnaie du jeu) n'est pas encore codée : bouton grisé.
 
-import { RARITIES, getRarity } from "./data.js?v=26";
-import { UPGRADE } from "./economy-config.js?v=26";
-import { getOwnedCards, addCards, removeCards, countCard, isLocked, setLocked } from "./inventory.js?v=26";
-import { createCardFace, createCardShell } from "./cards.js?v=26";
-import { playSound, vibrate, burst } from "./effects.js?v=26";
+import { RARITIES, getRarity } from "./data.js?v=27";
+import { UPGRADE } from "./economy-config.js?v=27";
+import { getOwnedCards, addCards, removeCards, countCard, isLocked, setLocked } from "./inventory.js?v=27";
+import { createCardFace, createCardShell } from "./cards.js?v=27";
+import { playSound, vibrate, burst } from "./effects.js?v=27";
 
 const SPIN_TIME = 3200; // durée de la roue (identique au CSS)
 

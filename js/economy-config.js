@@ -6,33 +6,44 @@
 //
 // ⚠️ Monnaie virtuelle uniquement, jamais convertible en euros (CLAUDE.md, section 9).
 
-// --- Taux de drop (PROVISOIRES) -------------------------------------------------
-// Poids relatifs : ils n'ont pas besoin de faire 100, le tirage les normalise.
-export const DROP_WEIGHTS = {
-  commun: 70,
-  rare: 22,
-  epique: 7,
-  legendaire: 1,
+// --- Taux de drop (en %, par carte) ----------------------------------------------
+// Chaque table doit faire 100. La simulation (tools/simulation.html) vérifie
+// les taux réellement obtenus.
+export const DROP_RATES = {
+  // Booster standard (ses 3 cartes) ET cartes 1-2 d'un booster Signature.
+  standard: { commun: 82, rare: 14, epique: 3.5, legendaire: 0.5 },
+  // Carte 3 d'un booster Signature (jamais Commune), toujours montrée en dernier.
+  signatureLast: { commun: 0, rare: 75, epique: 20, legendaire: 5 },
 };
 
 // --- Boosters ---------------------------------------------------------------------
 export const BOOSTER = {
-  // ⚠️ PÉRIODE DE TEST : true = boosters illimités pour tout le monde.
-  // À REMETTRE À false AVANT D'ENVOYER LE LIEN AUX AMIS.
+  // ⚠️ PÉRIODE DE TEST : true = quand le stock est vide, on peut quand même ouvrir
+  // (booster « test », compté comme gratuit). À REMETTRE À false AVANT D'ENVOYER
+  // LE LIEN AUX AMIS.
   unlimited: true,
   cardsPerPack: 3,        // cartes par booster
-  // Stock gratuit : nombre de boosters offerts par jour. Le stock se remplit
-  // à minuit, heure locale du téléphone (c'est le « minuteur » du jeu).
-  freePerDay: 1,
-  // Garantie : si les autres cartes sont toutes plus communes que cette rareté,
-  // la dernière carte du booster est au moins de cette rareté (« jamais 3 Communes »).
-  lastCardMinRarity: "rare",
+  // Stock gratuit : 1 booster est généré toutes les refillHours heures, jusqu'à
+  // maxStock. Le calcul se fait sur l'heure réelle : le site peut être fermé.
+  refillHours: 6,
+  maxStock: 3,
+  startStock: 3,          // stock d'un nouveau joueur
+  signatureEvery: 4,      // 1 booster GRATUIT sur 4 est un booster Signature
+  price: 100,             // prix d'un booster supplémentaire, en pièces
 };
 
-// --- Pity « Légendaire garantie » ---------------------------------------------------
+// --- Pity (compteurs de boosters d'affilée sans la rareté) --------------------------
+// Les compteurs comptent TOUS les boosters (gratuits, Signature, achetés) et
+// repartent à 0 dès que la rareté (ou mieux, pour l'Épique) sort.
 export const PITY = {
-  legendaryEvery: 30,     // le Nᵉ booster d'affilée sans Légendaire en contient une
-  almostThreshold: 5,     // la jauge brille sur les N derniers boosters
+  legendary: {
+    softStart: 40,        // après 40 boosters sans Légendaire, le taux monte…
+    softStep: 1,          // …de +1 point par carte à chaque booster de plus (41e : +1, 42e : +2…)
+    guaranteedAt: 60,     // le 60e booster d'affilée sans Légendaire en contient une
+  },
+  epic: {
+    guaranteedAfter: 16,  // après 16 boosters sans Épique ou mieux, le suivant en contient une
+  },
 };
 
 // --- Amélioration (roue) ----------------------------------------------------------
