@@ -33,7 +33,7 @@ Contraintes de la bêta :
 1. **Booster** : un bouton « Ouvrir un booster » qui tire 3 pièces selon les taux de rareté (section 6), avec une petite animation de révélation carte par carte. ✅ Fait.
 2. **Inventaire** : la collection du joueur, sauvegardée en `localStorage`, avec filtres simples (marque, catégorie, rareté) et le nombre d'exemplaires de chaque carte. ✅ Fait : progression « X / 300 », filtres Marque / Type / Rareté (menus natifs, collés en haut), grille triée de la plus rare à la plus commune, badge « ×N » pour les doublons.
 3. **Avatar** : un personnage en pixel art sur lequel on équipe une pièce par emplacement (section 7). ✅ Fait pour la bêta (fiche de tenue, tenue « à plat »).
-4. **Partager ma tenue** : exporter l'avatar habillé en **image PNG** (canvas → PNG), avec le nom des pièces et leur rareté, puis partage natif (`navigator.share` avec fichier si disponible, sinon téléchargement).
+4. **Partager ma tenue** : exporter l'avatar habillé en **image PNG** (canvas → PNG), avec le nom des pièces et leur rareté, puis partage natif (`navigator.share` avec fichier si disponible, sinon téléchargement). ✅ Fait : PNG 1080 × 1350 (tenue à plat ×6 + liste tête → pieds : nom, marque, coloris, rareté + adresse du jeu), **préparé à l'avance** à chaque changement de tenue (Safari n'ouvre le partage que juste après un toucher), repli téléchargement ; bouton désactivé tant que rien n'est porté.
 5. **Mise en ligne** sur GitHub Pages et test sur iPhone/Android.
 
 ### Hors périmètre de la bêta (ne pas coder pour l'instant)

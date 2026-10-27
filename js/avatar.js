@@ -6,9 +6,9 @@
 // bas, chaussures) avec un petit espace, et l'écharpe et le sac sont posés à côté.
 // Les sprites sont utilisés TELS QUELS, à leur taille réelle (×1 dans le canvas).
 
-import { RARITIES } from "./data.js?v=15";
-import { getOwnedCards, getEquipped, equip } from "./inventory.js?v=15";
-import { createCardFace, createCardShell } from "./cards.js?v=15";
+import { RARITIES } from "./data.js?v=16";
+import { getOwnedCards, getEquipped, equip } from "./inventory.js?v=16";
+import { createCardFace, createCardShell } from "./cards.js?v=16";
 
 // Les 7 emplacements, avec leur colonne sur la fiche.
 // Les identifiants correspondent au champ "slot" de pieces.json.
@@ -77,7 +77,10 @@ function drawPiece(ctx, { img, box }, x, y) {
   ctx.drawImage(img, box.x, box.y, box.w, box.h, x, y, box.w, box.h);
 }
 
-let drawToken = 0; // évite qu'un ancien dessin (images plus lentes) écrase le plus récent
+// Numéro du dernier dessin demandé, PAR canvas : évite qu'un ancien dessin
+// (images plus lentes) écrase le plus récent. Un compteur par canvas, car
+// l'écran et l'image partagée dessinent chacun dans le leur.
+const drawTokens = new WeakMap();
 
 /**
  * Dessine la tenue à plat dans le canvas.
@@ -85,10 +88,11 @@ let drawToken = 0; // évite qu'un ancien dessin (images plus lentes) écrase le
  * Renvoie le nombre de pièces dessinées.
  */
 export async function drawAvatar(canvas, pieces) {
-  const token = ++drawToken;
+  const token = (drawTokens.get(canvas) || 0) + 1;
+  drawTokens.set(canvas, token);
   const loaded = {};
   for (const slot of Object.keys(pieces)) loaded[slot] = await loadSprite(pieces[slot].sprite);
-  if (token !== drawToken) return 0; // un dessin plus récent a été demandé entre-temps
+  if (token !== drawTokens.get(canvas)) return 0; // un dessin plus récent a été demandé entre-temps
 
   const ctx = canvas.getContext("2d");
   ctx.imageSmoothingEnabled = false;
@@ -133,7 +137,13 @@ export async function drawAvatar(canvas, pieces) {
   return Object.keys(loaded).length;
 }
 
-export function setupOutfit({ catalogue }) {
+/**
+ * Branche la fiche de tenue et renvoie une fonction pour la redessiner.
+ * - catalogue : résultat de loadCatalogue()
+ * - onChange : appelé avec la tenue { emplacement: { colorway, rarity } }
+ *   à chaque changement (sert à préparer l'image à partager)
+ */
+export function setupOutfit({ catalogue, onChange }) {
   const leftCol = document.getElementById("outfit-left");
   const rightCol = document.getElementById("outfit-right");
   const summary = document.getElementById("outfit-summary");
@@ -156,17 +166,22 @@ export function setupOutfit({ catalogue }) {
   function render() {
     leftCol.replaceChildren();
     rightCol.replaceChildren();
-    const worn = {}; // emplacement → coloris porté
+    const worn = {};   // emplacement → coloris porté (pour le dessin)
+    const outfit = {}; // emplacement → { colorway, rarity } (pour l'image partagée)
     for (const slot of SLOTS) {
       const card = getEquipped(slot.id);
       const colorway = card && catalogue.colorwayById.get(card.colorwayId);
-      if (colorway) worn[slot.id] = colorway;
+      if (colorway) {
+        worn[slot.id] = colorway;
+        outfit[slot.id] = { colorway, rarity: card.rarity };
+      }
       (slot.side === "left" ? leftCol : rightCol).append(createSlotButton(slot, colorway, card));
     }
     const count = Object.keys(worn).length;
     summary.textContent = `${count} / ${SLOTS.length} pièces portées`;
     hint.hidden = count > 0; // invitation affichée tant que rien n'est porté
     drawAvatar(canvas, worn).catch((err) => console.error("Tenue :", err));
+    onChange?.(outfit);
   }
 
   /** Une case de la fiche : l'icône équipée (ou vide) + le nom de l'emplacement. */
