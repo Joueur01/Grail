@@ -17,7 +17,7 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=35">
+  <link rel="stylesheet" href="style.css?v=36">
 </head>
 <body>
   <header class="topbar">
@@ -218,6 +218,49 @@
       </div>
     </section>
 
+    <!-- Amis : pseudo, demandes, liste, tenue d'un ami (friends.js). Géré par le serveur. -->
+    <section class="screen" data-screen="friends" id="screen-friends" hidden>
+      <h2 class="screen-title">Amis</h2>
+      <p class="muted" id="friends-summary">—</p>
+      <p class="friends-error" id="friends-error" role="status" hidden></p>
+
+      <!-- Ton pseudo : à choisir avant d'ajouter des amis -->
+      <form class="friends-box" id="pseudo-form" novalidate>
+        <span class="eyebrow" id="pseudo-title">Choisis ton pseudo</span>
+        <p class="muted friends-hint" id="pseudo-hint">Tes amis te retrouvent avec ce pseudo. 3 à 16 caractères : lettres, chiffres ou _. Il n'apparaît dans aucune liste publique.</p>
+        <div class="friends-input-row">
+          <input class="auth-input" id="pseudo-input" type="text" maxlength="16" autocomplete="off" autocapitalize="none" spellcheck="false" aria-label="Ton pseudo" placeholder="Ton pseudo">
+          <button class="btn btn-primary" id="pseudo-submit" type="submit">Valider</button>
+        </div>
+      </form>
+
+      <div id="friends-main" hidden>
+        <p class="friends-me">Ton pseudo : <strong id="friends-me"></strong> <button class="friends-link" id="pseudo-edit" type="button">Modifier</button></p>
+
+        <form class="friends-box" id="add-form" novalidate>
+          <span class="eyebrow">Ajouter un ami</span>
+          <div class="friends-input-row">
+            <input class="auth-input" id="add-input" type="text" maxlength="16" autocomplete="off" autocapitalize="none" spellcheck="false" aria-label="Pseudo de ton ami" placeholder="Pseudo de ton ami">
+            <button class="btn btn-primary" id="add-submit" type="submit">Inviter</button>
+          </div>
+        </form>
+
+        <div class="friends-section" id="friends-incoming-box" hidden>
+          <span class="eyebrow">Demandes reçues</span>
+          <div class="atelier-list" id="friends-incoming"></div>
+        </div>
+        <div class="friends-section">
+          <span class="eyebrow">Mes amis</span>
+          <p class="muted friends-hint" id="friends-empty">Pas encore d'ami. Invite quelqu'un avec son pseudo.</p>
+          <div class="atelier-list" id="friends-list"></div>
+        </div>
+        <div class="friends-section" id="friends-outgoing-box" hidden>
+          <span class="eyebrow">Demandes envoyées</span>
+          <div class="atelier-list" id="friends-outgoing"></div>
+        </div>
+      </div>
+    </section>
+
     <section class="screen" data-screen="avatar" id="screen-avatar" hidden>
       <h2 class="screen-title">Ma tenue</h2>
       <p class="muted" id="outfit-summary">—</p>
@@ -275,9 +318,10 @@
     <a class="tab" href="#booster" data-tab="booster">Booster</a>
     <a class="tab" href="#collection" data-tab="collection">Collection</a>
     <a class="tab" href="#market" data-tab="market">Market</a>
+    <a class="tab" href="#friends" data-tab="friends">Amis<span class="tab-badge" id="friends-badge" hidden></span></a>
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=35"></script>
+  <script type="module" src="js/main.js?v=36"></script>
 </body>
 </html>
