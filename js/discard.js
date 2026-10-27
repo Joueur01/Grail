@@ -7,13 +7,13 @@
 // On peut l'ouvrir depuis la fiche d'une carte, une ligne de l'Atelier ou le
 // bouton « Sélectionner » de la Collection (createSelection, plus bas).
 
-import { RARITIES, getRarity } from "./data.js?v=31";
-import { DISCARD_VALUES, DISCARD_CONFIRM_FROM, DISCARD_KEEP } from "./economy-config.js?v=31";
-import { getOwnedCards, getEquipped, discardCards, cardKey } from "./inventory.js?v=31";
-import { SLOTS } from "./avatar.js?v=31";
-import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=31";
-import { playSound, vibrate } from "./effects.js?v=31";
-import { flyCoins, showToast } from "./wallet.js?v=31";
+import { RARITIES, getRarity } from "./data.js?v=32";
+import { DISCARD_VALUES, DISCARD_CONFIRM_FROM, DISCARD_KEEP } from "./economy-config.js?v=32";
+import { getOwnedCards, getEquipped, discardCards, cardKey } from "./inventory.js?v=32";
+import { SLOTS } from "./avatar.js?v=32";
+import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=32";
+import { playSound, vibrate } from "./effects.js?v=32";
+import { flyCoins, showToast } from "./wallet.js?v=32";
 
 /** Pièces gagnées pour une carte de cette rareté. */
 export function discardValue(rarity) {
@@ -371,14 +371,13 @@ export function createSelection({ catalogue, onChange }) {
     setActive,
     /** Exemplaires sélectionnés d'une carte. */
     pickedCount: (c) => picked.get(cardKey(c.colorwayId, c.rarity)) || 0,
-    /** Toucher une carte : +1 exemplaire (puis retour à 0 après le dernier). */
+    /** Toucher une carte : +1 exemplaire (puis retour à 0 après le dernier). Ne redessine rien. */
     toggle(c) {
       if (c.locked) return;
       const key = cardKey(c.colorwayId, c.rarity);
       const next = (picked.get(key) || 0) + 1;
       if (next > c.count) picked.delete(key); else picked.set(key, next);
-      armed = false;
-      refresh();
+      armed = false; // la carte et la barre sont mises à jour par la Collection, sans tout redessiner
     },
     /** Appelé par la Collection à chaque dessin : cartes affichées, puis mise à jour de la barre. */
     update(cards) { visible = cards; renderBar(); },

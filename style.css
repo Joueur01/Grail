@@ -797,7 +797,7 @@ main {
   box-shadow: 0 -12px 16px -4px var(--bg), -24px 0 var(--bg), 24px 0 var(--bg);
   border-top: 1px solid var(--border);
 }
-.select-summary { margin: 0; text-align: center; font-size: 15px; font-weight: 800; color: var(--muted); }
+.select-summary { margin: 0; min-height: 2.5em; display: grid; place-items: center; text-align: center; font-size: 15px; font-weight: 800; line-height: 1.25; color: var(--muted); } /* hauteur fixe : la barre ne bouge pas quand le texte change */
 .select-summary.on { color: var(--rarity-legendaire); }
 .select-tools { display: flex; gap: 8px; }
 .select-tools .btn { min-height: 40px; padding: 6px; font-size: 13px; }
