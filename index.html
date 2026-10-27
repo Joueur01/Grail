@@ -17,7 +17,7 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=17">
+  <link rel="stylesheet" href="style.css?v=18">
 </head>
 <body>
   <header class="topbar">
@@ -32,8 +32,8 @@
       <!-- Vue 1 : le paquet fermé -->
       <div class="booster-view" id="booster-closed">
         <span class="eyebrow booster-eyebrow">Drop du jour · 3 pièces</span>
-        <!-- Le booster lui-même sert de bouton : on le touche ou on glisse le doigt
-             dessus pour le déchirer. Le même dessin (32×48, agrandi d'un facteur entier)
+        <!-- Le booster lui-même : on glisse le doigt dessus pour le déchirer
+             (un simple toucher ne l'ouvre pas). Le même dessin (32×48, agrandi d'un facteur entier)
              est affiché deux fois, découpé en dents de scie : la bande du haut qui
              s'arrache, et le reste du paquet (booster.js). -->
         <button class="booster-pack" id="btn-open-booster" aria-label="Déchirer le booster" disabled>
@@ -45,11 +45,14 @@
         <p class="muted booster-status" id="booster-status">Chargement…</p>
       </div>
 
-      <!-- Vue 2 : les 3 cartes tirées, révélées une par une (booster.js) -->
+      <!-- Vue 2 : les cartes, UNE à la fois, sur une pile (booster.js) :
+           glisser pour retourner, glisser pour passer à la suivante -->
       <div class="booster-view" id="booster-opened" hidden>
-        <span class="eyebrow booster-eyebrow">Ton drop</span>
-        <div class="card-row" id="booster-result"></div>
+        <span class="eyebrow booster-eyebrow" id="reveal-counter"></span>
+        <div class="reveal-stage" id="reveal-stage"></div>
         <p class="muted reveal-hint" id="reveal-hint"></p>
+        <!-- Récapitulatif des 3 cartes, après la dernière -->
+        <div class="card-row" id="booster-result" hidden></div>
         <button class="btn btn-primary" id="btn-booster-done" hidden>Continuer</button>
       </div>
     </section>
@@ -87,12 +90,12 @@
     </section>
   </main>
 
-  <!-- Plein écran de révélation, pour les cartes Épique et Légendaire (booster.js) -->
+  <!-- Plein écran de révélation des cartes Légendaires (booster.js) : on glisse pour continuer -->
   <div class="reveal-overlay" id="reveal-overlay" hidden>
     <div class="reveal-rays"></div>
     <p class="reveal-title" id="reveal-title"></p>
     <div class="reveal-card" id="reveal-card"></div>
-    <p class="reveal-tap">Touche pour continuer</p>
+    <p class="reveal-tap">Glisse pour continuer</p>
   </div>
 
   <!-- Panneau de choix d'une pièce (s'ouvre par le bas, au-dessus de tout) -->
@@ -115,6 +118,6 @@
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=17"></script>
+  <script type="module" src="js/main.js?v=18"></script>
 </body>
 </html>
