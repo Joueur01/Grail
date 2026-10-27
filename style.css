@@ -22,6 +22,12 @@
   --rarity-epique: #a56bff;
   --rarity-legendaire: #f2c230;
 
+  /* Couleur d'accent de chaque marque (section 5 du CLAUDE.md) :
+     cartes ET image partagée (share.js les lit ici) */
+  --brand-signal9: #ff6a13;
+  --brand-halvane: #d4a72c;
+  --brand-pigeon_social_club: #4f9a68;
+
   --radius: 16px;
   --tabbar-h: 64px;
   /* Largeur max de la colonne de contenu (en-tête, écrans, onglets alignés) */
@@ -365,6 +371,8 @@ main {
   color: var(--muted);
 }
 
+.share-status { text-align: center; min-height: 1.4em; }
+
 /* --- Panneau de choix d'une pièce (monte depuis le bas) --- */
 .picker {
   position: fixed;
@@ -566,9 +574,9 @@ main {
 }
 
 /* Couleur d'accent de chaque marque (section 5 du CLAUDE.md) */
-.card[data-brand="signal9"]            { --brand-color: #ff6a13; }
-.card[data-brand="halvane"]            { --brand-color: #d4a72c; }
-.card[data-brand="pigeon_social_club"] { --brand-color: #4f9a68; }
+.card[data-brand="signal9"]            { --brand-color: var(--brand-signal9); }
+.card[data-brand="halvane"]            { --brand-color: var(--brand-halvane); }
+.card[data-brand="pigeon_social_club"] { --brand-color: var(--brand-pigeon_social_club); }
 
 .card-brand {
   font-size: 10px;

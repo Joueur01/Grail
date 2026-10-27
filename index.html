@@ -17,7 +17,7 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=15">
+  <link rel="stylesheet" href="style.css?v=16">
 </head>
 <body>
   <header class="topbar">
@@ -75,7 +75,9 @@
         </div>
         <div class="outfit-col" id="outfit-right"></div>
       </div>
-      <button class="btn" id="btn-share" disabled>Partager ma tenue</button>
+      <!-- Partage : image PNG de la tenue (share.js) -->
+      <button class="btn btn-primary" id="btn-share" disabled>Partager ma tenue</button>
+      <p class="muted share-status" id="share-status" aria-live="polite"></p>
     </section>
   </main>
 
@@ -99,6 +101,6 @@
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=15"></script>
+  <script type="module" src="js/main.js?v=16"></script>
 </body>
 </html>
