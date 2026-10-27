@@ -12,11 +12,11 @@
 // Effets de révélation, du plus discret au plus fort : Rare (reflet + particules),
 // Épique (éclair violet, gerbe de particules, titre), Légendaire (plein écran).
 
-import { RARITIES, CARDS_PER_BOOSTER, PITY_LEGENDAIRE, getRarity } from "./data.js?v=22";
-import { addCards, canOpenFreeBooster, markFreeBoosterUsed, getOwnedCards, cardKey, getPity, setPity, isTutorialDone, setTutorialDone } from "./inventory.js?v=22";
-import { createCardFace, createCardShell } from "./cards.js?v=22";
-import { playSound, vibrate, burst } from "./effects.js?v=22";
-import { attachGesture } from "./gestures.js?v=22";
+import { RARITIES, CARDS_PER_BOOSTER, PITY_LEGENDAIRE, getRarity } from "./data.js?v=23";
+import { addCards, canOpenFreeBooster, markFreeBoosterUsed, getOwnedCards, cardKey, getPity, setPity, isTutorialDone, setTutorialDone } from "./inventory.js?v=23";
+import { createCardFace, createCardShell } from "./cards.js?v=23";
+import { playSound, vibrate, burst } from "./effects.js?v=23";
+import { attachGesture } from "./gestures.js?v=23";
 
 // Durées (en millisecondes), faciles à ajuster.
 const TEAR_TIME = 550;    // la bande s'envole, le paquet descend

@@ -9,10 +9,10 @@
 //   - les cartes misées sont perdues dans tous les cas ; une Légendaire ne s'améliore pas.
 // La défausse (contre de la monnaie du jeu) n'est pas encore codée : bouton grisé.
 
-import { RARITIES, UPGRADE_MAX_CARDS, UPGRADE_CHANCE_PER_CARD, getRarity } from "./data.js?v=22";
-import { getOwnedCards, addCards, removeCards, countCard } from "./inventory.js?v=22";
-import { createCardFace, createCardShell } from "./cards.js?v=22";
-import { playSound, vibrate, burst } from "./effects.js?v=22";
+import { RARITIES, UPGRADE_MAX_CARDS, UPGRADE_CHANCE_PER_CARD, getRarity } from "./data.js?v=23";
+import { getOwnedCards, addCards, removeCards, countCard } from "./inventory.js?v=23";
+import { createCardFace, createCardShell } from "./cards.js?v=23";
+import { playSound, vibrate, burst } from "./effects.js?v=23";
 
 const SPIN_TIME = 3200; // durée de la roue (identique au CSS)
 
@@ -122,16 +122,31 @@ export function setupUpgrade({ catalogue, onChange }) {
 
   // --- 2. Amélioration : choix de la mise + roue ---
 
-  function openUpgrade(piece, rarity, firstColorwayId) {
+  /**
+   * - firstColorwayId : carte touchée dans la fiche (sa mise de départ)
+   * - fillModel : true (depuis l'Atelier) = la mise est pré-remplie avec les
+   *   cartes de tout le modèle, jusqu'à 5 (voir plus bas)
+   */
+  function openUpgrade(piece, rarity, firstColorwayId, fillModel = false) {
     const target = nextRarity(rarity);
     // Cartes possédées de ce modèle à cette rareté : [{ colorwayId, count }]
     const owned = getOwnedCards()
       .filter((c) => c.rarity === rarity && catalogue.colorwayById.get(c.colorwayId)?.piece.id === piece.id)
       .map((c) => ({ colorwayId: c.colorwayId, count: c.count }));
-    // Mise de départ : les exemplaires de la carte touchée (jusqu'à 5).
     const stake = [];
-    const first = owned.find((c) => c.colorwayId === firstColorwayId);
-    for (let i = 0; i < Math.min(first?.count || 0, UPGRADE_MAX_CARDS); i++) stake.push(firstColorwayId);
+    if (fillModel) {
+      // Depuis l'Atelier : si un coloris a au moins 5 exemplaires, on ne mise que
+      // lui (le coloris est alors conservé) ; sinon les coloris les plus nombreux d'abord.
+      const sorted = [...owned].sort((a, b) => b.count - a.count);
+      const pool = sorted[0]?.count >= UPGRADE_MAX_CARDS ? [sorted[0]] : sorted;
+      for (const c of pool) {
+        for (let i = 0; i < c.count && stake.length < UPGRADE_MAX_CARDS; i++) stake.push(c.colorwayId);
+      }
+    } else {
+      // Depuis la fiche : les exemplaires de la carte touchée (jusqu'à 5).
+      const first = owned.find((c) => c.colorwayId === firstColorwayId);
+      for (let i = 0; i < Math.min(first?.count || 0, UPGRADE_MAX_CARDS); i++) stake.push(firstColorwayId);
+    }
 
     title.textContent = "Améliorer";
     const subtitle = para(`${piece.name} · ${getRarity(rarity).name} → ${getRarity(target).name}`, "sheet-subtitle");
@@ -290,5 +305,10 @@ export function setupUpgrade({ catalogue, onChange }) {
     }
   }
 
-  return { openCard };
+  /** Ouvre la roue pour un modèle + une rareté, mise pré-remplie (utilisé par l'Atelier). */
+  function openModel(piece, rarity) {
+    openUpgrade(piece, rarity, null, true);
+  }
+
+  return { openCard, openModel };
 }
