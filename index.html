@@ -17,7 +17,7 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=29">
+  <link rel="stylesheet" href="style.css?v=31">
 </head>
 <body>
   <header class="topbar">
@@ -104,8 +104,10 @@
       <!-- Vue Collection (inchangée) -->
       <div class="collection-view" id="collection-view">
         <!-- Filtres : menus natifs du téléphone, faciles au doigt. Restent collés en haut. -->
-        <div class="filters">
-          <input class="search" id="search-collection" type="search" placeholder="Rechercher une carte" aria-label="Rechercher une carte par nom" autocomplete="off" enterkeyhint="search">
+        <div class="filters with-select">
+          <input class="search" id="search-collection" type="search" placeholder="Rechercher…" aria-label="Rechercher une carte par nom" autocomplete="off" enterkeyhint="search">
+          <!-- Mode « Sélectionner » : choisir plusieurs cartes à défausser (discard.js) -->
+          <button class="select-toggle" id="btn-select" aria-pressed="false">Sélectionner</button>
           <select id="filter-brand" aria-label="Filtrer par marque"><option value="">Marque</option></select>
           <select id="filter-category" aria-label="Filtrer par catégorie"><option value="">Type</option></select>
           <select id="filter-rarity" aria-label="Filtrer par rareté"><option value="">Rareté</option></select>
@@ -113,6 +115,16 @@
         <p class="muted collection-empty" id="collection-empty" hidden></p>
         <!-- Grille des cartes possédées (inventory.js) -->
         <div class="card-grid" id="collection-grid"></div>
+        <!-- Barre du mode « Sélectionner » : collée en bas de l'écran -->
+        <div class="select-bar" id="select-bar" hidden>
+          <p class="select-summary" id="select-summary"></p>
+          <div class="select-tools">
+            <button class="btn" id="select-all">Tout</button>
+            <button class="btn" id="select-dupes">Doublons</button>
+            <button class="btn" id="select-clear">Vider</button>
+          </div>
+          <button class="btn btn-primary" id="select-confirm">Défausser</button>
+        </div>
       </div>
 
       <!-- Vue Atelier : une ligne par modèle + rareté (atelier.js) -->
@@ -135,8 +147,8 @@
         <div class="atelier-discard">
           <span class="eyebrow">Défausse</span>
           <p class="muted" id="discard-values"></p>
-          <p class="muted">Les cartes verrouillées sont protégées.</p>
-          <button class="btn" id="btn-discard-all">Défausser des cartes</button>
+          <p class="muted">Les cartes verrouillées sont protégées. Pour défausser plusieurs cartes à la fois : sélectionne-les dans la Collection.</p>
+          <button class="btn" id="btn-discard-all">Sélectionner des cartes</button>
         </div>
       </div>
     </section>
@@ -199,6 +211,6 @@
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=29"></script>
+  <script type="module" src="js/main.js?v=31"></script>
 </body>
 </html>

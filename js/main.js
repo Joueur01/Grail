@@ -3,16 +3,16 @@
 // ?v=… sur les imports : même numéro que dans index.html, et le même partout
 // (un module importé sous deux adresses différentes serait chargé deux fois).
 
-import { loadCatalogue } from "./data.js?v=29";
-import { loadSave, setupCollection } from "./inventory.js?v=29";
-import { initAvatar, setupOutfit } from "./avatar.js?v=29";
-import { setupBooster } from "./booster.js?v=29";
-import { setupShare } from "./share.js?v=29";
-import { setupUpgrade } from "./upgrade.js?v=29";
-import { setupAtelier, setupViewSwitch } from "./atelier.js?v=29";
-import { setupWallet } from "./wallet.js?v=29";
-import { setupDiscard } from "./discard.js?v=29";
-import { BOOSTER } from "./economy-config.js?v=29";
+import { loadCatalogue } from "./data.js?v=31";
+import { loadSave, setupCollection } from "./inventory.js?v=31";
+import { initAvatar, setupOutfit } from "./avatar.js?v=31";
+import { setupBooster } from "./booster.js?v=31";
+import { setupShare } from "./share.js?v=31";
+import { setupUpgrade } from "./upgrade.js?v=31";
+import { setupAtelier, setupViewSwitch } from "./atelier.js?v=31";
+import { setupWallet } from "./wallet.js?v=31";
+import { setupDiscard, createSelection } from "./discard.js?v=31";
+import { BOOSTER } from "./economy-config.js?v=31";
 
 // ?debug=1 dans l'URL : boosters illimités pendant les tests.
 export const DEBUG = new URLSearchParams(location.search).get("debug") === "1";
@@ -66,11 +66,18 @@ async function start() {
     const discard = setupDiscard({ catalogue, onChange });
     const upgrade = setupUpgrade({ catalogue, onChange, onDiscard: (colorwayId, rarity) => discard.openCard(colorwayId, rarity) });
     // Collection (une carte par coloris) : toucher une carte ouvre sa fiche.
-    const refreshCollection = setupCollection({ catalogue, onCardTap: (card) => upgrade.openCard(card) });
+    // Mode « Sélectionner » : choisir plusieurs cartes parmi toute la collection, puis défausser.
+    const selection = createSelection({ catalogue, onChange });
+    const refreshCollection = setupCollection({ catalogue, onCardTap: (card) => upgrade.openCard(card), selection });
+    selection.bind(refreshCollection);
     // Atelier (par modèle + rareté) : toucher une ligne ouvre la roue, mise pré-remplie.
     const refreshAtelier = setupAtelier({ catalogue, onRowTap: (piece, rarity) => upgrade.openModel(piece, rarity),
       onRowDiscard: (piece, rarity) => discard.openModel(piece, rarity),
-      onDiscardAll: () => discard.openAll(),
+      // « Sélectionner des cartes » : on passe à la Collection, mode sélection activé.
+      onDiscardAll: () => {
+        document.querySelector('.view-tab[data-view="collection"]').click();
+        selection.setActive(true);
+      },
     });
     setupViewSwitch();
     // Collection et Atelier sont redessinés après chaque booster ou amélioration.

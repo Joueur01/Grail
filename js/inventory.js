@@ -18,10 +18,10 @@
 // }
 // Si le format change un jour, on crée "grail_save_v2" et on migre depuis v1.
 
-import { RARITIES, matchesSearch, getRarity } from "./data.js?v=29";
-import { BOOSTER, COINS, DISCARD_VALUES } from "./economy-config.js?v=29";
-import { refillStock, msUntilNextBooster, isSignatureNext, freeUntilSignature } from "./distribution.js?v=29";
-import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=29";
+import { RARITIES, matchesSearch, getRarity } from "./data.js?v=31";
+import { BOOSTER, COINS, DISCARD_VALUES } from "./economy-config.js?v=31";
+import { refillStock, msUntilNextBooster, isSignatureNext, freeUntilSignature } from "./distribution.js?v=31";
+import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=31";
 
 const SAVE_KEY = "grail_save_v1";
 
@@ -314,8 +314,9 @@ const CATEGORIES = [
  * Branche l'écran Collection et renvoie une fonction pour le redessiner
  * (à appeler après chaque ouverture de booster ou amélioration).
  * - onCardTap : appelé avec { colorwayId, rarity, count } quand on touche une carte
+ * - selection : mode « Sélectionner » (discard.js) ; en mode actif, toucher une carte la sélectionne
  */
-export function setupCollection({ catalogue, onCardTap }) {
+export function setupCollection({ catalogue, onCardTap, selection }) {
   const grid = document.getElementById("collection-grid");
   const summary = document.getElementById("collection-summary");
   const empty = document.getElementById("collection-empty");
@@ -352,6 +353,9 @@ export function setupCollection({ catalogue, onCardTap }) {
       .sort((a, b) => (rarityRank.get(b.rarity) - rarityRank.get(a.rarity))
         || (catalogueOrder.get(a.colorwayId) - catalogueOrder.get(b.colorwayId)));
 
+    selection?.update(visible); // le mode « Sélectionner » a besoin de savoir ce qui est affiché
+    const selecting = selection?.active === true;
+
     grid.replaceChildren(...visible.map((c) => {
       const colorway = catalogue.colorwayById.get(c.colorwayId);
       const card = createCardShell(colorway, c.rarity);
@@ -364,9 +368,30 @@ export function setupCollection({ catalogue, onCardTap }) {
         badge.textContent = `×${c.count}`;
         card.append(badge);
       }
+      card.setAttribute("role", "button");
+      if (selecting) {
+        // Mode « Sélectionner » : toucher choisit la carte (les verrouillées sont protégées).
+        const n = selection.pickedCount(c);
+        if (c.locked) {
+          card.classList.add("used");
+          card.setAttribute("aria-label", `${colorway.piece.name}, ${colorway.name} : verrouillée, protégée de la défausse`);
+        } else {
+          card.classList.add("tappable");
+          if (n > 0) {
+            card.classList.add("picked");
+            const pick = document.createElement("span");
+            pick.className = "pick-badge";
+            pick.textContent = c.count > 1 ? `${n}/${c.count}` : "✓";
+            card.append(pick);
+          }
+          card.setAttribute("aria-pressed", String(n > 0));
+          card.setAttribute("aria-label", `${colorway.piece.name}, ${colorway.name} : sélectionner`);
+          card.addEventListener("click", () => selection.toggle(c));
+        }
+        return card;
+      }
       // Toucher une carte ouvre sa fiche (améliorer, défausser…).
       card.classList.add("tappable");
-      card.setAttribute("role", "button");
       card.setAttribute("aria-label", `${colorway.piece.name}, ${colorway.name} : ouvrir la fiche`);
       card.addEventListener("click", () => onCardTap?.(c));
       return card;
