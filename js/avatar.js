@@ -6,9 +6,10 @@
 // bas, chaussures) avec un petit espace, et l'écharpe et le sac sont posés à côté.
 // Les sprites sont utilisés TELS QUELS, à leur taille réelle (×1 dans le canvas).
 
-import { RARITIES } from "./data.js?v=34";
-import { getOwnedCards, getEquipped, equip } from "./inventory.js?v=34";
-import { createCardFace, createCardShell } from "./cards.js?v=34";
+import { RARITIES } from "./data.js?v=35";
+import { getOwnedCards, getEquipped, equip } from "./inventory.js?v=35";
+import { reportError } from "./wallet.js?v=35";
+import { createCardFace, createCardShell } from "./cards.js?v=35";
 
 // Les 7 emplacements, avec leur colonne sur la fiche.
 // Les identifiants correspondent au champ "slot" de pieces.json.
@@ -240,10 +241,9 @@ export function setupOutfit({ catalogue, onChange }) {
       }
       card.append(createCardFace(colorway, c.rarity));
       btn.append(card);
-      btn.addEventListener("click", () => {
-        equip(slot.id, c);
+      btn.addEventListener("click", async () => {
         closePicker();
-        render();
+        await changeSlot(slot.id, c);
       });
       return btn;
     }));
@@ -253,15 +253,25 @@ export function setupOutfit({ catalogue, onChange }) {
     picker.hidden = false;
   }
 
+  /** Change la tenue : le SERVEUR vérifie (carte possédée, bon emplacement) puis on relit et on redessine. */
+  async function changeSlot(slotId, card) {
+    try {
+      await equip(slotId, card);
+    } catch (err) {
+      reportError(err);
+    }
+    render();
+  }
+
   function closePicker() {
     picker.hidden = true;
     currentSlot = null;
   }
 
-  removeBtn.addEventListener("click", () => {
-    if (currentSlot) equip(currentSlot.id, null);
+  removeBtn.addEventListener("click", async () => {
+    const slotId = currentSlot?.id;
     closePicker();
-    render();
+    if (slotId) await changeSlot(slotId, null);
   });
   document.getElementById("picker-close").addEventListener("click", closePicker);
   // Toucher le fond sombre (en dehors du panneau) ferme aussi.

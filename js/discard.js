@@ -7,13 +7,36 @@
 // On peut l'ouvrir depuis la fiche d'une carte, une ligne de l'Atelier ou le
 // bouton « Sélectionner » de la Collection (createSelection, plus bas).
 
-import { RARITIES, getRarity } from "./data.js?v=34";
-import { DISCARD_VALUES, DISCARD_CONFIRM_FROM, DISCARD_KEEP } from "./economy-config.js?v=34";
-import { getOwnedCards, getEquipped, discardCards, cardKey } from "./inventory.js?v=34";
-import { SLOTS } from "./avatar.js?v=34";
-import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=34";
-import { playSound, vibrate } from "./effects.js?v=34";
-import { flyCoins, showToast } from "./wallet.js?v=34";
+import { RARITIES, getRarity } from "./data.js?v=35";
+import { DISCARD_VALUES, DISCARD_CONFIRM_FROM, DISCARD_KEEP } from "./economy-config.js?v=35";
+import { getOwnedCards, getEquipped, refreshState, cardKey } from "./inventory.js?v=35";
+import { discardCards as sendDiscardToServer } from "./api.js?v=35";
+import { SLOTS } from "./avatar.js?v=35";
+import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=35";
+import { playSound, vibrate } from "./effects.js?v=35";
+import { flyCoins, showToast, reportError } from "./wallet.js?v=35";
+
+/**
+ * Envoie la défausse au SERVEUR (tout ou rien) et relit l'état. Renvoie les pièces gagnées, calculées
+ * par le serveur, ou null si la défausse a été refusée (message affiché ; la collection est relue).
+ * - cards : [{ colorwayId, rarity }], une ligne par exemplaire
+ */
+async function sendDiscard(cards) {
+  const counts = new Map();
+  for (const c of cards) {
+    const key = cardKey(c.colorwayId, c.rarity);
+    counts.set(key, { colorway_id: c.colorwayId, rarity: c.rarity, count: (counts.get(key)?.count || 0) + 1 });
+  }
+  try {
+    const gained = await sendDiscardToServer([...counts.values()]);
+    await refreshState({ booster: false });
+    return gained;
+  } catch (err) {
+    reportError(err); // « Carte verrouillée », « Cartes insuffisantes »…
+    try { await refreshState({ booster: false }); } catch { /* sans importance */ }
+    return null;
+  }
+}
 
 /** Pièces gagnées pour une carte de cette rareté. */
 export function discardValue(rarity) {
@@ -195,11 +218,12 @@ export function setupDiscard({ catalogue, onChange }) {
         render();
       };
       clearBtn.onclick = () => { selected.clear(); armed = false; render(); };
-      confirmBtn.onclick = () => {
-        if (!list.length) return;
+      confirmBtn.onclick = async () => {
+        if (!list.length || confirmBtn.disabled) return;
         if (needsConfirm && !armed) { armed = true; render(); return; } // Épique / Légendaire : 2e toucher
-        const gained = discardCards(list);
-        if (gained === null) { selected.clear(); armed = false; render(); return; } // la collection a changé entre-temps
+        confirmBtn.disabled = true; // pas de double envoi pendant que le serveur répond
+        const gained = await sendDiscard(list);
+        if (gained === null) { selected.clear(); armed = false; onChange?.(); render(); return; } // refusé : on repart d'un état à jour
         playSound("coin");
         vibrate([20]);
         flyCoins(confirmBtn, gained);
@@ -350,12 +374,13 @@ export function createSelection({ catalogue, onChange }) {
     refresh();
   });
   clearBtn.addEventListener("click", () => { picked.clear(); armed = false; refresh(); });
-  confirmBtn.addEventListener("click", () => {
+  confirmBtn.addEventListener("click", async () => {
     const chosen = list();
-    if (!chosen.length) return;
+    if (!chosen.length || confirmBtn.disabled) return;
     if (chosen.some((c) => rank.get(c.rarity) >= confirmRank) && !armed) { armed = true; renderBar(); return; }
-    const gained = discardCards(chosen);
-    if (gained === null) { picked.clear(); armed = false; refresh(); return; } // la collection a changé entre-temps
+    confirmBtn.disabled = true; // pas de double envoi pendant que le serveur répond
+    const gained = await sendDiscard(chosen);
+    if (gained === null) { picked.clear(); armed = false; onChange?.(); refresh(); return; } // refusé : on repart d'un état à jour
     playSound("coin");
     vibrate([20]);
     flyCoins(confirmBtn, gained);

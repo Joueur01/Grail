@@ -112,6 +112,63 @@ body {
 .coins.bump { animation: coins-bump 0.5s ease-out; }
 @keyframes coins-bump { 40% { transform: scale(1.18); border-color: var(--rarity-legendaire); } }
 
+/* Écran de connexion : tant qu'on n'est pas connecté, le jeu est caché */
+body[data-auth="out"] .topbar,
+body[data-auth="out"] main,
+body[data-auth="out"] .tabbar { display: none; }
+.auth { display: none; }
+body[data-auth="out"] .auth {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: calc(24px + env(safe-area-inset-top)) var(--gutter) 24px;
+}
+.auth-card { display: flex; flex-direction: column; gap: 18px; width: min(420px, 100%); }
+.auth-logo { font-size: 40px; text-align: center; }
+.auth-tab {
+  min-height: 40px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.auth-tab[aria-selected="true"] { background: var(--text); color: var(--bg); }
+.auth-form { display: flex; flex-direction: column; gap: 8px; }
+.auth-label { font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.auth-input {
+  min-height: 52px;
+  padding: 0 18px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 16px;         /* 16 px : Safari ne zoome pas dans le champ */
+}
+.auth-input:focus { outline: none; border-color: var(--text); }
+.auth-message { margin: 4px 0 0; font-size: 14px; font-weight: 600; text-align: center; }
+.auth-message[data-kind="error"] { color: #ff7a6b; }
+.auth-message[data-kind="ok"] { color: var(--rarity-legendaire); }
+.auth-form .btn { margin-top: 8px; }
+.signout {
+  align-self: center;
+  margin-top: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 /* Notification sous l'en-tête */
 .toast {
   position: fixed;
@@ -131,6 +188,7 @@ body {
   transform: translateX(-50%);
   pointer-events: none;
 }
+.toast.error { background: #ff7a6b; color: #1a0705; }
 .toast.show { animation: toast-in 3.6s ease-in-out both; }
 @keyframes toast-in {
   0% { opacity: 0; transform: translate(-50%, -12px); }
@@ -139,16 +197,6 @@ body {
 }
 @media (prefers-reduced-motion: reduce) { .coins.bump, .toast.show { animation: none; } }
 
-.debug-badge {
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--bg);
-  background: var(--text);
-  padding: 4px 10px;
-  border-radius: 999px;
-}
 
 /* --- Écrans --- */
 main {

@@ -17,14 +17,12 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=34">
+  <link rel="stylesheet" href="style.css?v=35">
 </head>
 <body>
   <header class="topbar">
     <h1 class="logo">GRAIL</h1>
     <div class="topbar-right">
-      <!-- Visible seulement avec ?debug=1 -->
-      <span class="debug-badge" id="debug-badge" hidden>Debug</span>
       <!-- Solde de pièces, visible sur toutes les pages (wallet.js) -->
       <span class="coins" id="coins" role="status" aria-label="Solde : 0 pièce">
         <svg class="coin-icon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="currentColor"/><circle cx="8" cy="8" r="4.2" fill="none" stroke="#0b0b0d" stroke-opacity=".45" stroke-width="1.4"/></svg>
@@ -32,7 +30,26 @@
       </span>
     </div>
   </header>
-  <!-- Notification (bonus quotidien…) -->
+  <!-- Connexion / création de compte : le jeu n'est accessible que connecté (main.js) -->
+  <div class="auth" id="auth">
+    <div class="auth-card">
+      <h1 class="logo auth-logo">GRAIL</h1>
+      <div class="view-switch" role="tablist" aria-label="Compte">
+        <button class="auth-tab" type="button" role="tab" data-mode="signin" aria-selected="true">Connexion</button>
+        <button class="auth-tab" type="button" role="tab" data-mode="signup" aria-selected="false">Créer un compte</button>
+      </div>
+      <form class="auth-form" id="auth-form" novalidate>
+        <label class="auth-label" for="auth-email">E-mail</label>
+        <input class="auth-input" id="auth-email" type="email" inputmode="email" autocomplete="email" autocapitalize="none" required>
+        <label class="auth-label" for="auth-password">Mot de passe</label>
+        <input class="auth-input" id="auth-password" type="password" autocomplete="current-password" minlength="6" required>
+        <p class="auth-message" id="auth-message" role="status" hidden></p>
+        <button class="btn btn-primary" id="auth-submit" type="submit">Se connecter</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Notification (bonus quotidien, erreurs…) -->
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
   <main>
@@ -154,7 +171,7 @@
     </section>
 
     <!-- Market entre joueurs : prix fixes, une seule offre (la moins chère) par carte (market.js).
-         SIMULATION locale en attendant un serveur. -->
+         Géré par le serveur. -->
     <section class="screen" data-screen="market" id="screen-market" hidden>
       <h2 class="screen-title">Market</h2>
       <p class="muted" id="market-summary">—</p>
@@ -197,7 +214,7 @@
       <div class="collection-view" id="market-mine-view" hidden>
         <p class="muted collection-empty" id="market-mine-empty" hidden>Tu n'as rien en vente. Va dans « Vendre » pour mettre une carte au market.</p>
         <div class="atelier-list" id="market-mine-list"></div>
-        <p class="muted atelier-intro">Simulation : en attendant le serveur, des acheteurs fictifs achètent tes cartes après quelques minutes, plus vite quand le prix est raisonnable.</p>
+        <p class="muted atelier-intro">Quand un joueur achète une de tes cartes, tu es payé tout de suite, même hors ligne : une notification te prévient à ton retour.</p>
       </div>
     </section>
 
@@ -217,6 +234,7 @@
       <!-- Partage : image PNG de la tenue (share.js) -->
       <button class="btn btn-primary" id="btn-share" disabled>Partager ma tenue</button>
       <p class="muted share-status" id="share-status" aria-live="polite"></p>
+      <button class="signout" id="btn-signout">Se déconnecter</button>
     </section>
   </main>
 
@@ -260,6 +278,6 @@
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=34"></script>
+  <script type="module" src="js/main.js?v=35"></script>
 </body>
 </html>
