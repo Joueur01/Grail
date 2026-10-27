@@ -1,15 +1,13 @@
 // data.js — catalogue des pièces, raretés et petits outils partagés.
 // Les valeurs d'économie (taux, seuils, gains…) sont dans economy-config.js.
 
-import { DROP_WEIGHTS } from "./economy-config.js?v=26";
-
-// Les 4 raretés (ordre croissant). Les poids de tirage ne sont PAS ici :
-// ils viennent de js/economy-config.js (DROP_WEIGHTS).
+// Les 4 raretés (ordre croissant). Les taux de tirage ne sont PAS ici :
+// ils sont dans js/economy-config.js (DROP_RATES).
 export const RARITIES = [
-  { id: "commun",     name: "Commun",     weight: DROP_WEIGHTS.commun },
-  { id: "rare",       name: "Rare",       weight: DROP_WEIGHTS.rare },
-  { id: "epique",     name: "Épique",     weight: DROP_WEIGHTS.epique },
-  { id: "legendaire", name: "Légendaire", weight: DROP_WEIGHTS.legendaire },
+  { id: "commun",     name: "Commun" },
+  { id: "rare",       name: "Rare" },
+  { id: "epique",     name: "Épique" },
+  { id: "legendaire", name: "Légendaire" },
 ];
 
 // Catalogue chargé une seule fois, puis gardé en mémoire.

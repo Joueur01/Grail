@@ -17,7 +17,7 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=26">
+  <link rel="stylesheet" href="style.css?v=27">
 </head>
 <body>
   <header class="topbar">
@@ -40,7 +40,12 @@
     <section class="screen" data-screen="booster" id="screen-booster">
       <!-- Vue 1 : le paquet fermé -->
       <div class="booster-view" id="booster-closed">
-        <span class="eyebrow booster-eyebrow">Drop du jour</span>
+        <!-- Stock gratuit (se recharge avec le temps) + minuteur, en une ligne (booster.js) -->
+        <div class="stock-bar">
+          <span class="stock-pips" id="stock-pips" role="img"></span>
+          <span class="stock-timer" id="stock-timer"></span>
+        </div>
+        <span class="eyebrow booster-eyebrow" id="booster-eyebrow">Booster</span>
         <!-- Le booster lui-même : on glisse le doigt dessus pour le déchirer
              (un simple toucher ne l'ouvre pas). Le même dessin (32×48, agrandi d'un facteur entier)
              est affiché deux fois, découpé en dents de scie : la bande du haut qui
@@ -52,6 +57,12 @@
           </span>
         </button>
         <p class="muted booster-status" id="booster-status">Chargement…</p>
+        <!-- Compteur Signature, boosters achetés en attente, achat (booster.js) -->
+        <div class="stock">
+          <p class="stock-signature" id="stock-signature"></p>
+          <p class="stock-bought" id="stock-bought" hidden></p>
+          <button class="btn" id="btn-buy-booster" hidden></button>
+        </div>
         <!-- Jauge « Légendaire garantie » (pity) : se remplit à chaque booster sans
              Légendaire, repart à 0 quand une Légendaire sort (booster.js) -->
         <div class="pity" id="pity" role="img">
@@ -60,6 +71,14 @@
             <span class="pity-count" id="pity-count">—</span>
           </div>
           <div class="pity-bar"><div class="pity-fill" id="pity-fill"></div></div>
+        </div>
+        <!-- Jauge « Épique garantie » : boosters d'affilée sans Épique ou mieux -->
+        <div class="pity epic" id="pity-epic" role="img">
+          <div class="pity-head">
+            <span class="pity-label">Épique garantie</span>
+            <span class="pity-count" id="pity-epic-count">—</span>
+          </div>
+          <div class="pity-bar"><div class="pity-fill" id="pity-epic-fill"></div></div>
         </div>
       </div>
 
@@ -180,6 +199,6 @@
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=26"></script>
+  <script type="module" src="js/main.js?v=27"></script>
 </body>
 </html>

@@ -406,7 +406,48 @@ main {
   background: linear-gradient(90deg, #8a6d12, var(--rarity-legendaire));
   transition: width 0.6s ease-out;
 }
-/* Les 5 derniers boosters : la jauge brille, la Légendaire approche */
+/* Jauge Épique : même dessin, en violet */
+.pity.epic .pity-count { color: var(--rarity-epique); }
+.pity.epic .pity-fill { background: linear-gradient(90deg, #4b2c86, var(--rarity-epique)); }
+
+/* Stock de boosters gratuits (pastilles) + minuteur, en une ligne au-dessus du paquet */
+.stock-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  align-self: center;
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+}
+.stock-pips { display: flex; gap: 5px; }
+.stock-pip { width: 12px; height: 17px; border-radius: 3px; border: 2px solid var(--border); }
+.stock-pip.full { border-color: var(--text); background: var(--text); }
+.stock-timer { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Sous le paquet : compteur Signature, boosters achetés, achat */
+.stock { display: flex; flex-direction: column; gap: 6px; width: min(320px, 100%); align-self: center; text-align: center; }
+.stock-signature, .stock-bought { margin: 0; font-size: 13px; }
+.stock-signature { color: var(--muted); }
+.stock-signature.now { color: var(--rarity-legendaire); font-weight: 700; }
+.stock-bought { color: var(--text); font-weight: 700; }
+.stock .btn { margin-top: 4px; min-height: 48px; padding: 10px 16px; font-size: 14px; }
+
+/* Booster Signature : étiquette dorée et halo doré FIXE autour du paquet (aucune animation) */
+.booster-eyebrow.signature { color: var(--rarity-legendaire); }
+/* Lueur dessinée DERRIÈRE le paquet (pas de filter sur les pixels : Safari les rendrait flous) */
+.booster-pack.signature::before {
+  content: "";
+  position: absolute;
+  inset: -10% -22%;
+  background: radial-gradient(closest-side, rgba(242, 194, 48, 0.5), rgba(242, 194, 48, 0));
+  z-index: -1;
+}
+.booster-pack.signature.torn::before { opacity: 0; transition: opacity 0.3s; }
+
+/* Pity douce en cours : la jauge brille, la Légendaire approche */
 .pity.almost .pity-fill { animation: pity-glow 1.2s ease-in-out infinite; }
 @keyframes pity-glow {
   50% { box-shadow: 0 0 12px 2px var(--rarity-legendaire); }

@@ -12,12 +12,14 @@
 // Effets de révélation, du plus discret au plus fort : Rare (reflet + particules),
 // Épique (éclair violet, gerbe de particules, titre), Légendaire (plein écran).
 
-import { RARITIES, getRarity } from "./data.js?v=26";
-import { BOOSTER, PITY } from "./economy-config.js?v=26";
-import { addCards, canOpenFreeBooster, markFreeBoosterUsed, getOwnedCards, cardKey, getPity, setPity, isTutorialDone, setTutorialDone } from "./inventory.js?v=26";
-import { createCardFace, createCardShell } from "./cards.js?v=26";
-import { playSound, vibrate, burst } from "./effects.js?v=26";
-import { attachGesture } from "./gestures.js?v=26";
+import { RARITIES, getRarity } from "./data.js?v=27";
+import { BOOSTER, DROP_RATES, PITY } from "./economy-config.js?v=27";
+import { addCards, getOwnedCards, cardKey, getPity, getPityEpic, setPity, isTutorialDone, setTutorialDone,
+  getBoosterState, takeBooster, buyBooster, getCoins } from "./inventory.js?v=27";
+import { drawBooster, revealOrder } from "./distribution.js?v=27";
+import { createCardFace, createCardShell } from "./cards.js?v=27";
+import { playSound, vibrate, burst } from "./effects.js?v=27";
+import { attachGesture } from "./gestures.js?v=27";
 
 // Durées (en millisecondes), faciles à ajuster.
 const TEAR_TIME = 550;    // la bande s'envole, le paquet descend
@@ -48,62 +50,23 @@ function tearClip(top) {
     : `polygon(${points.join(", ")}, 100% 100%, 0% 100%)`;
 }
 
-/**
- * Tire une rareté selon les poids définis dans RARITIES.
- * - exclude : raretés interdites (ex. ["commun"]) ; les autres gardent
- *   leurs proportions entre elles (Rare 22 : Épique 7 : Légendaire 1).
- */
-export function drawRarity(exclude = []) {
-  const allowed = RARITIES.filter((r) => !exclude.includes(r.id));
-  const total = allowed.reduce((sum, r) => sum + r.weight, 0);
-  let roll = Math.random() * total;
-  for (const r of allowed) {
-    roll -= r.weight;
-    if (roll < 0) return r.id;
-  }
-  return allowed[0].id; // filet de sécurité (arrondis)
+/** Durée lisible pour le minuteur : « 5:12:08 » (heures:minutes:secondes). */
+function formatDuration(ms) {
+  const total = Math.ceil(ms / 1000);
+  const h = Math.floor(total / 3600);
+  const m = String(Math.floor((total % 3600) / 60)).padStart(2, "0");
+  const sec = String(total % 60).padStart(2, "0");
+  return `${h}:${m}:${sec}`;
 }
 
-/**
- * Tire un booster : pour chaque carte, d'abord la rareté, puis un coloris au
- * hasard parmi tout le catalogue (uniforme pour la bêta). Deux garanties :
- *   1. jamais 3 Communes : si les autres cartes sont toutes Communes, la
- *      dernière est au minimum Rare ;
- *   2. pity : si le joueur a déjà ouvert PITY.legendaryEvery - 1 boosters
- *      d'affilée sans Légendaire, celui-ci en contient forcément une.
- * - pity : boosters ouverts d'affilée sans Légendaire AVANT celui-ci
- * Renvoie [{ colorwayId, rarity, forced? }, ...].
- */
-export function drawBooster(catalogue, pity = 0) {
-  const rarities = [];
-  // Raretés plus communes que le minimum garanti pour la dernière carte (ex. ["commun"]).
-  const tooLow = RARITIES.slice(0, RARITIES.findIndex((r) => r.id === BOOSTER.lastCardMinRarity)).map((r) => r.id);
-  for (let i = 0; i < BOOSTER.cardsPerPack; i++) {
-    const last = i === BOOSTER.cardsPerPack - 1;
-    const othersAllLow = tooLow.length > 0 && rarities.every((r) => tooLow.includes(r));
-    rarities.push(last && othersAllLow ? drawRarity(tooLow) : drawRarity());
-  }
-
-  // Pity : la carte la moins rare devient Légendaire (elle sera montrée en dernier).
-  let forced = -1;
-  if (pity + 1 >= PITY.legendaryEvery && !rarities.includes("legendaire")) {
-    const rank = (id) => RARITIES.findIndex((r) => r.id === id);
-    forced = rarities.reduce((low, r, i) => (rank(r) < rank(rarities[low]) ? i : low), 0);
-    rarities[forced] = "legendaire";
-  }
-
-  const list = catalogue.colorways;
-  return rarities.map((rarity, i) => ({
-    colorwayId: list[Math.floor(Math.random() * list.length)].id,
-    rarity,
-    forced: i === forced, // true = Légendaire offerte par la jauge
-  }));
-}
+// Rareté minimale de la carte Signature (« Rare ou mieux »), lue dans la config.
+const SIGNATURE_MIN = RARITIES.find((r) => DROP_RATES.signatureLast[r.id] > 0);
 
 /**
  * Branche tout l'écran Booster.
  * - catalogue : résultat de loadCatalogue()
- * - debug : true = boosters illimités (?debug=1)
+ * - debug : true = mode test : stock vide → on peut quand même ouvrir (?debug=1
+ *   ou BOOSTER.unlimited dans la config)
  * - onOpened : appelé après chaque ouverture (pour rafraîchir la collection)
  */
 export function setupBooster({ catalogue, debug, onOpened }) {
@@ -122,6 +85,15 @@ export function setupBooster({ catalogue, debug, onOpened }) {
   const pityGauge = document.getElementById("pity");
   const pityCount = document.getElementById("pity-count");
   const pityFill = document.getElementById("pity-fill");
+  const pityEpicGauge = document.getElementById("pity-epic");
+  const pityEpicCount = document.getElementById("pity-epic-count");
+  const pityEpicFill = document.getElementById("pity-epic-fill");
+  const eyebrow = document.getElementById("booster-eyebrow");
+  const stockPips = document.getElementById("stock-pips");
+  const stockTimer = document.getElementById("stock-timer");
+  const stockSignature = document.getElementById("stock-signature");
+  const stockBought = document.getElementById("stock-bought");
+  const buyBtn = document.getElementById("btn-buy-booster");
 
   packTop.style.clipPath = tearClip(true);
   packBody.style.clipPath = tearClip(false);
@@ -152,30 +124,101 @@ export function setupBooster({ catalogue, debug, onOpened }) {
     if (text) container.append(swipeHint(text));
   }
 
-  // Met le paquet dans le bon état (disponible ou « reviens demain »).
+  let packSource = null; // booster affiché sur le paquet : "free", "bought", "test" ou null
+
+  // Met le paquet dans le bon état (disponible ou non, standard ou Signature).
   function refreshPack() {
-    const available = debug || canOpenFreeBooster();
+    const state = getBoosterState(Date.now(), debug);
+    const available = state.source !== null;
+    packSource = state.source;
     pack.disabled = !available;
     pack.dataset.locked = "0";
     pack.classList.remove("nudge", "torn", "dragging");
+    pack.classList.toggle("signature", state.signature);
     packTop.style.transform = "";
-    status.textContent = available
-      ? "Glisse ton doigt sur le booster pour le déchirer."
-      : "Reviens demain pour un nouveau booster.";
+    eyebrow.textContent = state.signature ? "Booster Signature"
+      : state.source === "bought" ? "Booster acheté" : "Booster";
+    eyebrow.classList.toggle("signature", state.signature);
+    status.textContent = !available
+      ? "Plus de booster pour l'instant."
+      : state.source === "test"
+        ? "Mode test : stock vide, booster offert. Glisse pour le déchirer."
+        : "Glisse ton doigt sur le booster pour le déchirer.";
     // 1er booster : le doigt montre qu'il faut GLISSER sur le paquet (pas toucher).
     showTutorial(pack.querySelector(".pack-art"), available && !isTutorialDone() ? "Glisse pour déchirer" : "");
+    renderStock(state);
     renderPity();
   }
 
-  /** Jauge « Légendaire garantie » sous le paquet. */
+  /** Stock gratuit (pastilles), minuteur, compteur Signature et bouton d'achat. */
+  function renderStock(state = getBoosterState(Date.now(), debug)) {
+    stockPips.replaceChildren(...Array.from({ length: state.max }, (_, i) => {
+      const pip = document.createElement("span");
+      pip.className = i < state.stock ? "stock-pip full" : "stock-pip";
+      return pip;
+    }));
+    stockPips.setAttribute("aria-label", `${state.stock} booster${state.stock > 1 ? "s" : ""} gratuit${state.stock > 1 ? "s" : ""} sur ${state.max}`);
+    stockTimer.textContent = state.nextInMs === null
+      ? "Stock plein"
+      : `Prochain dans ${formatDuration(state.nextInMs)}`;
+
+    stockSignature.textContent = state.signature
+      ? `Ce booster est un Signature : ${BOOSTER.cardsPerPack}e carte ${SIGNATURE_MIN.name} ou mieux !`
+      : state.untilSignature === 1
+        ? "Le prochain booster gratuit est un Signature !"
+        : `Signature dans ${state.untilSignature} boosters gratuits`;
+    stockSignature.classList.toggle("now", state.signature);
+
+    stockBought.hidden = state.bought === 0;
+    stockBought.textContent = `${state.bought} booster${state.bought > 1 ? "s" : ""} acheté${state.bought > 1 ? "s" : ""} à ouvrir`;
+
+    // Achat : seulement quand il n'y a plus rien à ouvrir (stock vide, aucun acheté en attente).
+    const canBuyNow = state.stock === 0 && state.bought === 0;
+    buyBtn.hidden = !canBuyNow;
+    if (canBuyNow) {
+      const missing = BOOSTER.price - getCoins();
+      buyBtn.disabled = missing > 0;
+      buyBtn.textContent = missing > 0
+        ? `Acheter un booster · ${BOOSTER.price} pièces (il en manque ${missing})`
+        : `Acheter un booster · ${BOOSTER.price} pièces`;
+    }
+    return state;
+  }
+
+  buyBtn.addEventListener("click", () => {
+    if (!buyBooster()) return;
+    refreshPack();
+    status.textContent = "Booster acheté ! Glisse ton doigt dessus pour le déchirer.";
+  });
+
+  // Minuteur : chaque seconde, on met à jour le stock ; si un booster vient d'arriver
+  // pendant que le paquet fermé est affiché (et pas en train d'être déchiré), on le rend disponible.
+  function tick() {
+    if (closedView.hidden || pack.dataset.locked === "1") return;
+    const state = renderStock();
+    // Le booster à ouvrir a changé (arrivée d'un gratuit, fin du stock…) : on redessine le paquet.
+    if (state.source !== packSource || state.signature !== pack.classList.contains("signature")) refreshPack();
+  }
+  setInterval(tick, 1000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) tick(); });
+
+  /** Jauges « Légendaire garantie » et « Épique garantie » sous le paquet. */
   function renderPity() {
     const pity = getPity();
-    const nextIsSure = pity + 1 >= PITY.legendaryEvery;
-    pityCount.textContent = nextIsSure ? "Prochain booster\u00a0!" : `${pity} / ${PITY.legendaryEvery}`;
-    pityFill.style.width = `${Math.min(100, (pity / (PITY.legendaryEvery - 1)) * 100)}%`;
-    pityGauge.classList.toggle("almost", PITY.legendaryEvery - pity <= PITY.almostThreshold);
+    const at = PITY.legendary.guaranteedAt;
+    pityCount.textContent = pity + 1 >= at ? "Prochain booster\u00a0!" : `${pity} / ${at}`;
+    pityFill.style.width = `${Math.min(100, (pity / (at - 1)) * 100)}%`;
+    // La jauge brille dès que la pity douce a commencé (taux Légendaire en hausse).
+    pityGauge.classList.toggle("almost", pity >= PITY.legendary.softStart);
     pityGauge.setAttribute("aria-label",
-      `Légendaire garantie : ${pity} boosters sans Légendaire sur ${PITY.legendaryEvery}`);
+      `Légendaire garantie : ${pity} boosters sans Légendaire sur ${at}`);
+
+    const epic = getPityEpic();
+    const after = PITY.epic.guaranteedAfter;
+    pityEpicCount.textContent = epic >= after ? "Prochain booster\u00a0!" : `${epic} / ${after}`;
+    pityEpicFill.style.width = `${Math.min(100, (epic / after) * 100)}%`;
+    pityEpicGauge.setAttribute("aria-label",
+      `Épique garantie : ${epic} boosters sans Épique ou mieux sur ${after}`);
   }
 
   // --- 1. Déchirer le paquet (uniquement en glissant) ------------------------
@@ -211,22 +254,29 @@ export function setupBooster({ catalogue, debug, onOpened }) {
 
     // Cartes déjà possédées AVANT ce booster (pour le badge « NOUVEAU »).
     const owned = new Set(getOwnedCards().map((c) => cardKey(c.colorwayId, c.rarity)));
-    const pity = getPity();
-    cards = drawBooster(catalogue, pity).map((card) => {
+    // Le booster est pris dans le stock (ou parmi les achetés) AVANT le tirage.
+    const taken = takeBooster(Date.now(), debug);
+    if (!taken) {
+      pack.dataset.locked = "0";
+      refreshPack();
+      return;
+    }
+    const result = drawBooster(catalogue.colorways, {
+      signature: taken.signature, pityLegendary: getPity(), pityEpic: getPityEpic(),
+    });
+    cards = result.cards.map((card) => {
       const key = cardKey(card.colorwayId, card.rarity);
       const isNew = !owned.has(key);
       owned.add(key); // la même carte deux fois dans un booster : la 2e n'est pas « nouvelle »
       return { ...card, isNew };
     });
-    // La plus rare en dernier : on garde le meilleur pour la fin.
-    cards.sort((a, b) => rank.get(a.rarity) - rank.get(b.rarity));
+    // La plus rare en dernier (et la carte Signature toujours en dernier) : le meilleur pour la fin.
+    cards = revealOrder(cards);
 
     // Le tirage est SAUVEGARDÉ tout de suite, avant l'animation :
     // recharger la page pendant la révélation ne permet pas de retirer.
     addCards(cards);
-    if (!debug) markFreeBoosterUsed();
-    // Jauge : remise à 0 si une Légendaire est sortie, sinon +1.
-    setPity(cards.some((c) => c.rarity === "legendaire") ? 0 : pity + 1);
+    setPity(result.pityLegendary, result.pityEpic); // compteurs remis à 0 si la rareté est sortie
     onOpened?.();
 
     playSound("tear");
