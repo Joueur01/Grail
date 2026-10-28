@@ -181,6 +181,19 @@ $$;
 -- ============================================================
 -- 4. Vue des meilleures offres : + is_shop, et la boutique coupée disparaît tout de suite
 -- ============================================================
+-- La vue est lue par les JOUEURS (rôle authenticated), qui n'ont pas le droit de lire economy_config :
+-- elle ne peut donc pas appeler private.cfg() directement (cette fonction lit la table avec les droits de
+-- l'appelant). Cette petite fonction, exécutée avec les droits du propriétaire, ne renvoie que oui / non.
+create or replace function public.shop_enabled()
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$ select coalesce((private.cfg() -> 'SHOP' ->> 'enabled')::boolean, false) $$;
+revoke execute on function public.shop_enabled() from public;
+grant  execute on function public.shop_enabled() to anon, authenticated;
+
 create or replace view public.market_best_offers as
   select distinct on (colorway_id, rarity)
          id, colorway_id, rarity, price,
@@ -188,7 +201,7 @@ create or replace view public.market_best_offers as
          is_system as is_shop
     from public.market_listings
    where status = 'active'
-     and (not is_system or coalesce((private.cfg() -> 'SHOP' ->> 'enabled')::boolean, false))
+     and (not is_system or public.shop_enabled())
    order by colorway_id, rarity, price, id;
 
 -- ============================================================
