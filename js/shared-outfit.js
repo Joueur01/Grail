@@ -1,18 +1,26 @@
 // shared-outfit.js — page PUBLIQUE d'une tenue partagée par lien (visible sans compte).
 //
 // Le serveur renvoie une copie de la tenue (get_shared_outfit, appelable sans être connecté) :
-// on la dessine « à plat », comme sur l'écran Tenue, avec la liste des pièces et leur rareté.
-// Aucun pseudo ni autre information du joueur n'est montré.
+// l'avatar 3D (Garçon / Fille du joueur au moment du partage, migration 0019) porte la tenue et se
+// fait tourner en glissant, comme partout dans le jeu. Dessous : la date du partage et la liste des
+// pièces avec leur rareté. Aucun pseudo ni autre information du joueur n'est montré.
 
-import { loadCatalogue, getRarity } from "./data.js?v=66";
-import { getSharedOutfit } from "./api.js?v=66";
-import { SLOTS, initAvatar, drawAvatar } from "./avatar.js?v=66";
+import { loadCatalogue, getRarity } from "./data.js?v=67";
+import { getSharedOutfit } from "./api.js?v=67";
+import { SLOTS } from "./avatar.js?v=67";
+import { createAvatar3D } from "./avatar3d.js?v=67";
 
 function el(tag, className, text) {
   const e = document.createElement(tag);
   if (className) e.className = className;
   if (text !== undefined) e.textContent = text;
   return e;
+}
+
+/** « 28 octobre 2026 » : juste la date (jour de Paris), sans l'heure. */
+function formatDate(iso) {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Paris" });
 }
 
 /** Affiche la tenue partagée dans #public-outfit (le jeu et la connexion restent cachés). */
@@ -39,9 +47,20 @@ export async function showSharedOutfit(token, { signedIn = false } = {}) {
     }
     if (!lines.length) throw new Error("Cette tenue est vide.");
 
-    const canvas = el("canvas", "pixel public-canvas");
-    initAvatar(canvas);
-    drawAvatar(canvas, worn).catch(() => {});
+    // Avatar 3D sur fond gris sombre (même canvas 46 × 88 que dans le jeu). Sans la migration 0019,
+    // le serveur ne renvoie pas l'avatar : on montre le Garçon.
+    const stage = el("div", "public-stage");
+    const canvas = el("canvas", "pixel avatar-3d public-avatar");
+    canvas.width = 46;
+    canvas.height = 88;
+    canvas.setAttribute("aria-label", "Tenue en 3D : glisse pour la faire tourner");
+    stage.append(canvas);
+    createAvatar3D(canvas).setOutfit(worn, { type: shared.avatar_body === "femme" ? "femme" : "homme" })
+      .catch((err) => console.error("Avatar 3D :", err));
+    const meta = el("div", "public-meta");
+    meta.append(el("p", "muted public-hint", "Glisse pour tourner"));
+    const date = formatDate(shared.created_at);
+    if (date) meta.append(el("p", "public-date", `Partagée le ${date}`));
     const list = el("div", "atelier-list");
     for (const { slot, colorway, rarity } of lines) {
       const row = el("div", "market-row");
@@ -59,7 +78,7 @@ export async function showSharedOutfit(token, { signedIn = false } = {}) {
       row.append(tile, info);
       list.append(row);
     }
-    body.replaceChildren(canvas, list);
+    body.replaceChildren(stage, meta, list);
   } catch (err) {
     body.replaceChildren(el("p", "muted", err?.message || "Impossible d'afficher cette tenue."));
   }

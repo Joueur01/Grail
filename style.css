@@ -2015,7 +2015,19 @@ body[data-auth="public"] .public {
 }
 .public-card { display: flex; flex-direction: column; gap: 18px; width: min(460px, 100%); }
 .public-card .auth-title { text-align: center; }
-.public-canvas { align-self: center; display: block; margin: 0 auto 14px; background: #cccac4; border-radius: 28px; width: 128px; height: 192px; /* ×2 : facteur entier */ }
+/* Tenue partagée en 3D (page du lien) : même avatar et même fond que dans le jeu, canvas 46×88 ×3 (×4 sur PC) */
+.public-stage {
+  --avatar3d-scale: 3;
+  display: flex;
+  justify-content: center;
+  padding: 8px 18px;
+  border-radius: 28px;
+  background: radial-gradient(ellipse at 50% 40%, #34353c 0%, #2a2b31 60%, #232429 100%);
+}
+@media (min-width: 700px) { .public-stage { --avatar3d-scale: 4; } }
+.public-meta { display: flex; flex-direction: column; align-items: center; gap: 4px; margin: 10px 0 16px; }
+.public-hint { font-size: 12px; font-weight: 600; text-align: center; }
+.public-date { margin: 0; font-size: 14px; font-weight: 700; color: var(--text); text-align: center; }
 .public-cta { text-decoration: none; text-align: center; display: grid; place-items: center; }
 
 /* Historique du Market : prix en rouge (achat) ou en vert (vente) */

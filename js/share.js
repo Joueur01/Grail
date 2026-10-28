@@ -9,7 +9,7 @@
 // L'URL n'est jamais affichée.
 //
 // Image :
-// L'image (1080 × 1350, format portrait des réseaux) montre l'avatar EN 3D (Garçon / Fille du
+// L'image (1080 × 1350, format portrait des réseaux), avec la DATE du partage en haut à droite, montre l'avatar EN 3D (Garçon / Fille du
 // joueur, vu de trois quarts comme dans le jeu) agrandi ×6 (facteur entier, sans lissage) sur un
 // cadre gris sombre, et la liste des pièces avec leur nom, coloris, marque et rareté.
 //
@@ -17,12 +17,12 @@
 // préparée À L'AVANCE, à chaque changement de tenue, pour être prête au moment
 // où l'on touche le bouton (sinon le partage serait refusé).
 
-import { RARITIES } from "./data.js?v=66";
-import { SLOTS, readBodyChoice } from "./avatar.js?v=66";
-import { buildModel, renderModel, DEFAULT_YAW } from "./avatar3d.js?v=66";
-import { createOutfitShare } from "./api.js?v=66";
-import { showToast } from "./wallet.js?v=66";
-import { track } from "./analytics.js?v=66";
+import { RARITIES } from "./data.js?v=67";
+import { SLOTS, readBodyChoice } from "./avatar.js?v=67";
+import { buildModel, renderModel, DEFAULT_YAW } from "./avatar3d.js?v=67";
+import { createOutfitShare } from "./api.js?v=67";
+import { showToast } from "./wallet.js?v=67";
+import { track } from "./analytics.js?v=67";
 
 const IMG_W = 1080;
 const IMG_H = 1350;
@@ -33,6 +33,11 @@ const SITE_URL = "joueur01.github.io/Grail";
 const FILE_NAME = "grail-ma-tenue.png";
 // Ordre de la liste : de la tête aux pieds, comme la tenue, puis le sac.
 const LIST_ORDER = ["tete", "cou", "haut", "veste", "bas", "chaussures", "sac"];
+
+/** « 28 octobre 2026 » : la date du jour de partage (jour de Paris), sans l'heure. */
+function todayLabel() {
+  return new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Paris" });
+}
 
 /** Lit une couleur définie dans style.css (:root), pour garder une seule source. */
 function cssColor(name, fallback) {
@@ -104,6 +109,13 @@ export async function buildShareImage(outfit) {
   ctx.fillStyle = text;
   ctx.font = `900 72px ${FONT}`;
   ctx.fillText("GRAIL", PAD, PAD + 64);
+  // La date du partage, en haut à droite (juste la date, pas l'heure)
+  ctx.fillStyle = cssColor("--muted", "#8f8d88");
+  ctx.font = `400 30px ${FONT}`;
+  ctx.textAlign = "right";
+  ctx.fillText(todayLabel(), IMG_W - PAD, PAD + 64);
+  ctx.textAlign = "left";
+  ctx.fillStyle = text;
   const count = Object.keys(outfit).length;
   const best = [...RARITIES].reverse()
     .map((r) => ({ r, n: Object.values(outfit).filter((o) => o.rarity === r.id).length }))
@@ -213,6 +225,7 @@ export function setupShare() {
   const menu = document.getElementById("share-menu");
   const status = document.getElementById("share-status");
   let pending = null; // Promise du Blob de la tenue actuelle
+  let builtOn = "";   // jour (todayLabel) où l'image a été préparée : si on passe minuit, elle est refaite
   let version = 0;
   let current = null; // tenue actuelle
   let link = null;    // { key, url } : lien déjà créé pour la tenue actuelle (le partage suivant est instantané)
@@ -225,8 +238,18 @@ export function setupShare() {
     if (link && (!current || link.key !== outfitKey(current))) link = null;
     if (count === 0) { pending = null; closeMenu(); return; }
     const v = ++version;
+    builtOn = todayLabel();
     pending = buildShareImage(outfit);
     pending.catch((err) => { if (v === version) console.error("Image de partage :", err); });
+  }
+
+  /** L'image prête, refaite si la date a changé depuis sa préparation (page restée ouverte la nuit). */
+  function readyImage() {
+    if (current && builtOn !== todayLabel()) {
+      builtOn = todayLabel();
+      pending = buildShareImage(current);
+    }
+    return pending;
   }
 
   /** Crée (ou retrouve) le lien de la tenue actuelle : le serveur en garde une copie. */
@@ -262,7 +285,7 @@ export function setupShare() {
     const url = await getLink();
     const text = `Regarde ma tenue sur Grail : ${url}`;
     try {
-      const blob = await pending;
+      const blob = await readyImage();
       const file = new File([blob], FILE_NAME, { type: "image/png" });
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({ files: [file], title: "Ma tenue Grail", text });
@@ -309,7 +332,7 @@ export function setupShare() {
     closeMenu();
     if (!pending) return;
     try {
-      download(await pending);
+      download(await readyImage());
       track("share_image");
       showToast("Image enregistrée.");
     } catch {
