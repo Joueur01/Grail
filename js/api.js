@@ -6,7 +6,7 @@
 // amélioration. Ne remettre AUCUNE logique de jeu ici ni ailleurs côté client.
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase-config.js?v=85";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase-config.js?v=86";
 
 // Le lien « mot de passe oublié » reçu par e-mail ramène sur le site avec « type=recovery » dans
 // l'adresse. On le note AVANT que supabase-js ne traite (et n'efface) l'adresse.
@@ -179,6 +179,11 @@ export const marketHistory = (before = null) => rpc("market_history", { p_limit:
 /** Boutique Grail (migration 0027) : renouvelle la sélection si le jour a changé, puis renvoie
  *  { enabled, name, next_in_seconds, offers } (enabled: false si la boutique est coupée). */
 export const getMarketShop = () => rpc("get_market_shop");
+/** Catalogue du Marché (migration 0028) : { recent_days, cards: [{ c, r, offers, best, mine, shop, last, last_at, recent }] }
+ *  (seulement les cartes qui ont des offres ou des ventes). */
+export const getMarketCatalog = () => rpc("market_catalog");
+/** Toutes les offres d'une carte, du moins cher au plus cher : { total, offers: [{ id, price, shop, mine }] } (jamais le vendeur). */
+export const getMarketCardOffers = (colorwayId, rarity) => rpc("market_card_offers", { p_colorway: colorwayId, p_rarity: rarity });
 
 // --- Album (migration 0022) ---------------------------------------------------------
 

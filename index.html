@@ -23,7 +23,7 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=85">
+  <link rel="stylesheet" href="style.css?v=86">
 </head>
 <body>
   <header class="topbar">
@@ -272,19 +272,8 @@
       <div class="collection-view" id="market-buy-view">
         <!-- Boutique Grail : nom + décompte jusqu'à la prochaine sélection (market.js) -->
         <p class="shop-banner" id="market-shop-banner" hidden></p>
-        <div class="filters">
-          <input class="search" id="search-market" type="search" placeholder="Rechercher une carte" aria-label="Rechercher une carte à acheter" autocomplete="off" enterkeyhint="search">
-          <select id="market-rarity" aria-label="Filtrer par rareté"><option value="">Rareté</option></select>
-          <select id="market-type" aria-label="Filtrer par catégorie"><option value="">Type</option></select>
-          <select id="market-sort" aria-label="Trier les offres">
-            <option value="price">Prix ↑</option>
-            <option value="priceDesc">Prix ↓</option>
-            <option value="rarity">Rareté</option>
-            <option value="catalogue">Marque</option>
-          </select>
-        </div>
-        <p class="muted collection-empty" id="market-empty" hidden>Aucune offre ne correspond à ta recherche.</p>
-        <div class="card-grid" id="market-grid"></div>
+        <!-- Catalogue : modèles → coloris + rareté → offres (market-browse.js) -->
+        <div id="market-browse"></div>
       </div>
 
       <!-- Vendre : choisir une carte de ta collection, fixer ton prix -->
@@ -493,6 +482,6 @@
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=85"></script>
+  <script type="module" src="js/main.js?v=86"></script>
 </body>
 </html>
