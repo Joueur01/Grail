@@ -6,7 +6,7 @@
 // amélioration. Ne remettre AUCUNE logique de jeu ici ni ailleurs côté client.
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase-config.js?v=38";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase-config.js?v=39";
 
 // Le lien « mot de passe oublié » reçu par e-mail ramène sur le site avec « type=recovery » dans
 // l'adresse. On le note AVANT que supabase-js ne traite (et n'efface) l'adresse.
@@ -178,3 +178,15 @@ export const friendRespond = (id, accept) => rpc("friend_respond", { p_id: id, p
 export const friendRemove = (id) => rpc("friend_remove", { p_id: id });
 /** → { pseudo, equipped: { emplacement: "coloris|rareté" }, cards_owned, cards_total } (amis seulement) */
 export const getFriendProfile = (friendId) => rpc("get_friend_profile", { p_friend: friendId });
+
+// --- Tenue partagée par lien (migration 0008) --------------------------------------
+
+/** Crée (ou retrouve) le lien de la tenue portée. → code secret (20 caractères) */
+export const createOutfitShare = () => rpc("create_outfit_share");
+/** Lecture PUBLIQUE, sans compte : → { equipped: { emplacement: "coloris|rareté" }, created_at } */
+export const getSharedOutfit = (token) => rpc("get_shared_outfit", { p_token: token });
+/** Code d'une tenue partagée présent dans l'adresse (?tenue=…), ou null. */
+export function sharedOutfitToken() {
+  const t = new URLSearchParams(location.search).get("tenue");
+  return t && /^[A-Za-z0-9]{10,40}$/.test(t) ? t : null;
+}

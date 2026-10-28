@@ -7,18 +7,19 @@
 // ?v=… sur les imports : même numéro que dans index.html, et le même partout
 // (un module importé sous deux adresses différentes serait chargé deux fois).
 
-import { loadCatalogue } from "./data.js?v=38";
-import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=38";
-import { initAvatar, setupOutfit } from "./avatar.js?v=38";
-import { setupBooster } from "./booster.js?v=38";
-import { setupShare } from "./share.js?v=38";
-import { setupUpgrade } from "./upgrade.js?v=38";
-import { setupAtelier, setupViewSwitch } from "./atelier.js?v=38";
-import { setupWallet, reportError, showToast } from "./wallet.js?v=38";
-import { setupDiscard, createSelection } from "./discard.js?v=38";
-import { setupMarket } from "./market.js?v=38";
-import { setupFriends } from "./friends.js?v=38";
-import { getSession, signIn, signUp, signOut, supabase, requestPasswordReset, updatePassword, isRecoveryLink, endRecovery } from "./api.js?v=38";
+import { loadCatalogue } from "./data.js?v=39";
+import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=39";
+import { initAvatar, setupOutfit } from "./avatar.js?v=39";
+import { setupBooster } from "./booster.js?v=39";
+import { setupShare } from "./share.js?v=39";
+import { setupUpgrade } from "./upgrade.js?v=39";
+import { setupAtelier, setupViewSwitch } from "./atelier.js?v=39";
+import { setupWallet, reportError, showToast } from "./wallet.js?v=39";
+import { setupDiscard, createSelection } from "./discard.js?v=39";
+import { setupMarket } from "./market.js?v=39";
+import { setupFriends } from "./friends.js?v=39";
+import { showSharedOutfit } from "./shared-outfit.js?v=39";
+import { getSession, signIn, signUp, signOut, supabase, requestPasswordReset, updatePassword, isRecoveryLink, endRecovery, sharedOutfitToken } from "./api.js?v=39";
 
 const SCREENS = ["booster", "collection", "market", "friends", "avatar"];
 
@@ -245,6 +246,16 @@ async function start() {
     console.warn("Session :", err);
   }
   setupPasswordRecovery();
+  // Lien de tenue partagée (?tenue=CODE) : page publique, sans compte requis.
+  const outfitToken = sharedOutfitToken();
+  if (outfitToken) {
+    document.getElementById("public-cta").addEventListener("click", (e) => {
+      e.preventDefault();
+      location.href = location.pathname; // on retire ?tenue=… et on ouvre le jeu (ou la connexion)
+    });
+    showSharedOutfit(outfitToken, { signedIn: !!session });
+    return;
+  }
   const linkExpired = /error_code=otp_expired|error=access_denied/.test(location.hash);
   if (isRecoveryLink()) showRecovery();                // lien « mot de passe oublié » : nouveau mot de passe d'abord
   else if (session) boot();
