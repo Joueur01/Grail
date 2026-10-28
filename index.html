@@ -23,7 +23,7 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=84">
+  <link rel="stylesheet" href="style.css?v=85">
 </head>
 <body>
   <header class="topbar">
@@ -270,6 +270,8 @@
 
       <!-- Acheter : l'offre la moins chère de chaque carte -->
       <div class="collection-view" id="market-buy-view">
+        <!-- Boutique Grail : nom + décompte jusqu'à la prochaine sélection (market.js) -->
+        <p class="shop-banner" id="market-shop-banner" hidden></p>
         <div class="filters">
           <input class="search" id="search-market" type="search" placeholder="Rechercher une carte" aria-label="Rechercher une carte à acheter" autocomplete="off" enterkeyhint="search">
           <select id="market-rarity" aria-label="Filtrer par rareté"><option value="">Rareté</option></select>
@@ -491,6 +493,6 @@
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=84"></script>
+  <script type="module" src="js/main.js?v=85"></script>
 </body>
 </html>

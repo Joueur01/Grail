@@ -6,11 +6,11 @@
 // Si le serveur change une valeur, la mettre à jour dans ce fichier-là, pas ici.
 // Les règles cachées du Videur (Club, VIP) ne sont volontairement PAS décrites.
 
-import { RARITIES } from "./data.js?v=84";
+import { RARITIES } from "./data.js?v=85";
 import {
-  DROP_RATES, BOOSTER, PITY, UPGRADE, DISCARD_VALUES, MARKET, FRIENDS, saleTax, saleNet,
+  DROP_RATES, BOOSTER, PITY, UPGRADE, DISCARD_VALUES, MARKET, SHOP, FRIENDS, saleTax, saleNet,
   DAILY_BONUS, REPUTATION, SHOWCASE, VIDEUR_INFO,
-} from "./economy-config.js?v=84";
+} from "./economy-config.js?v=85";
 
 function el(tag, className, text) {
   const e = document.createElement(tag);
@@ -121,7 +121,7 @@ function buildSections(catalogue) {
     para("Le Market est un échange entre joueurs, en pièces uniquement. Les pièces sont virtuelles : elles ne s'achètent pas avec de l'argent et ne se convertissent jamais en euros."),
     sub("Comment gagner des pièces"),
     bullets([
-      `Bonus de connexion : +${DAILY_BONUS.coins} pièces une fois par jour (jour de Paris).`,
+      `Bonus de connexion : +${DAILY_BONUS.coins} pièces une fois par jour (jour de Paris), et +${DAILY_BONUS.signup} pièces pour le tout premier.`,
       "Défausse de cartes (voir plus haut).",
       "Vente de cartes au Market.",
     ]),
@@ -136,6 +136,14 @@ function buildSections(catalogue) {
     para(`Payée par le vendeur, arrondie à l'entier supérieur (1 pièce minimum). L'acheteur paie le prix affiché. Exemple : une carte vendue ${40} pièces te rapporte ${saleNet(40)} pièces (taxe de ${saleTax(40)}).`),
     sub("Prix conseillés (repères)"),
     table(RARITIES.map((r) => [chip(r.id), `${MARKET.referencePrice[r.id]} pièces`])),
+    sub(SHOP.name),
+    para(`Chaque jour à ${SHOP.refreshHour} h (heure de Paris), la ${SHOP.name} propose une nouvelle sélection de cartes à prix fixe. Ses offres sont mélangées à celles des joueurs et portent le badge « Boutique ».`),
+    table(RARITIES.map((r) => [chip(r.id), `${fmt(SHOP.rarities[r.id].chance)} % de chance par coloris · ${SHOP.rarities[r.id].price} pièces`])),
+    bullets([
+      "Les pièces dépensées à la boutique disparaissent du jeu : aucune taxe, rien n'est versé à un joueur.",
+      "Les offres de la boutique ne comptent pas dans tes 10 ventes. Les offres non vendues sont retirées à chaque renouvellement ; celles des joueurs ne sont jamais touchées.",
+      "Le stock d'une carte est limité (1 à 4 exemplaires pour une Commune, 1 pour une Épique ou une Légendaire).",
+    ]),
   ]);
 
   const videur = section("videur", "Le Videur", "3 portes par jour, essais, Flow, boosters", [
