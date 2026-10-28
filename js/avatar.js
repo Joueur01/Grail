@@ -6,12 +6,12 @@
 // bas, chaussures) avec un petit espace, et l'écharpe et le sac sont posés à côté.
 // Les sprites sont utilisés TELS QUELS, à leur taille réelle (×1 dans le canvas).
 
-import { RARITIES, matchesSearch, getRarity } from "./data.js?v=61";
-import { getOwnedCards, getEquipped, equip, getAvatarBody, saveAvatarBody } from "./inventory.js?v=61";
-import { reportError } from "./wallet.js?v=61";
-import { createCardFace, createCardShell } from "./cards.js?v=61";
-import { createAvatar3D } from "./avatar3d.js?v=61";
-import { hasWearModel } from "./wear-models.js?v=61";
+import { RARITIES, matchesSearch, getRarity } from "./data.js?v=62";
+import { getOwnedCards, getEquipped, equip, getAvatarBody, saveAvatarBody } from "./inventory.js?v=62";
+import { reportError } from "./wallet.js?v=62";
+import { createCardFace, createCardShell } from "./cards.js?v=62";
+import { createAvatar3D } from "./avatar3d.js?v=62";
+import { hasWearModel } from "./wear-models.js?v=62";
 
 // Les 7 emplacements.
 // Les identifiants correspondent au champ "slot" de pieces.json. L'ordre de cette liste
@@ -43,7 +43,8 @@ const SIDE_SHIFT = 8; // avec écharpe ou sac, la pile se décale à gauche pour
 // Réglage « Garçon / Fille » : enregistré sur le SERVEUR (migration 0014, visible par les amis).
 // Le navigateur en garde une copie, utilisée seulement si le serveur ne connaît pas encore ce réglage.
 const BODY_KEY = "grail_avatar_body";
-function readBodyChoice() {
+/** Avatar choisi (Garçon / Fille) : celui du serveur, sinon la copie du navigateur. Sert aussi au Videur. */
+export function readBodyChoice() {
   const fromServer = getAvatarBody();
   if (fromServer) return fromServer;
   try {
