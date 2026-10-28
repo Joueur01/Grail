@@ -17,7 +17,7 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=70">
+  <link rel="stylesheet" href="style.css?v=71">
 </head>
 <body>
   <header class="topbar">
@@ -134,6 +134,7 @@
           </div>
           <div class="pity-bar"><div class="pity-fill" id="pity-epic-fill"></div></div>
         </div>
+        <a class="rules-link" href="#rules/boosters">Taux de drop et garanties ›</a>
       </div>
 
       <!-- Vue 2 : les cartes, UNE à la fois, sur une pile (booster.js) :
@@ -196,6 +197,7 @@
           </select>
         </div>
         <p class="muted atelier-intro" id="atelier-intro"></p>
+        <a class="rules-link" href="#rules/roue">Comment marche la roue ? ›</a>
         <p class="muted atelier-locked-note" id="atelier-locked-note" hidden></p>
         <div class="atelier-list" id="atelier-list"></div>
         <p class="muted collection-empty" id="atelier-empty" hidden>Rien à améliorer pour l'instant. Ouvre des boosters !</p>
@@ -214,6 +216,7 @@
     <section class="screen" data-screen="videur" id="screen-videur" hidden>
       <h2 class="screen-title">Videur</h2>
       <p class="muted" id="videur-summary">—</p>
+      <a class="rules-link" href="#rules/videur">Règles du Videur ›</a>
       <p class="friends-error" id="videur-error" role="status" hidden></p>
       <div class="door-tabs" role="tablist" aria-label="Portes" id="door-tabs"></div>
       <div id="videur-door"></div>
@@ -224,6 +227,7 @@
     <section class="screen" data-screen="market" id="screen-market" hidden>
       <h2 class="screen-title">Market</h2>
       <p class="muted" id="market-summary">—</p>
+      <a class="rules-link" href="#rules/market">Règles du Market et taxe de vente ›</a>
       <div class="view-switch" role="tablist" aria-label="Market">
         <button class="view-tab" role="tab" data-view="market-buy" aria-selected="true">Acheter</button>
         <button class="view-tab" role="tab" data-view="market-sell" aria-selected="false">Vendre</button>
@@ -323,8 +327,18 @@
     <!-- Mon profil (profile.js) : identité, avatar 3D, vitrine, statistiques — lu sur le serveur -->
     <section class="screen" data-screen="profile" id="screen-profile" hidden>
       <div id="profile-body"></div>
+      <a class="rules-open" href="#rules">Règles et taux du jeu ›</a>
       <!-- Se déconnecter (main.js) : hors de #profile-body, que le profil recharge ; reste visible même si le profil ne charge pas -->
       <button class="signout" id="btn-signout">Se déconnecter</button>
+    </section>
+
+    <!-- Règles du jeu (rules.js) : taux de drop et spécificités, en sections repliables. Pas d'onglet :
+         on y va depuis le profil (#rules) ou par un lien « ? » (#rules/boosters…). -->
+    <section class="screen" data-screen="rules" id="screen-rules" hidden>
+      <button class="rules-back" id="rules-back" type="button">‹ Retour</button>
+      <h2 class="screen-title">Règles du jeu</h2>
+      <p class="muted">Les chances et les règles du jeu, au même endroit. Touche une rubrique pour la déplier.</p>
+      <div class="rules-list" id="rules-list"></div>
     </section>
 
     <section class="screen" data-screen="avatar" id="screen-avatar" hidden>
@@ -429,6 +443,6 @@
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=70"></script>
+  <script type="module" src="js/main.js?v=71"></script>
 </body>
 </html>
