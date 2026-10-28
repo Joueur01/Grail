@@ -7,25 +7,27 @@
 // ?v=… sur les imports : même numéro que dans index.html, et le même partout
 // (un module importé sous deux adresses différentes serait chargé deux fois).
 
-import { loadCatalogue } from "./data.js?v=42";
-import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=42";
-import { initAvatar, setupOutfit } from "./avatar.js?v=42";
-import { setupBooster } from "./booster.js?v=42";
-import { setupShare } from "./share.js?v=42";
-import { setupUpgrade } from "./upgrade.js?v=42";
-import { setupAtelier, setupViewSwitch } from "./atelier.js?v=42";
-import { setupWallet, reportError, showToast } from "./wallet.js?v=42";
-import { setupDiscard, createSelection } from "./discard.js?v=42";
-import { setupMarket } from "./market.js?v=42";
-import { setupFriends } from "./friends.js?v=42";
-import { showSharedOutfit } from "./shared-outfit.js?v=42";
-import { getSession, signIn, signUp, signOut, supabase, requestPasswordReset, updatePassword, isRecoveryLink, endRecovery, sharedOutfitToken } from "./api.js?v=42";
+import { loadCatalogue } from "./data.js?v=43";
+import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=43";
+import { initAvatar, setupOutfit } from "./avatar.js?v=43";
+import { setupBooster } from "./booster.js?v=43";
+import { setupShare } from "./share.js?v=43";
+import { setupUpgrade } from "./upgrade.js?v=43";
+import { setupAtelier, setupViewSwitch } from "./atelier.js?v=43";
+import { setupWallet, reportError, showToast } from "./wallet.js?v=43";
+import { setupDiscard, createSelection } from "./discard.js?v=43";
+import { setupMarket } from "./market.js?v=43";
+import { setupFriends } from "./friends.js?v=43";
+import { startAnalytics, track } from "./analytics.js?v=43";
+import { showSharedOutfit } from "./shared-outfit.js?v=43";
+import { getSession, signIn, signUp, signOut, supabase, requestPasswordReset, updatePassword, isRecoveryLink, endRecovery, sharedOutfitToken } from "./api.js?v=43";
 
 const SCREENS = ["booster", "collection", "market", "friends", "avatar"];
 
 /** Affiche l'écran demandé et met à jour l'onglet actif. */
 function showScreen(name) {
   if (!SCREENS.includes(name)) name = SCREENS[0];
+  track("screen_view", { screen: name }); // statistiques d'usage (ignoré tant que le joueur n'est pas connecté)
   for (const section of document.querySelectorAll(".screen")) {
     section.hidden = section.dataset.screen !== name;
   }
@@ -187,6 +189,8 @@ async function boot() {
   if (booted) return;
   booted = true;
   delete document.body.dataset.auth;
+  startAnalytics(); // mesure d'usage anonyme (rétention) : ouverture du jeu, écrans, temps actif
+  track("screen_view", { screen: currentScreenFromHash() || SCREENS[0] });
   clearLocalSave(); // l'ancienne sauvegarde du navigateur n'est plus utilisée
   initAvatar(document.getElementById("avatar-canvas"));
   document.getElementById("btn-signout").addEventListener("click", async () => {
@@ -200,7 +204,14 @@ async function boot() {
     const [catalogue] = await Promise.all([loadCatalogue(), refreshState()]);
     setupWallet(); // solde en haut de l'écran + bonus de connexion quotidien (décidé par le serveur)
     // La tenue prévient le partage à chaque changement (image préparée à l'avance).
-    const refreshOutfit = setupOutfit({ catalogue, onChange: setupShare() });
+    const updateShare = setupShare();
+    let lastOutfit = null; // l'événement « tenue changée » ne part que quand la tenue change vraiment
+    const refreshOutfit = setupOutfit({ catalogue, onChange: (outfit) => {
+      updateShare(outfit);
+      const key = Object.entries(outfit).map(([slot, o]) => `${slot}:${o.colorway.id}|${o.rarity}`).sort().join(",");
+      if (lastOutfit !== null && key !== lastOutfit) track("outfit_change", { pieces: Object.keys(outfit).length });
+      lastOutfit = key;
+    } });
     // Après une action (roue, défausse, vente…), collection, Atelier, Market et tenue sont redessinés.
     const onChange = () => { refreshCards(); refreshOutfit(); };
     // Défausse (plusieurs cartes contre des pièces) : ouverte depuis la fiche ou l'Atelier.

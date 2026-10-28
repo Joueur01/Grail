@@ -6,7 +6,7 @@
 // amélioration. Ne remettre AUCUNE logique de jeu ici ni ailleurs côté client.
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase-config.js?v=42";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase-config.js?v=43";
 
 // Le lien « mot de passe oublié » reçu par e-mail ramène sur le site avec « type=recovery » dans
 // l'adresse. On le note AVANT que supabase-js ne traite (et n'efface) l'adresse.
@@ -181,6 +181,11 @@ export const friendRespond = (id, accept) => rpc("friend_respond", { p_id: id, p
 export const friendRemove = (id) => rpc("friend_remove", { p_id: id });
 /** → { pseudo, equipped: { emplacement: "coloris|rareté" }, cards_owned, cards_total } (amis seulement) */
 export const getFriendProfile = (friendId) => rpc("get_friend_profile", { p_friend: friendId });
+
+// --- Statistiques d'usage (migration 0010) -------------------------------------------
+
+/** Envoie un lot d'événements anonymes [{ name, props }] (liste blanche côté serveur). */
+export const trackEvents = (session, events) => rpc("track_events", { p_session: session, p_events: events });
 
 // --- Tenue partagée par lien (migration 0008) --------------------------------------
 

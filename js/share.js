@@ -17,10 +17,11 @@
 // préparée À L'AVANCE, à chaque changement de tenue, pour être prête au moment
 // où l'on touche le bouton (sinon le partage serait refusé).
 
-import { RARITIES } from "./data.js?v=42";
-import { SLOTS, drawAvatar } from "./avatar.js?v=42";
-import { createOutfitShare } from "./api.js?v=42";
-import { showToast } from "./wallet.js?v=42";
+import { RARITIES } from "./data.js?v=43";
+import { SLOTS, drawAvatar } from "./avatar.js?v=43";
+import { createOutfitShare } from "./api.js?v=43";
+import { showToast } from "./wallet.js?v=43";
+import { track } from "./analytics.js?v=43";
 
 const IMG_W = 1080;
 const IMG_H = 1350;
@@ -258,8 +259,10 @@ export function setupShare() {
       const file = new File([blob], FILE_NAME, { type: "image/png" });
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({ files: [file], title: "Ma tenue Grail", text });
+        track("share_native", { file: true });
       } else {
         await navigator.share({ title: "Ma tenue Grail", text: "Regarde ma tenue sur Grail", url });
+        track("share_native", { file: false });
       }
     } catch (err) {
       if (err && err.name === "AbortError") return; // menu fermé : rien à faire
@@ -288,6 +291,7 @@ export function setupShare() {
     if (!current) return;
     try {
       const ok = await copyText(getLink());
+      if (ok) track("share_copy");
       showToast(ok ? "Lien copié." : "Copie impossible : autorise l'accès au presse-papiers.", { error: !ok });
     } catch (err) {
       showToast(err?.message || "Impossible de créer le lien.", { error: true });
@@ -299,6 +303,7 @@ export function setupShare() {
     if (!pending) return;
     try {
       download(await pending);
+      track("share_image");
       showToast("Image enregistrée.");
     } catch {
       showToast("Impossible de créer l'image.", { error: true });
