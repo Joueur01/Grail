@@ -5,7 +5,7 @@
 // Le texte décrit ce que fait réellement le jeu (voir CLAUDE.md, sections 13, 15 et 17) : si le jeu change
 // (nouvelle donnée collectée, nouveau prestataire…), mettre ce fichier à jour.
 
-import { PRIVACY } from "./privacy-config.js?v=81";
+import { PRIVACY } from "./privacy-config.js?v=82";
 
 function el(tag, className, text) {
   const e = document.createElement(tag);
@@ -66,11 +66,11 @@ function sections() {
       title: "Prestataires et services tiers",
       paras: ["Pour fonctionner, le jeu s'appuie sur ces services, qui reçoivent des données techniques (dont ton adresse IP) quand ton navigateur les contacte :"],
       items: [
-        "Supabase : connexion, base de données et fonctions du jeu. C'est là que sont stockées toutes les données listées plus haut.",
+        "Supabase : connexion, base de données et fonctions du jeu. C'est là que sont stockées toutes les données listées plus haut, sur des serveurs situés dans l'Union européenne.",
         "GitHub Pages : hébergement du site (les pages et les images du jeu).",
         "Google Fonts : la police de caractères Archivo.",
         "jsDelivr : le fichier qui permet au site de parler à Supabase.",
-        "Certains de ces services peuvent traiter des données hors de l'Union européenne ; ils encadrent ces transferts dans leurs propres conditions (par exemple par des clauses contractuelles types).",
+        "GitHub Pages, Google Fonts et jsDelivr peuvent traiter les données techniques de ta visite (dont ton adresse IP) hors de l'Union européenne ; ils encadrent ces transferts dans leurs propres conditions (par exemple par des clauses contractuelles types). Tes données de jeu, elles, restent chez Supabase dans l'Union européenne.",
       ],
     },
     {
