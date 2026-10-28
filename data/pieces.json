@@ -15,6 +15,26 @@
       "id": "pigeon_social_club",
       "name": "Pigeon Social Club",
       "style": "Skate / DIY"
+    },
+    {
+      "id": "ferrant_fils",
+      "name": "Ferrant & Fils",
+      "style": "Workwear"
+    },
+    {
+      "id": "brume",
+      "name": "Brume",
+      "style": "Outdoor"
+    },
+    {
+      "id": "faubourg_78",
+      "name": "A.S. Faubourg 78",
+      "style": "Sportswear rétro"
+    },
+    {
+      "id": "orbite_2000",
+      "name": "Orbite 2000",
+      "style": "Y2K / soirées"
     }
   ],
   "pieces": [
@@ -610,6 +630,814 @@
           "id": "pigeon_social_club_tote_miettes_noir_delave_moutarde",
           "name": "Noir délavé / Moutarde",
           "sprite": "assets/pieces/pigeon_social_club_tote_miettes_noir_delave_moutarde.png"
+        }
+      ]
+    },
+    {
+      "id": "ferrant_fils_veste_contremaitre",
+      "brand": "ferrant_fils",
+      "name": "Veste « Contremaître »",
+      "category": "haut",
+      "slot": "veste",
+      "flagship": true,
+      "description": "Veste de chantier en toile épaisse, poches plaquées, pointillé de couture blanc.",
+      "colorways": [
+        {
+          "id": "ferrant_fils_veste_contremaitre_bleu_denim",
+          "name": "Bleu denim",
+          "sprite": "assets/pieces/ferrant_fils_veste_contremaitre_bleu_denim.png"
+        },
+        {
+          "id": "ferrant_fils_veste_contremaitre_noir_delave",
+          "name": "Noir délavé",
+          "sprite": "assets/pieces/ferrant_fils_veste_contremaitre_noir_delave.png"
+        },
+        {
+          "id": "ferrant_fils_veste_contremaitre_kaki",
+          "name": "Kaki",
+          "sprite": "assets/pieces/ferrant_fils_veste_contremaitre_kaki.png"
+        },
+        {
+          "id": "ferrant_fils_veste_contremaitre_rouille",
+          "name": "Rouille",
+          "sprite": "assets/pieces/ferrant_fils_veste_contremaitre_rouille.png"
+        },
+        {
+          "id": "ferrant_fils_veste_contremaitre_ecru",
+          "name": "Écru",
+          "sprite": "assets/pieces/ferrant_fils_veste_contremaitre_ecru.png"
+        },
+        {
+          "id": "ferrant_fils_veste_contremaitre_vert_foret",
+          "name": "Vert forêt",
+          "sprite": "assets/pieces/ferrant_fils_veste_contremaitre_vert_foret.png"
+        }
+      ]
+    },
+    {
+      "id": "ferrant_fils_chemise_fabrique",
+      "brand": "ferrant_fils",
+      "name": "Chemise « Fabrique »",
+      "category": "haut",
+      "slot": "haut",
+      "flagship": false,
+      "description": "Surchemise de filature, coupe droite, deux poches plaquées.",
+      "colorways": [
+        {
+          "id": "ferrant_fils_chemise_fabrique_ecru",
+          "name": "Écru",
+          "sprite": "assets/pieces/ferrant_fils_chemise_fabrique_ecru.png"
+        },
+        {
+          "id": "ferrant_fils_chemise_fabrique_bleu_ciel_delave",
+          "name": "Bleu ciel délavé",
+          "sprite": "assets/pieces/ferrant_fils_chemise_fabrique_bleu_ciel_delave.png"
+        },
+        {
+          "id": "ferrant_fils_chemise_fabrique_kaki_clair",
+          "name": "Kaki clair",
+          "sprite": "assets/pieces/ferrant_fils_chemise_fabrique_kaki_clair.png"
+        },
+        {
+          "id": "ferrant_fils_chemise_fabrique_rouille",
+          "name": "Rouille",
+          "sprite": "assets/pieces/ferrant_fils_chemise_fabrique_rouille.png"
+        },
+        {
+          "id": "ferrant_fils_chemise_fabrique_charbon",
+          "name": "Charbon",
+          "sprite": "assets/pieces/ferrant_fils_chemise_fabrique_charbon.png"
+        }
+      ]
+    },
+    {
+      "id": "ferrant_fils_pantalon_etabli",
+      "brand": "ferrant_fils",
+      "name": "Pantalon « Établi »",
+      "category": "bas",
+      "slot": "bas",
+      "flagship": false,
+      "description": "Pantalon de travail droit, poches plaquées et étiquette « F&F » sur la hanche.",
+      "colorways": [
+        {
+          "id": "ferrant_fils_pantalon_etabli_bleu_denim",
+          "name": "Bleu denim",
+          "sprite": "assets/pieces/ferrant_fils_pantalon_etabli_bleu_denim.png"
+        },
+        {
+          "id": "ferrant_fils_pantalon_etabli_noir_delave",
+          "name": "Noir délavé",
+          "sprite": "assets/pieces/ferrant_fils_pantalon_etabli_noir_delave.png"
+        },
+        {
+          "id": "ferrant_fils_pantalon_etabli_kaki",
+          "name": "Kaki",
+          "sprite": "assets/pieces/ferrant_fils_pantalon_etabli_kaki.png"
+        },
+        {
+          "id": "ferrant_fils_pantalon_etabli_ecru",
+          "name": "Écru",
+          "sprite": "assets/pieces/ferrant_fils_pantalon_etabli_ecru.png"
+        }
+      ]
+    },
+    {
+      "id": "ferrant_fils_pantalon_peintre",
+      "brand": "ferrant_fils",
+      "name": "Pantalon « Peintre »",
+      "category": "bas",
+      "slot": "bas",
+      "flagship": false,
+      "description": "Pantalon de peintre en toile claire, taches de couleur et passant à marteau.",
+      "colorways": [
+        {
+          "id": "ferrant_fils_pantalon_peintre_ecru_tache",
+          "name": "Écru taché",
+          "sprite": "assets/pieces/ferrant_fils_pantalon_peintre_ecru_tache.png"
+        },
+        {
+          "id": "ferrant_fils_pantalon_peintre_gris_clair",
+          "name": "Gris clair",
+          "sprite": "assets/pieces/ferrant_fils_pantalon_peintre_gris_clair.png"
+        },
+        {
+          "id": "ferrant_fils_pantalon_peintre_kaki_clair",
+          "name": "Kaki clair",
+          "sprite": "assets/pieces/ferrant_fils_pantalon_peintre_kaki_clair.png"
+        }
+      ]
+    },
+    {
+      "id": "ferrant_fils_bottines_godillot",
+      "brand": "ferrant_fils",
+      "name": "Bottines « Godillot »",
+      "category": "chaussures",
+      "slot": "chaussures",
+      "flagship": false,
+      "description": "Bottines de chantier lacées, semelle crème.",
+      "colorways": [
+        {
+          "id": "ferrant_fils_bottines_godillot_brun_rouille",
+          "name": "Brun rouille",
+          "sprite": "assets/pieces/ferrant_fils_bottines_godillot_brun_rouille.png"
+        },
+        {
+          "id": "ferrant_fils_bottines_godillot_noir",
+          "name": "Noir",
+          "sprite": "assets/pieces/ferrant_fils_bottines_godillot_noir.png"
+        },
+        {
+          "id": "ferrant_fils_bottines_godillot_sable",
+          "name": "Sable",
+          "sprite": "assets/pieces/ferrant_fils_bottines_godillot_sable.png"
+        }
+      ]
+    },
+    {
+      "id": "ferrant_fils_bonnet_docker",
+      "brand": "ferrant_fils",
+      "name": "Bonnet « Docker »",
+      "category": "accessoire",
+      "slot": "tete",
+      "flagship": false,
+      "description": "Bonnet de docker en maille épaisse avec petite étiquette.",
+      "colorways": [
+        {
+          "id": "ferrant_fils_bonnet_docker_charbon",
+          "name": "Charbon",
+          "sprite": "assets/pieces/ferrant_fils_bonnet_docker_charbon.png"
+        },
+        {
+          "id": "ferrant_fils_bonnet_docker_marine",
+          "name": "Marine",
+          "sprite": "assets/pieces/ferrant_fils_bonnet_docker_marine.png"
+        }
+      ]
+    },
+    {
+      "id": "ferrant_fils_sac_musette",
+      "brand": "ferrant_fils",
+      "name": "Sac « Musette »",
+      "category": "accessoire",
+      "slot": "sac",
+      "flagship": false,
+      "description": "Musette en toile, anses cousues et poche plaquée.",
+      "colorways": [
+        {
+          "id": "ferrant_fils_sac_musette_ecru",
+          "name": "Écru",
+          "sprite": "assets/pieces/ferrant_fils_sac_musette_ecru.png"
+        },
+        {
+          "id": "ferrant_fils_sac_musette_kaki_clair",
+          "name": "Kaki clair",
+          "sprite": "assets/pieces/ferrant_fils_sac_musette_kaki_clair.png"
+        }
+      ]
+    },
+    {
+      "id": "brume_polaire_brouillard",
+      "brand": "brume",
+      "name": "Polaire « Brouillard »",
+      "category": "haut",
+      "slot": "veste",
+      "flagship": true,
+      "description": "Polaire douce à zip, sangle corail et petit sommet brodé.",
+      "colorways": [
+        {
+          "id": "brume_polaire_brouillard_sauge",
+          "name": "Sauge",
+          "sprite": "assets/pieces/brume_polaire_brouillard_sauge.png"
+        },
+        {
+          "id": "brume_polaire_brouillard_bleu_brume",
+          "name": "Bleu brume",
+          "sprite": "assets/pieces/brume_polaire_brouillard_bleu_brume.png"
+        },
+        {
+          "id": "brume_polaire_brouillard_pierre",
+          "name": "Pierre",
+          "sprite": "assets/pieces/brume_polaire_brouillard_pierre.png"
+        },
+        {
+          "id": "brume_polaire_brouillard_nuit",
+          "name": "Nuit",
+          "sprite": "assets/pieces/brume_polaire_brouillard_nuit.png"
+        },
+        {
+          "id": "brume_polaire_brouillard_creme",
+          "name": "Crème",
+          "sprite": "assets/pieces/brume_polaire_brouillard_creme.png"
+        },
+        {
+          "id": "brume_polaire_brouillard_ocre",
+          "name": "Ocre",
+          "sprite": "assets/pieces/brume_polaire_brouillard_ocre.png"
+        }
+      ]
+    },
+    {
+      "id": "brume_pull_sentier",
+      "brand": "brume",
+      "name": "Pull « Sentier »",
+      "category": "haut",
+      "slot": "haut",
+      "flagship": false,
+      "description": "Pull de randonnée aux épaules renforcées, volumes arrondis.",
+      "colorways": [
+        {
+          "id": "brume_pull_sentier_bleu_brume",
+          "name": "Bleu brume",
+          "sprite": "assets/pieces/brume_pull_sentier_bleu_brume.png"
+        },
+        {
+          "id": "brume_pull_sentier_sauge",
+          "name": "Sauge",
+          "sprite": "assets/pieces/brume_pull_sentier_sauge.png"
+        },
+        {
+          "id": "brume_pull_sentier_pierre_sombre",
+          "name": "Pierre sombre",
+          "sprite": "assets/pieces/brume_pull_sentier_pierre_sombre.png"
+        },
+        {
+          "id": "brume_pull_sentier_corail_clair",
+          "name": "Corail clair",
+          "sprite": "assets/pieces/brume_pull_sentier_corail_clair.png"
+        },
+        {
+          "id": "brume_pull_sentier_nuit",
+          "name": "Nuit",
+          "sprite": "assets/pieces/brume_pull_sentier_nuit.png"
+        }
+      ]
+    },
+    {
+      "id": "brume_pantalon_moraine",
+      "brand": "brume",
+      "name": "Pantalon « Moraine »",
+      "category": "bas",
+      "slot": "bas",
+      "flagship": false,
+      "description": "Pantalon technique, taille corail et poches zippées.",
+      "colorways": [
+        {
+          "id": "brume_pantalon_moraine_pierre_corail",
+          "name": "Pierre / Corail",
+          "sprite": "assets/pieces/brume_pantalon_moraine_pierre_corail.png"
+        },
+        {
+          "id": "brume_pantalon_moraine_olive_creme",
+          "name": "Olive / Crème",
+          "sprite": "assets/pieces/brume_pantalon_moraine_olive_creme.png"
+        },
+        {
+          "id": "brume_pantalon_moraine_nuit_corail",
+          "name": "Nuit / Corail",
+          "sprite": "assets/pieces/brume_pantalon_moraine_nuit_corail.png"
+        },
+        {
+          "id": "brume_pantalon_moraine_sable_nuit",
+          "name": "Sable / Nuit",
+          "sprite": "assets/pieces/brume_pantalon_moraine_sable_nuit.png"
+        }
+      ]
+    },
+    {
+      "id": "brume_short_source",
+      "brand": "brume",
+      "name": "Short « Source »",
+      "category": "bas",
+      "slot": "bas",
+      "flagship": false,
+      "description": "Short de rando léger, liserés corail.",
+      "colorways": [
+        {
+          "id": "brume_short_source_sauge_corail",
+          "name": "Sauge / Corail",
+          "sprite": "assets/pieces/brume_short_source_sauge_corail.png"
+        },
+        {
+          "id": "brume_short_source_bleu_brume_corail",
+          "name": "Bleu brume / Corail",
+          "sprite": "assets/pieces/brume_short_source_bleu_brume_corail.png"
+        },
+        {
+          "id": "brume_short_source_sable_nuit",
+          "name": "Sable / Nuit",
+          "sprite": "assets/pieces/brume_short_source_sable_nuit.png"
+        }
+      ]
+    },
+    {
+      "id": "brume_baskets_cairn",
+      "brand": "brume",
+      "name": "Baskets « Cairn »",
+      "category": "chaussures",
+      "slot": "chaussures",
+      "flagship": false,
+      "description": "Baskets de marche, lacets corail, semelle crème.",
+      "colorways": [
+        {
+          "id": "brume_baskets_cairn_pierre_corail",
+          "name": "Pierre / Corail",
+          "sprite": "assets/pieces/brume_baskets_cairn_pierre_corail.png"
+        },
+        {
+          "id": "brume_baskets_cairn_sauge",
+          "name": "Sauge",
+          "sprite": "assets/pieces/brume_baskets_cairn_sauge.png"
+        },
+        {
+          "id": "brume_baskets_cairn_nuit",
+          "name": "Nuit",
+          "sprite": "assets/pieces/brume_baskets_cairn_nuit.png"
+        }
+      ]
+    },
+    {
+      "id": "brume_bonnet_givre",
+      "brand": "brume",
+      "name": "Bonnet « Givre »",
+      "category": "accessoire",
+      "slot": "tete",
+      "flagship": false,
+      "description": "Bonnet côtelé à pompon.",
+      "colorways": [
+        {
+          "id": "brume_bonnet_givre_bleu_brume_corail",
+          "name": "Bleu brume / Corail",
+          "sprite": "assets/pieces/brume_bonnet_givre_bleu_brume_corail.png"
+        },
+        {
+          "id": "brume_bonnet_givre_corail_creme",
+          "name": "Corail / Crème",
+          "sprite": "assets/pieces/brume_bonnet_givre_corail_creme.png"
+        }
+      ]
+    },
+    {
+      "id": "brume_sac_lichen",
+      "brand": "brume",
+      "name": "Sac « Lichen »",
+      "category": "accessoire",
+      "slot": "sac",
+      "flagship": false,
+      "description": "Sac à dos arrondi, sangles corail et poche frontale.",
+      "colorways": [
+        {
+          "id": "brume_sac_lichen_sauge",
+          "name": "Sauge",
+          "sprite": "assets/pieces/brume_sac_lichen_sauge.png"
+        },
+        {
+          "id": "brume_sac_lichen_nuit",
+          "name": "Nuit",
+          "sprite": "assets/pieces/brume_sac_lichen_nuit.png"
+        }
+      ]
+    },
+    {
+      "id": "faubourg_78_veste_tribune",
+      "brand": "faubourg_78",
+      "name": "Veste « Tribune »",
+      "category": "haut",
+      "slot": "veste",
+      "flagship": true,
+      "description": "Veste de club à col et poignets contrastés, numéro 78 dans un cercle.",
+      "colorways": [
+        {
+          "id": "faubourg_78_veste_tribune_bleu_nuit_cerise",
+          "name": "Bleu nuit / Cerise",
+          "sprite": "assets/pieces/faubourg_78_veste_tribune_bleu_nuit_cerise.png"
+        },
+        {
+          "id": "faubourg_78_veste_tribune_cerise_blanc",
+          "name": "Cerise / Blanc",
+          "sprite": "assets/pieces/faubourg_78_veste_tribune_cerise_blanc.png"
+        },
+        {
+          "id": "faubourg_78_veste_tribune_vert_sapin_jaune",
+          "name": "Vert sapin / Jaune",
+          "sprite": "assets/pieces/faubourg_78_veste_tribune_vert_sapin_jaune.png"
+        },
+        {
+          "id": "faubourg_78_veste_tribune_noir_cerise",
+          "name": "Noir / Cerise",
+          "sprite": "assets/pieces/faubourg_78_veste_tribune_noir_cerise.png"
+        },
+        {
+          "id": "faubourg_78_veste_tribune_ciel_marine",
+          "name": "Ciel / Marine",
+          "sprite": "assets/pieces/faubourg_78_veste_tribune_ciel_marine.png"
+        },
+        {
+          "id": "faubourg_78_veste_tribune_jaune_marine",
+          "name": "Jaune / Marine",
+          "sprite": "assets/pieces/faubourg_78_veste_tribune_jaune_marine.png"
+        }
+      ]
+    },
+    {
+      "id": "faubourg_78_maillot_domicile",
+      "brand": "faubourg_78",
+      "name": "Maillot « Domicile »",
+      "category": "haut",
+      "slot": "haut",
+      "flagship": false,
+      "description": "Maillot d'archives, flocage 78, liseré bicolore au col et aux poignets.",
+      "colorways": [
+        {
+          "id": "faubourg_78_maillot_domicile_cerise",
+          "name": "Cerise",
+          "sprite": "assets/pieces/faubourg_78_maillot_domicile_cerise.png"
+        },
+        {
+          "id": "faubourg_78_maillot_domicile_blanc",
+          "name": "Blanc",
+          "sprite": "assets/pieces/faubourg_78_maillot_domicile_blanc.png"
+        },
+        {
+          "id": "faubourg_78_maillot_domicile_bleu_nuit",
+          "name": "Bleu nuit",
+          "sprite": "assets/pieces/faubourg_78_maillot_domicile_bleu_nuit.png"
+        },
+        {
+          "id": "faubourg_78_maillot_domicile_vert_sapin",
+          "name": "Vert sapin",
+          "sprite": "assets/pieces/faubourg_78_maillot_domicile_vert_sapin.png"
+        },
+        {
+          "id": "faubourg_78_maillot_domicile_jaune",
+          "name": "Jaune",
+          "sprite": "assets/pieces/faubourg_78_maillot_domicile_jaune.png"
+        }
+      ]
+    },
+    {
+      "id": "faubourg_78_pantalon_entrainement",
+      "brand": "faubourg_78",
+      "name": "Pantalon « Entraînement »",
+      "category": "bas",
+      "slot": "bas",
+      "flagship": false,
+      "description": "Pantalon de survêtement, revers contrastés aux chevilles.",
+      "colorways": [
+        {
+          "id": "faubourg_78_pantalon_entrainement_bleu_nuit",
+          "name": "Bleu nuit",
+          "sprite": "assets/pieces/faubourg_78_pantalon_entrainement_bleu_nuit.png"
+        },
+        {
+          "id": "faubourg_78_pantalon_entrainement_noir",
+          "name": "Noir",
+          "sprite": "assets/pieces/faubourg_78_pantalon_entrainement_noir.png"
+        },
+        {
+          "id": "faubourg_78_pantalon_entrainement_cerise",
+          "name": "Cerise",
+          "sprite": "assets/pieces/faubourg_78_pantalon_entrainement_cerise.png"
+        },
+        {
+          "id": "faubourg_78_pantalon_entrainement_vert_sapin",
+          "name": "Vert sapin",
+          "sprite": "assets/pieces/faubourg_78_pantalon_entrainement_vert_sapin.png"
+        }
+      ]
+    },
+    {
+      "id": "faubourg_78_short_exterieur",
+      "brand": "faubourg_78",
+      "name": "Short « Extérieur »",
+      "category": "bas",
+      "slot": "bas",
+      "flagship": false,
+      "description": "Short de match, liseré bicolore à la taille.",
+      "colorways": [
+        {
+          "id": "faubourg_78_short_exterieur_blanc",
+          "name": "Blanc",
+          "sprite": "assets/pieces/faubourg_78_short_exterieur_blanc.png"
+        },
+        {
+          "id": "faubourg_78_short_exterieur_cerise",
+          "name": "Cerise",
+          "sprite": "assets/pieces/faubourg_78_short_exterieur_cerise.png"
+        },
+        {
+          "id": "faubourg_78_short_exterieur_noir",
+          "name": "Noir",
+          "sprite": "assets/pieces/faubourg_78_short_exterieur_noir.png"
+        }
+      ]
+    },
+    {
+      "id": "faubourg_78_baskets_terrain",
+      "brand": "faubourg_78",
+      "name": "Baskets « Terrain »",
+      "category": "chaussures",
+      "slot": "chaussures",
+      "flagship": false,
+      "description": "Baskets de salle rétro, empiècements contrastés.",
+      "colorways": [
+        {
+          "id": "faubourg_78_baskets_terrain_blanc_cerise",
+          "name": "Blanc / Cerise",
+          "sprite": "assets/pieces/faubourg_78_baskets_terrain_blanc_cerise.png"
+        },
+        {
+          "id": "faubourg_78_baskets_terrain_bleu_nuit_cerise",
+          "name": "Bleu nuit / Cerise",
+          "sprite": "assets/pieces/faubourg_78_baskets_terrain_bleu_nuit_cerise.png"
+        },
+        {
+          "id": "faubourg_78_baskets_terrain_vert_jaune",
+          "name": "Vert / Jaune",
+          "sprite": "assets/pieces/faubourg_78_baskets_terrain_vert_jaune.png"
+        }
+      ]
+    },
+    {
+      "id": "faubourg_78_bonnet_virage",
+      "brand": "faubourg_78",
+      "name": "Bonnet « Virage »",
+      "category": "accessoire",
+      "slot": "tete",
+      "flagship": false,
+      "description": "Bonnet de supporter à pompon, double liseré.",
+      "colorways": [
+        {
+          "id": "faubourg_78_bonnet_virage_cerise",
+          "name": "Cerise",
+          "sprite": "assets/pieces/faubourg_78_bonnet_virage_cerise.png"
+        },
+        {
+          "id": "faubourg_78_bonnet_virage_bleu_nuit",
+          "name": "Bleu nuit",
+          "sprite": "assets/pieces/faubourg_78_bonnet_virage_bleu_nuit.png"
+        }
+      ]
+    },
+    {
+      "id": "faubourg_78_echarpe_kop",
+      "brand": "faubourg_78",
+      "name": "Écharpe « Kop »",
+      "category": "accessoire",
+      "slot": "cou",
+      "flagship": false,
+      "description": "Écharpe de tribune rayée à franges.",
+      "colorways": [
+        {
+          "id": "faubourg_78_echarpe_kop_cerise_blanc",
+          "name": "Cerise / Blanc",
+          "sprite": "assets/pieces/faubourg_78_echarpe_kop_cerise_blanc.png"
+        },
+        {
+          "id": "faubourg_78_echarpe_kop_bleu_nuit_blanc",
+          "name": "Bleu nuit / Blanc",
+          "sprite": "assets/pieces/faubourg_78_echarpe_kop_bleu_nuit_blanc.png"
+        }
+      ]
+    },
+    {
+      "id": "orbite_2000_veste_satellite",
+      "brand": "orbite_2000",
+      "name": "Veste « Satellite »",
+      "category": "haut",
+      "slot": "veste",
+      "flagship": true,
+      "description": "Veste chromée ajustée, bandes réfléchissantes et étoile à quatre branches.",
+      "colorways": [
+        {
+          "id": "orbite_2000_veste_satellite_chrome_violet",
+          "name": "Chrome / Violet",
+          "sprite": "assets/pieces/orbite_2000_veste_satellite_chrome_violet.png"
+        },
+        {
+          "id": "orbite_2000_veste_satellite_noir_violet",
+          "name": "Noir / Violet",
+          "sprite": "assets/pieces/orbite_2000_veste_satellite_noir_violet.png"
+        },
+        {
+          "id": "orbite_2000_veste_satellite_glacier_violet",
+          "name": "Glacier / Violet",
+          "sprite": "assets/pieces/orbite_2000_veste_satellite_glacier_violet.png"
+        },
+        {
+          "id": "orbite_2000_veste_satellite_rose_violet",
+          "name": "Rose / Violet",
+          "sprite": "assets/pieces/orbite_2000_veste_satellite_rose_violet.png"
+        },
+        {
+          "id": "orbite_2000_veste_satellite_chrome_lime",
+          "name": "Chrome / Lime",
+          "sprite": "assets/pieces/orbite_2000_veste_satellite_chrome_lime.png"
+        },
+        {
+          "id": "orbite_2000_veste_satellite_chrome_bleu",
+          "name": "Chrome / Bleu",
+          "sprite": "assets/pieces/orbite_2000_veste_satellite_chrome_bleu.png"
+        }
+      ]
+    },
+    {
+      "id": "orbite_2000_tshirt_flyer",
+      "brand": "orbite_2000",
+      "name": "T-shirt « Flyer »",
+      "category": "haut",
+      "slot": "haut",
+      "flagship": false,
+      "description": "T-shirt court imprimé flyer de soirée, étoile à quatre branches.",
+      "colorways": [
+        {
+          "id": "orbite_2000_tshirt_flyer_glacier_violet",
+          "name": "Glacier / Violet",
+          "sprite": "assets/pieces/orbite_2000_tshirt_flyer_glacier_violet.png"
+        },
+        {
+          "id": "orbite_2000_tshirt_flyer_rose_violet",
+          "name": "Rose / Violet",
+          "sprite": "assets/pieces/orbite_2000_tshirt_flyer_rose_violet.png"
+        },
+        {
+          "id": "orbite_2000_tshirt_flyer_chrome_violet",
+          "name": "Chrome / Violet",
+          "sprite": "assets/pieces/orbite_2000_tshirt_flyer_chrome_violet.png"
+        },
+        {
+          "id": "orbite_2000_tshirt_flyer_lime_violet",
+          "name": "Lime / Violet",
+          "sprite": "assets/pieces/orbite_2000_tshirt_flyer_lime_violet.png"
+        },
+        {
+          "id": "orbite_2000_tshirt_flyer_noir_rose",
+          "name": "Noir / Rose",
+          "sprite": "assets/pieces/orbite_2000_tshirt_flyer_noir_rose.png"
+        }
+      ]
+    },
+    {
+      "id": "orbite_2000_pantalon_apesanteur",
+      "brand": "orbite_2000",
+      "name": "Pantalon « Apesanteur »",
+      "category": "bas",
+      "slot": "bas",
+      "flagship": false,
+      "description": "Pantalon ajusté brillant, ceinture électrique et bandes réfléchissantes.",
+      "colorways": [
+        {
+          "id": "orbite_2000_pantalon_apesanteur_noir_violet",
+          "name": "Noir / Violet",
+          "sprite": "assets/pieces/orbite_2000_pantalon_apesanteur_noir_violet.png"
+        },
+        {
+          "id": "orbite_2000_pantalon_apesanteur_chrome_violet",
+          "name": "Chrome / Violet",
+          "sprite": "assets/pieces/orbite_2000_pantalon_apesanteur_chrome_violet.png"
+        },
+        {
+          "id": "orbite_2000_pantalon_apesanteur_glacier_bleu",
+          "name": "Glacier / Bleu",
+          "sprite": "assets/pieces/orbite_2000_pantalon_apesanteur_glacier_bleu.png"
+        },
+        {
+          "id": "orbite_2000_pantalon_apesanteur_violet_nuit_rose",
+          "name": "Violet nuit / Rose",
+          "sprite": "assets/pieces/orbite_2000_pantalon_apesanteur_violet_nuit_rose.png"
+        }
+      ]
+    },
+    {
+      "id": "orbite_2000_short_hologramme",
+      "brand": "orbite_2000",
+      "name": "Short « Hologramme »",
+      "category": "bas",
+      "slot": "bas",
+      "flagship": false,
+      "description": "Short dégradé holographique.",
+      "colorways": [
+        {
+          "id": "orbite_2000_short_hologramme_chrome_violet",
+          "name": "Chrome-Violet",
+          "sprite": "assets/pieces/orbite_2000_short_hologramme_chrome_violet.png"
+        },
+        {
+          "id": "orbite_2000_short_hologramme_chrome_rose",
+          "name": "Chrome-Rose",
+          "sprite": "assets/pieces/orbite_2000_short_hologramme_chrome_rose.png"
+        },
+        {
+          "id": "orbite_2000_short_hologramme_chrome_bleu",
+          "name": "Chrome-Bleu",
+          "sprite": "assets/pieces/orbite_2000_short_hologramme_chrome_bleu.png"
+        }
+      ]
+    },
+    {
+      "id": "orbite_2000_baskets_lune",
+      "brand": "orbite_2000",
+      "name": "Baskets « Lune »",
+      "category": "chaussures",
+      "slot": "chaussures",
+      "flagship": false,
+      "description": "Baskets montantes chromées à lacets électriques.",
+      "colorways": [
+        {
+          "id": "orbite_2000_baskets_lune_chrome_violet",
+          "name": "Chrome / Violet",
+          "sprite": "assets/pieces/orbite_2000_baskets_lune_chrome_violet.png"
+        },
+        {
+          "id": "orbite_2000_baskets_lune_noir_rose",
+          "name": "Noir / Rose",
+          "sprite": "assets/pieces/orbite_2000_baskets_lune_noir_rose.png"
+        },
+        {
+          "id": "orbite_2000_baskets_lune_rose_violet",
+          "name": "Rose / Violet",
+          "sprite": "assets/pieces/orbite_2000_baskets_lune_rose_violet.png"
+        }
+      ]
+    },
+    {
+      "id": "orbite_2000_bob_frequence",
+      "brand": "orbite_2000",
+      "name": "Bob « Fréquence »",
+      "category": "accessoire",
+      "slot": "tete",
+      "flagship": false,
+      "description": "Bob brillant à large bord.",
+      "colorways": [
+        {
+          "id": "orbite_2000_bob_frequence_chrome_violet",
+          "name": "Chrome / Violet",
+          "sprite": "assets/pieces/orbite_2000_bob_frequence_chrome_violet.png"
+        },
+        {
+          "id": "orbite_2000_bob_frequence_rose_bleu",
+          "name": "Rose / Bleu",
+          "sprite": "assets/pieces/orbite_2000_bob_frequence_rose_bleu.png"
+        }
+      ]
+    },
+    {
+      "id": "orbite_2000_sac_pastille",
+      "brand": "orbite_2000",
+      "name": "Sac « Pastille »",
+      "category": "accessoire",
+      "slot": "sac",
+      "flagship": false,
+      "description": "Petit sac rigide aux anses chromées, étoile à quatre branches.",
+      "colorways": [
+        {
+          "id": "orbite_2000_sac_pastille_violet_chrome",
+          "name": "Violet / Chrome",
+          "sprite": "assets/pieces/orbite_2000_sac_pastille_violet_chrome.png"
+        },
+        {
+          "id": "orbite_2000_sac_pastille_rose_chrome",
+          "name": "Rose / Chrome",
+          "sprite": "assets/pieces/orbite_2000_sac_pastille_rose_chrome.png"
         }
       ]
     }

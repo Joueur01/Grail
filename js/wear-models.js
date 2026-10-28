@@ -271,6 +271,203 @@ export const WEAR_MODELS = {
     { type: "box", box: [10, 12, 34, 41, 1, 3], plain: [8, 12] },
     { type: "box", box: [16, 18, 34, 41, 1, 3], plain: [8, 12] },
   ],
+
+  // =====================================================================================
+  // 2e vague de marques (les sprites ont la même disposition que ceux de la 1re vague :
+  // corps au centre, manches sur les côtés, pantalon en deux jambes).
+  // =====================================================================================
+
+  // --- Ferrant & Fils · Veste « Contremaître » (veste de chantier, poches plaquées) ---
+  ferrant_fils_veste_contremaitre: [
+    { type: "box", box: [-10, 10, 33, 59, -7, 7], front: [6, 7, 20, 21], keep: [0, 2, 0, 0], round: 1 },
+    { type: "box", box: [-15, -9, 36, 59, -3, 3], front: [26, 12, 4, 14], keep: [0, 2, 0, 0], flipX: true },
+    { type: "box", box: [9, 15, 36, 59, -3, 3], front: [26, 12, 4, 14], keep: [0, 2, 0, 0] },
+    { type: "box", box: [-5, 5, 57, 62, -5, 5], front: [10, 4, 12, 4], round: 1 },
+  ],
+
+  // --- Ferrant & Fils · Chemise « Fabrique » (haut) ---
+  ferrant_fils_chemise_fabrique: [
+    { type: "box", box: [-9, 9, 35, 58, -6, 6], front: [6, 7, 20, 19], keep: [0, 1, 0, 0], round: 1 },
+    { type: "box", box: [-14, -9, 35, 58, -3, 3], front: [26, 12, 4, 12], keep: [0, 2, 0, 0], flipX: true },
+    { type: "box", box: [9, 14, 35, 58, -3, 3], front: [26, 12, 4, 12], keep: [0, 2, 0, 0] },
+    { type: "box", box: [-4, 4, 57, 60, -4, 4], front: [10, 4, 12, 4], round: 1 },
+  ],
+
+  // --- Ferrant & Fils · Pantalon « Établi » (bas) ---
+  ferrant_fils_pantalon_etabli: [
+    { type: "box", box: [-9, 9, 26, 37, -5, 5], front: [8, 7, 16, 6], keep: [2, 0, 0, 0] },
+    { type: "box", box: [-9, -1, 5, 26, -4, 4], front: [8, 13, 8, 17], keep: [0, 2, 0, 0] },
+    { type: "box", box: [1, 9, 5, 26, -4, 4], front: [16, 13, 8, 17], keep: [0, 2, 0, 0] },
+  ],
+
+  // --- Ferrant & Fils · Pantalon « Peintre » (bas, un peu plus large) ---
+  ferrant_fils_pantalon_peintre: [
+    { type: "box", box: [-9, 9, 26, 37, -5, 5], front: [7, 7, 18, 6], keep: [2, 0, 0, 0] },
+    { type: "box", box: [-9, -1, 5, 26, -4, 4], front: [7, 13, 9, 17], keep: [0, 2, 0, 0] },
+    { type: "box", box: [1, 9, 5, 26, -4, 4], front: [16, 13, 9, 17], keep: [0, 2, 0, 0] },
+  ],
+
+  // --- Ferrant & Fils · Bottines « Godillot » (chaussures montantes, vues de face : une boîte par pied) ---
+  ferrant_fils_bottines_godillot: [
+    { type: "box", box: [-8, -1, 0, 9, -5, 7], front: [2, 12, 13, 15], keep: [0, 2, 0, 0], round: 1 },
+    { type: "box", box: [1, 8, 0, 9, -5, 7], front: [17, 12, 13, 15], keep: [0, 2, 0, 0], round: 1 },
+  ],
+
+  // --- Ferrant & Fils · Bonnet « Docker » (tête ; l'étiquette qui pend n'est pas modélisée) ---
+  ferrant_fils_bonnet_docker: [
+    { type: "lathe", center: [0, 0], y0: 68, rect: [6, 7, 20, 16], scale: 0.7 },
+  ],
+
+  // --- Ferrant & Fils · Sac « Musette » (sac, tenu à la hanche droite) ---
+  ferrant_fils_sac_musette: [
+    { type: "box", box: [8, 20, 20, 34, -1, 6], front: [7, 10, 18, 16], keep: [0, 1, 0, 0] },
+    { type: "box", box: [10, 12, 34, 41, 1, 3], plain: [10, 6] },
+    { type: "box", box: [16, 18, 34, 41, 1, 3], plain: [10, 6] },
+  ],
+
+  // --- Brume · Polaire « Brouillard » (veste, sangle corail) ---
+  brume_polaire_brouillard: [
+    { type: "box", box: [-10, 10, 33, 59, -7, 7], front: [6, 7, 20, 21], keep: [0, 2, 0, 0], round: 1 },
+    { type: "box", box: [-15, -9, 36, 59, -3, 3], front: [26, 12, 4, 14], keep: [0, 2, 0, 0], flipX: true },
+    { type: "box", box: [9, 15, 36, 59, -3, 3], front: [26, 12, 4, 14], keep: [0, 2, 0, 0] },
+    { type: "box", box: [-5, 5, 57, 62, -5, 5], front: [10, 4, 12, 4], round: 1 },
+  ],
+
+  // --- Brume · Pull « Sentier » (haut) ---
+  brume_pull_sentier: [
+    { type: "box", box: [-9, 9, 35, 58, -6, 6], front: [6, 7, 20, 19], keep: [0, 1, 0, 0], round: 1 },
+    { type: "box", box: [-14, -9, 35, 58, -3, 3], front: [26, 12, 4, 12], keep: [0, 2, 0, 0], flipX: true },
+    { type: "box", box: [9, 14, 35, 58, -3, 3], front: [26, 12, 4, 12], keep: [0, 2, 0, 0] },
+    { type: "box", box: [-4, 4, 57, 60, -4, 4], front: [11, 4, 10, 4], round: 1 },
+  ],
+
+  // --- Brume · Pantalon « Moraine » (bas) ---
+  brume_pantalon_moraine: [
+    { type: "box", box: [-9, 9, 26, 37, -5, 5], front: [8, 7, 16, 6], keep: [2, 0, 0, 0] },
+    { type: "box", box: [-9, -1, 5, 26, -4, 4], front: [8, 13, 8, 17], keep: [0, 2, 0, 0] },
+    { type: "box", box: [1, 9, 5, 26, -4, 4], front: [16, 13, 8, 17], keep: [0, 2, 0, 0] },
+  ],
+
+  // --- Brume · Short « Source » (bas) ---
+  brume_short_source: [
+    { type: "box", box: [-9, 9, 27, 37, -5, 5], front: [7, 7, 18, 6], keep: [1, 0, 0, 0] },
+    { type: "box", box: [-8, -1, 18, 27, -4, 4], front: [7, 13, 9, 11], keep: [0, 1, 0, 0] },
+    { type: "box", box: [1, 8, 18, 27, -4, 4], front: [16, 13, 9, 11], keep: [0, 1, 0, 0] },
+  ],
+
+  // --- Brume · Baskets « Cairn » (chaussures basses de marche) ---
+  brume_baskets_cairn: [
+    { type: "box", box: [-8, -1, 0, 8, -5, 7], front: [2, 14, 13, 13], keep: [0, 2, 0, 0], round: 1 },
+    { type: "box", box: [1, 8, 0, 8, -5, 7], front: [17, 14, 13, 13], keep: [0, 2, 0, 0], round: 1 },
+  ],
+
+  // --- Brume · Bonnet « Givre » (tête, pompon compris) ---
+  brume_bonnet_givre: [
+    { type: "lathe", center: [0, 0], y0: 68, rect: [6, 4, 20, 21], scale: 0.7 },
+  ],
+
+  // --- Brume · Sac « Lichen » (sac à dos : le sac dans le dos, les sangles devant) ---
+  brume_sac_lichen: [
+    { type: "box", box: [-8, 8, 34, 54, -13, -7], plain: [10, 12], round: 1 },
+    { type: "box", box: [-6, -3, 38, 58, 6, 8], plain: [15, 6] },
+    { type: "box", box: [3, 6, 38, 58, 6, 8], plain: [15, 6] },
+  ],
+
+  // --- A.S. Faubourg 78 · Veste « Tribune » (veste de club, col et poignets contrastés) ---
+  faubourg_78_veste_tribune: [
+    { type: "box", box: [-10, 10, 33, 59, -7, 7], front: [6, 7, 20, 20], keep: [0, 2, 0, 0], round: 1 },
+    { type: "box", box: [-15, -9, 36, 59, -3, 3], front: [26, 12, 4, 14], keep: [0, 2, 0, 0], flipX: true },
+    { type: "box", box: [9, 15, 36, 59, -3, 3], front: [26, 12, 4, 14], keep: [0, 2, 0, 0] },
+    { type: "box", box: [-5, 5, 57, 62, -5, 5], front: [10, 4, 12, 4], round: 1 },
+  ],
+
+  // --- A.S. Faubourg 78 · Maillot « Domicile » (haut, manches courtes) ---
+  faubourg_78_maillot_domicile: [
+    { type: "box", box: [-9, 9, 34, 58, -6, 6], front: [6, 6, 20, 21], keep: [0, 1, 0, 0], round: 1 },
+    { type: "box", box: [-14, -9, 50, 58, -3, 3], front: [26, 8, 4, 8], keep: [0, 1, 0, 0], flipX: true },
+    { type: "box", box: [9, 14, 50, 58, -3, 3], front: [26, 8, 4, 8], keep: [0, 1, 0, 0] },
+    { type: "box", box: [-4, 4, 57, 60, -4, 4], front: [10, 4, 12, 4], round: 1 },
+  ],
+
+  // --- A.S. Faubourg 78 · Pantalon « Entraînement » (bas) ---
+  faubourg_78_pantalon_entrainement: [
+    { type: "box", box: [-9, 9, 26, 37, -5, 5], front: [8, 7, 16, 6], keep: [2, 0, 0, 0] },
+    { type: "box", box: [-9, -1, 5, 26, -4, 4], front: [8, 13, 8, 17], keep: [0, 2, 0, 0] },
+    { type: "box", box: [1, 9, 5, 26, -4, 4], front: [16, 13, 8, 17], keep: [0, 2, 0, 0] },
+  ],
+
+  // --- A.S. Faubourg 78 · Short « Extérieur » (bas) ---
+  faubourg_78_short_exterieur: [
+    { type: "box", box: [-9, 9, 27, 37, -5, 5], front: [7, 7, 18, 6], keep: [1, 0, 0, 0] },
+    { type: "box", box: [-8, -1, 18, 27, -4, 4], front: [7, 13, 9, 11], keep: [0, 1, 0, 0] },
+    { type: "box", box: [1, 8, 18, 27, -4, 4], front: [16, 13, 9, 11], keep: [0, 1, 0, 0] },
+  ],
+
+  // --- A.S. Faubourg 78 · Baskets « Terrain » (chaussures basses) ---
+  faubourg_78_baskets_terrain: [
+    { type: "box", box: [-8, -1, 0, 7, -5, 7], front: [2, 16, 13, 11], keep: [0, 2, 0, 0], round: 1 },
+    { type: "box", box: [1, 8, 0, 7, -5, 7], front: [17, 16, 13, 11], keep: [0, 2, 0, 0], round: 1 },
+  ],
+
+  // --- A.S. Faubourg 78 · Bonnet « Virage » (tête, pompon compris) ---
+  faubourg_78_bonnet_virage: [
+    { type: "lathe", center: [0, 0], y0: 68, rect: [6, 4, 20, 21], scale: 0.7 },
+  ],
+
+  // --- A.S. Faubourg 78 · Écharpe « Kop » (cou : tour de cou + un long pan devant) ---
+  faubourg_78_echarpe_kop: [
+    { type: "box", box: [-6, 6, 56, 60, -6, 6], front: [6, 5, 20, 6], round: 1 },
+    { type: "box", box: [-4, 4, 36, 57, 5, 8], front: [11, 13, 10, 17], keep: [0, 2, 0, 0] },
+  ],
+
+  // --- Orbite 2000 · Veste « Satellite » (veste chromée ajustée) ---
+  orbite_2000_veste_satellite: [
+    { type: "box", box: [-10, 10, 33, 59, -7, 7], front: [6, 7, 20, 19], keep: [0, 2, 0, 0], round: 1 },
+    { type: "box", box: [-15, -9, 36, 59, -3, 3], front: [26, 12, 4, 13], keep: [0, 2, 0, 0], flipX: true },
+    { type: "box", box: [9, 15, 36, 59, -3, 3], front: [26, 12, 4, 13], keep: [0, 2, 0, 0] },
+    { type: "box", box: [-5, 5, 57, 62, -5, 5], front: [10, 4, 12, 4], round: 1 },
+  ],
+
+  // --- Orbite 2000 · T-shirt « Flyer » (haut court : le ventre reste nu) ---
+  orbite_2000_tshirt_flyer: [
+    { type: "box", box: [-9, 9, 40, 58, -6, 6], front: [6, 6, 20, 15], keep: [0, 1, 0, 0], round: 1 },
+    { type: "box", box: [-14, -9, 50, 58, -3, 3], front: [26, 8, 4, 8], keep: [0, 1, 0, 0], flipX: true },
+    { type: "box", box: [9, 14, 50, 58, -3, 3], front: [26, 8, 4, 8], keep: [0, 1, 0, 0] },
+    { type: "box", box: [-4, 4, 57, 60, -4, 4], front: [10, 4, 12, 4], round: 1 },
+  ],
+
+  // --- Orbite 2000 · Pantalon « Apesanteur » (bas ajusté) ---
+  orbite_2000_pantalon_apesanteur: [
+    { type: "box", box: [-9, 9, 26, 37, -5, 5], front: [6, 7, 20, 6], keep: [2, 0, 0, 0] },
+    { type: "box", box: [-9, -1, 5, 26, -4, 4], front: [6, 13, 10, 17], keep: [0, 2, 0, 0] },
+    { type: "box", box: [1, 9, 5, 26, -4, 4], front: [16, 13, 10, 17], keep: [0, 2, 0, 0] },
+  ],
+
+  // --- Orbite 2000 · Short « Hologramme » (bas court) ---
+  orbite_2000_short_hologramme: [
+    { type: "box", box: [-9, 9, 27, 37, -5, 5], front: [8, 7, 16, 6], keep: [1, 0, 0, 0] },
+    { type: "box", box: [-8, -1, 21, 27, -4, 4], front: [8, 13, 8, 8], keep: [0, 1, 0, 0] },
+    { type: "box", box: [1, 8, 21, 27, -4, 4], front: [16, 13, 8, 8], keep: [0, 1, 0, 0] },
+  ],
+
+  // --- Orbite 2000 · Baskets « Lune » (chaussures montantes) ---
+  orbite_2000_baskets_lune: [
+    { type: "box", box: [-8, -1, 0, 10, -5, 7], front: [2, 12, 13, 17], keep: [0, 2, 0, 0], round: 1 },
+    { type: "box", box: [1, 8, 0, 10, -5, 7], front: [17, 12, 13, 17], keep: [0, 2, 0, 0], round: 1 },
+  ],
+
+  // --- Orbite 2000 · Bob « Fréquence » (tête : calotte + large bord) ---
+  orbite_2000_bob_frequence: [
+    { type: "lathe", center: [0, 0], y0: 68, rect: [2, 7, 28, 17], scale: 0.7 },
+  ],
+
+  // --- Orbite 2000 · Sac « Pastille » (petit sac rigide, tenu à la hanche droite, anses au-dessus) ---
+  orbite_2000_sac_pastille: [
+    { type: "box", box: [8, 18, 26, 36, -1, 6], front: [5, 9, 22, 15], keep: [0, 1, 0, 0], round: 1 },
+    { type: "box", box: [10, 12, 36, 41, 1, 3], plain: [12, 5] },
+    { type: "box", box: [14, 16, 36, 41, 1, 3], plain: [12, 5] },
+    { type: "box", box: [10, 16, 41, 42, 1, 3], plain: [12, 5] },
+  ],
 };
 
 /** Vrai si la pièce a déjà un modèle 3D. */
