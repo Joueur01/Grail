@@ -6,12 +6,12 @@
 // bas, chaussures) avec un petit espace, et l'écharpe et le sac sont posés à côté.
 // Les sprites sont utilisés TELS QUELS, à leur taille réelle (×1 dans le canvas).
 
-import { RARITIES, matchesSearch, getRarity } from "./data.js?v=58";
-import { getOwnedCards, getEquipped, equip, getAvatarBody, saveAvatarBody } from "./inventory.js?v=58";
-import { reportError } from "./wallet.js?v=58";
-import { createCardFace, createCardShell } from "./cards.js?v=58";
-import { createAvatar3D } from "./avatar3d.js?v=58";
-import { hasWearModel } from "./wear-models.js?v=58";
+import { RARITIES, matchesSearch, getRarity } from "./data.js?v=60";
+import { getOwnedCards, getEquipped, equip, getAvatarBody, saveAvatarBody } from "./inventory.js?v=60";
+import { reportError } from "./wallet.js?v=60";
+import { createCardFace, createCardShell } from "./cards.js?v=60";
+import { createAvatar3D } from "./avatar3d.js?v=60";
+import { hasWearModel } from "./wear-models.js?v=60";
 
 // Les 7 emplacements.
 // Les identifiants correspondent au champ "slot" de pieces.json. L'ordre de cette liste

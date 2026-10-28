@@ -2122,5 +2122,63 @@ body[data-auth="public"] .public {
 }
 .rarity-chip b { color: var(--rarity-color); font-weight: 800; }
 
+/* Vitrine vide + éditeur de vitrine */
+.profile-section-head { display: flex; align-items: baseline; justify-content: space-between; }
+.showcase-empty {
+  padding: 22px 16px;
+  border: 1.5px dashed var(--border);
+  border-radius: 14px;
+  text-align: center;
+  font-size: 14px;
+}
+.showcase-intro { font-size: 13px; font-weight: 600; }
+/* Cases de la vitrine (en haut de l'éditeur) : sprite ×1 sur case claire, numéro d'ordre */
+.showcase-slots {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+}
+.showcase-slot {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: #cccac4; /* case claire : les contours noirs restent visibles */
+  box-shadow: inset 0 0 0 2px var(--rarity-color, transparent);
+  cursor: pointer;
+}
+.showcase-slot:disabled { background: var(--surface); border: 1.5px dashed var(--border); cursor: default; }
+.showcase-slot img { width: 32px; height: 32px; }
+.showcase-slot-num,
+.showcase-order {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--bg);
+  background: var(--text);
+}
+/* Carte déjà dans la vitrine : même contour que la pièce portée + son numéro */
+.card.owned.in-showcase[data-rarity] .card-face {
+  outline: 3px solid var(--text);
+  outline-offset: 2px;
+}
+.showcase-filters { grid-template-columns: 1fr 1fr; }
+/* Enregistrer / Tout retirer : côte à côte, plus compacts, pour garder la liste visible */
+.showcase-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.showcase-actions .btn { min-height: 46px; padding: 8px 12px; font-size: 15px; }
+.showcase-grid { padding: 6px 4px; }
+
 /* Profil d'un ami dans le panneau : un peu moins d'espace */
 .sheet-body .profile { gap: 16px; }
