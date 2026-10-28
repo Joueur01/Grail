@@ -603,10 +603,11 @@ main {
 }
 .outfit-view[hidden] { display: none; }
 
-/* Avatar 3D 48×96 : facteur entier ×3 (144×288) sur téléphone, ×4 sur tablette / PC.
+/* Avatar 3D 48×96 : facteur entier ×3 (144×288) sur téléphone (×2 sous 360 px), ×4 sur tablette / PC.
    Glisser horizontalement le fait tourner ; le défilement vertical de la page
    reste possible (pan-y). */
 .outfit-body { --avatar3d-scale: 3; }
+@media (max-width: 359px) { .outfit-body { --avatar3d-scale: 2; } } /* petit téléphone : laisse la place aux cases */
 @media (min-width: 700px) { .outfit-body { --avatar3d-scale: 4; } }
 .avatar-3d {
   width: calc(48px * var(--avatar3d-scale));
@@ -628,6 +629,31 @@ main {
   color: #6e6c67;
 }
 .outfit-3d-note { color: #4a4844; }
+
+/* Choix Garçon / Fille : petite pilule sous l'avatar 3D */
+.body-switch {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 2px;
+  margin-top: 6px;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.12);
+}
+.body-tab {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: #4a4844;
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.body-tab[aria-pressed="true"] { background: var(--bg); color: var(--text); }
 
 /* Invitation posée sur la vitrine tant qu'aucune pièce n'est portée */
 .outfit-hint {

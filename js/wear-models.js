@@ -25,25 +25,99 @@
 //
 // Ajouter une pièce = ajouter une entrée ici (identifiant de la pièce dans pieces.json).
 
-// Le corps de base : un mannequin neutre, non genré, sans visage.
+// --- Les corps de base : un avatar homme et un avatar femme ---
+// Tous les avatars ont la MÊME mensuration (carrure, taille, bras, jambes, tête) :
+// un modèle de pièce sert pour tous, y compris pour les futurs skins. Ils ne
+// diffèrent que par les cheveux et le visage (et la teinte de peau).
+// Sans vêtement porté, l'avatar a une tenue de base (t-shirt, short, chaussettes).
 export const BODY_COLOR = [178, 172, 162];
-export const BODY = [
-  // Pieds
-  { box: [-6, -1, 0, 4, -3, 5] },
-  { box: [1, 6, 0, 4, -3, 5] },
-  // Jambes
-  { box: [-6, -1, 4, 27, -3, 3] },
-  { box: [1, 6, 4, 27, -3, 3] },
-  // Bassin, buste
-  { box: [-7, 7, 27, 37, -4, 4] },
-  { box: [-8, 8, 37, 57, -5, 5], round: 1 },
-  // Bras (avec la main en bas)
-  { box: [-13, -10, 34, 57, -2, 2] },
-  { box: [10, 13, 34, 57, -2, 2] },
-  // Cou, tête
-  { box: [-2, 2, 57, 60, -2, 2] },
-  { box: [-5, 5, 60, 72, -5, 5], round: 1 },
-];
+export const SKIN_TONES = {
+  claire: [236, 196, 164],
+  moyenne: [204, 146, 106],
+  foncee: [126, 84, 58],
+};
+const TEE = [232, 228, 218];
+const SHORTS = [56, 58, 66];
+const SOCKS = [232, 228, 218];
+const EYES = [30, 26, 26];
+
+/** Pièces communes aux deux corps (jambes, cou, tête et visage). */
+function commonBody(skin, hair) {
+  const mouth = skin.map((c) => Math.round(c * 0.78));
+  return [
+    // Pieds (chaussettes), jambes (peau, puis short), bassin (short)
+    { box: [-6, -1, 0, 4, -3, 5], color: SOCKS },
+    { box: [1, 6, 0, 4, -3, 5], color: SOCKS },
+    { box: [-6, -1, 4, 18, -3, 3], color: skin },
+    { box: [1, 6, 4, 18, -3, 3], color: skin },
+    { box: [-6, -1, 18, 27, -3, 3], color: SHORTS },
+    { box: [1, 6, 18, 27, -3, 3], color: SHORTS },
+    { box: [-7, 7, 27, 37, -4, 4], color: SHORTS },
+    // Cou, tête, oreilles
+    { box: [-2, 2, 57, 60, -2, 2], color: skin },
+    { box: [-5, 5, 60, 72, -5, 5], round: 1, color: skin },
+    { box: [-6, -5, 64, 67, -1, 1], color: skin },
+    { box: [5, 6, 64, 67, -1, 1], color: skin },
+    // Visage : yeux, sourcils, nez (en relief), bouche
+    { box: [-3, -2, 65, 67, 4, 5], color: EYES },
+    { box: [2, 3, 65, 67, 4, 5], color: EYES },
+    { box: [-1, 1, 63, 65, 5, 6], color: skin },
+    { box: [-1, 1, 62, 63, 4, 5], color: mouth },
+    { box: [-4, -1, 68, 69, 4, 5], color: hair },
+    { box: [1, 4, 68, 69, 4, 5], color: hair },
+  ];
+}
+
+/**
+ * Buste et bras COMMUNS à tous les avatars : une seule mensuration, pour que
+ * chaque vêtement aille sur tous (et sur les futurs skins).
+ */
+function commonTorso(skin) {
+  return [
+    // Buste en t-shirt
+    { box: [-8, 8, 44, 57, -5, 5], round: 1, color: TEE },
+    { box: [-7, 7, 37, 44, -4, 4], round: 1, color: TEE },
+    // Bras : manche courte, puis peau jusqu'à la main
+    { box: [-13, -10, 50, 57, -2, 2], color: TEE },
+    { box: [10, 13, 50, 57, -2, 2], color: TEE },
+    { box: [-13, -10, 34, 50, -2, 2], color: skin },
+    { box: [10, 13, 34, 50, -2, 2], color: skin },
+  ];
+}
+
+/** Avatar homme : cheveux courts avec une mèche sur le front. */
+function maleBody(skin = SKIN_TONES.moyenne, hair = [46, 34, 28]) {
+  return [
+    ...commonBody(skin, hair),
+    ...commonTorso(skin),
+    // Cheveux courts : dessus, arrière, mèche sur le front
+    { box: [-6, 6, 68, 73, -6, 3], color: hair },
+    { box: [-5, 5, 73, 74, -5, 3], round: 1, color: hair },
+    { box: [-5, 5, 63, 68, -6, -4], color: hair },
+    { box: [-5, 5, 70, 72, 4, 5], color: hair },
+  ];
+}
+
+/** Avatar femme : même corps que l'homme, cheveux mi-longs. */
+function femaleBody(skin = SKIN_TONES.moyenne, hair = [34, 26, 24]) {
+  return [
+    ...commonBody(skin, hair),
+    ...commonTorso(skin),
+    // Cheveux mi-longs : masse jusqu'aux épaules, mèches qui encadrent le visage
+    { box: [-6, 6, 58, 73, -7, 1], color: hair },
+    { box: [-5, 5, 73, 74, -5, 3], round: 1, color: hair },
+    { box: [-6, 6, 68, 73, 1, 4], color: hair },
+    { box: [-6, -4, 59, 68, 1, 4], color: hair },
+    { box: [4, 6, 59, 68, 1, 4], color: hair },
+    { box: [-5, 2, 70, 72, 4, 5], color: hair },
+  ];
+}
+
+/** Le corps choisi : "homme" ou "femme", avec une teinte de peau (SKIN_TONES). */
+export function getBody(type = "homme", skin = "moyenne") {
+  const tone = SKIN_TONES[skin] || SKIN_TONES.moyenne;
+  return type === "femme" ? femaleBody(tone) : maleBody(tone);
+}
 
 // Ordre de dessin : une pièce dessinée plus tard recouvre les précédentes.
 // Les chaussures passent sous le bas (le pantalon tombe sur la chaussure).
@@ -90,7 +164,112 @@ export const WEAR_MODELS = {
 
   // --- SIGNAL/9 · Bonnet « Nuit » (tête) ---
   signal9_bonnet_nuit: [
-    { type: "lathe", center: [0, 0], y0: 65, rect: [6, 8, 20, 15], scale: 0.7 },
+    { type: "lathe", center: [0, 0], y0: 68, rect: [6, 8, 20, 15], scale: 0.7 },
+  ],
+
+  // --- SIGNAL/9 · Gilet « Dossard » (veste sans manches : les bras restent nus) ---
+  signal9_gilet_dossard: [
+    { type: "box", box: [-10, 10, 34, 58, -6, 6], front: [7, 6, 18, 20], keep: [0, 1, 0, 0], round: 1 },
+  ],
+
+  // --- SIGNAL/9 · Short « Course » (bas) ---
+  signal9_short_course: [
+    { type: "box", box: [-9, 9, 27, 37, -5, 5], front: [5, 8, 22, 7], keep: [1, 0, 0, 0] },
+    { type: "box", box: [-8, -1, 18, 27, -4, 4], front: [3, 15, 12, 8], keep: [0, 1, 0, 0] },
+    { type: "box", box: [1, 8, 18, 27, -4, 4], front: [17, 15, 12, 8], keep: [0, 1, 0, 0] },
+  ],
+
+  // --- SIGNAL/9 · Sacoche « Tournée » (sac, portée en banane devant, sangle autour de la taille) ---
+  signal9_sacoche_tournee: [
+    { type: "box", box: [-9, 9, 31, 39, 5, 9], front: [3, 16, 26, 9], keep: [0, 1, 0, 0], round: 1 },
+    { type: "box", box: [-10, 10, 37, 39, -7, 7], plain: [6, 22], round: 1 },
+  ],
+
+  // --- Halvane · Manteau « Atelier » (veste longue, jusqu'aux genoux) ---
+  halvane_manteau_atelier: [
+    { type: "box", box: [-10, 10, 37, 59, -7, 7], front: [7, 3, 18, 18], round: 1 },
+    { type: "box", box: [-9, 9, 17, 37, -6, 6], front: [6, 21, 20, 9], keep: [0, 1, 0, 0] },
+    { type: "box", box: [-15, -9, 36, 59, -3, 3], front: [27, 11, 4, 10], keep: [0, 2, 0, 0], flipX: true },
+    { type: "box", box: [9, 15, 36, 59, -3, 3], front: [27, 11, 4, 10], keep: [0, 2, 0, 0] },
+    { type: "box", box: [-6, 6, 57, 62, -6, 6], plain: [8, 16], round: 1 },
+  ],
+
+  // --- Halvane · Col roulé « Fil » (haut) ---
+  halvane_col_roule_fil: [
+    { type: "box", box: [-9, 9, 34, 58, -6, 6], front: [7, 8, 18, 19], keep: [0, 2, 0, 0], round: 1 },
+    { type: "box", box: [-14, -9, 35, 58, -3, 3], front: [26, 12, 4, 13], keep: [0, 1, 0, 0], flipX: true },
+    { type: "box", box: [9, 14, 35, 58, -3, 3], front: [26, 12, 4, 13], keep: [0, 1, 0, 0] },
+    { type: "box", box: [-4, 4, 57, 60, -4, 4], front: [10, 4, 12, 4], round: 1 },
+  ],
+
+  // --- Halvane · Chemise « Coupe » (haut) ---
+  halvane_chemise_coupe: [
+    { type: "box", box: [-9, 9, 35, 58, -6, 6], front: [7, 6, 18, 19], keep: [0, 1, 0, 0], round: 1 },
+    { type: "box", box: [-14, -9, 35, 58, -3, 3], front: [26, 11, 4, 13], keep: [0, 2, 0, 0], flipX: true },
+    { type: "box", box: [9, 14, 35, 58, -3, 3], front: [26, 11, 4, 13], keep: [0, 2, 0, 0] },
+    { type: "box", box: [-4, 4, 57, 60, -4, 4], front: [10, 7, 12, 3], round: 1 },
+  ],
+
+  // --- Halvane · Pantalon « Pli » (bas) ---
+  halvane_pantalon_pli: [
+    { type: "box", box: [-9, 9, 26, 37, -5, 5], front: [5, 2, 22, 9], keep: [2, 0, 0, 0] },
+    { type: "box", box: [-9, -1, 5, 26, -4, 4], front: [4, 11, 10, 19], keep: [0, 2, 0, 0] },
+    { type: "box", box: [1, 9, 5, 26, -4, 4], front: [18, 11, 10, 19], keep: [0, 2, 0, 0] },
+  ],
+
+  // --- Halvane · Mocassins « Héritage » (chaussures, de profil) ---
+  halvane_mocassins_heritage: [
+    { type: "profile", x: [-7, -1], z0: -5, y0: 0, rect: [3, 10, 26, 11], scale: 0.7 },
+    { type: "profile", x: [1, 7], z0: -5, y0: 0, rect: [3, 10, 26, 11], scale: 0.7 },
+  ],
+
+  // --- Halvane · Sac « Losange » (sac, tenu à la hanche droite, anse au-dessus) ---
+  halvane_sac_losange: [
+    { type: "box", box: [8, 18, 26, 36, -1, 6], front: [4, 11, 24, 14], keep: [0, 1, 0, 0], round: 1 },
+    { type: "box", box: [10, 12, 36, 41, 1, 3], plain: [9, 9] },
+    { type: "box", box: [14, 16, 36, 41, 1, 3], plain: [9, 9] },
+    { type: "box", box: [10, 16, 41, 42, 1, 3], plain: [9, 9] },
+  ],
+
+  // --- Halvane · Écharpe « Liseré » (cou : tour de cou + deux pans devant) ---
+  halvane_echarpe_lisere: [
+    { type: "box", box: [-6, 6, 56, 60, -6, 6], front: [7, 4, 16, 7], round: 1 },
+    { type: "box", box: [-4, -1, 38, 57, 5, 8], front: [8, 12, 5, 15], keep: [0, 2, 0, 0] },
+    { type: "box", box: [1, 4, 44, 57, 5, 8], front: [17, 12, 5, 10], keep: [0, 2, 0, 0] },
+  ],
+
+  // --- Pigeon Social Club · T-shirt « Roucoule » (haut, manches courtes) ---
+  pigeon_social_club_t_shirt_roucoule: [
+    { type: "box", box: [-9, 9, 34, 58, -6, 6], front: [6, 6, 20, 20], round: 1 },
+    { type: "box", box: [-14, -9, 50, 58, -3, 3], front: [26, 10, 4, 6], keep: [0, 1, 0, 0], flipX: true },
+    { type: "box", box: [9, 14, 50, 58, -3, 3], front: [26, 10, 4, 6], keep: [0, 1, 0, 0] },
+    { type: "box", box: [-4, 4, 57, 60, -4, 4], front: [9, 6, 14, 3], round: 1 },
+  ],
+
+  // --- Pigeon Social Club · Short « Ollie » (bas, large) ---
+  pigeon_social_club_short_ollie: [
+    { type: "box", box: [-9, 9, 27, 37, -5, 5], front: [5, 7, 22, 7], keep: [1, 0, 0, 0] },
+    { type: "box", box: [-9, -1, 15, 27, -4, 4], front: [3, 14, 12, 11], keep: [0, 1, 0, 0] },
+    { type: "box", box: [1, 9, 15, 27, -4, 4], front: [17, 14, 12, 11], keep: [0, 1, 0, 0] },
+  ],
+
+  // --- Pigeon Social Club · Sneakers « Bitume » (chaussures, de profil) ---
+  pigeon_social_club_sneakers_bitume: [
+    { type: "profile", x: [-7, -1], z0: -5, y0: 0, rect: [3, 9, 26, 13], scale: 0.7 },
+    { type: "profile", x: [1, 7], z0: -5, y0: 0, rect: [3, 9, 26, 13], scale: 0.7 },
+  ],
+
+  // --- Pigeon Social Club · Casquette « Perchoir » (tête : calotte + visière devant) ---
+  pigeon_social_club_casquette_perchoir: [
+    { type: "lathe", center: [0, 0], y0: 68, rect: [4, 9, 24, 10], scale: 0.7 },
+    { type: "box", box: [-6, 6, 68, 69, 4, 10], plain: [14, 20], round: 1 },
+  ],
+
+  // --- Pigeon Social Club · Tote « Miettes » (sac, tenu à la hanche droite) ---
+  pigeon_social_club_tote_miettes: [
+    { type: "box", box: [8, 20, 20, 34, -1, 6], front: [4, 9, 24, 18], keep: [0, 1, 0, 0] },
+    { type: "box", box: [10, 12, 34, 41, 1, 3], plain: [8, 12] },
+    { type: "box", box: [16, 18, 34, 41, 1, 3], plain: [8, 12] },
   ],
 };
 
