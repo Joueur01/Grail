@@ -2,17 +2,17 @@
 //
 // ⚠️ Tout vient du SERVEUR (migrations 0014 et 0015, get_player_profile) : identité, tenue
 // portée, statistiques et vitrine. La VITRINE est choisie par le joueur (vide au départ,
-// jusqu'à showcase_max cartes, dans l'ordre voulu) et enregistrée par set_showcase, qui vérifie
+// jusqu'à showcase_max cartes, 3 par défaut, dans l'ordre voulu) et enregistrée par set_showcase, qui vérifie
 // que chaque carte est possédée. Ce fichier ne calcule rien : il met en page ce que le serveur
 // renvoie. Un ami ne reçoit pas le solde de pièces (le serveur renvoie null).
 
-import { RARITIES, getRarity, matchesSearch } from "./data.js?v=60";
-import { getPlayerProfile, setShowcase } from "./api.js?v=60";
-import { getOwnedCards } from "./inventory.js?v=60";
-import { showToast, reportError } from "./wallet.js?v=60";
-import { SLOTS } from "./avatar.js?v=60";
-import { createAvatar3D } from "./avatar3d.js?v=60";
-import { createCardFace, createCardShell } from "./cards.js?v=60";
+import { RARITIES, getRarity, matchesSearch } from "./data.js?v=61";
+import { getPlayerProfile, setShowcase } from "./api.js?v=61";
+import { getOwnedCards } from "./inventory.js?v=61";
+import { showToast, reportError } from "./wallet.js?v=61";
+import { SLOTS } from "./avatar.js?v=61";
+import { createAvatar3D } from "./avatar3d.js?v=61";
+import { createCardFace, createCardShell } from "./cards.js?v=61";
 
 function el(tag, className, text) {
   const e = document.createElement(tag);
@@ -205,6 +205,8 @@ function openShowcaseEditor({ catalogue, current, max, onSaved }) {
   title.textContent = "Ma vitrine";
   const intro = el("p", "muted showcase-intro", "");
   const slots = el("div", "showcase-slots");
+  slots.style.gridTemplateColumns = `repeat(${max}, minmax(0, 1fr))`;
+  slots.classList.toggle("few", max <= 4); // peu de cases : elles sont grandes, sprite ×2
 
   // Recherche et filtres (mêmes règles que la Collection)
   const filters = el("div", "filters picker-filters showcase-filters");
@@ -255,7 +257,7 @@ function openShowcaseEditor({ catalogue, current, max, onSaved }) {
         cell.append(img);
       }
       cell.append(el("span", "showcase-slot-num", String(i + 1)));
-      cell.addEventListener("click", () => { picked = picked.filter((k) => k !== key); render(); });
+      cell.addEventListener("click", () => { picked = picked.filter((k) => k !== key); update(); });
       return cell;
     }));
     clear.disabled = picked.length === 0;
@@ -273,31 +275,51 @@ function openShowcaseEditor({ catalogue, current, max, onSaved }) {
       })
       .sort((a, b) => (rarityRank.get(b.rarity) - rarityRank.get(a.rarity))
         || (catalogueOrder.get(a.colorwayId) - catalogueOrder.get(b.colorwayId)));
+    // On garde la position de défilement du panneau quand la liste est redessinée (filtres).
+    const scroller = sheet.querySelector(".picker-sheet");
+    const keepScroll = scroller.scrollTop;
     grid.replaceChildren(...visible.map((c) => {
       const colorway = catalogue.colorwayById.get(c.colorwayId);
       const key = keyOf(c);
-      const pos = picked.indexOf(key);
       const btn = el("button", "picker-choice");
       btn.type = "button";
-      btn.setAttribute("aria-pressed", String(pos >= 0));
+      btn.dataset.key = key;
       const card = createCardShell(colorway, c.rarity);
       card.classList.add("owned");
       card.append(createCardFace(colorway, c.rarity));
-      if (pos >= 0) {
-        card.classList.add("in-showcase");
-        card.append(el("span", "showcase-order", String(pos + 1)));
-      }
       btn.append(card);
       btn.addEventListener("click", () => {
-        if (pos >= 0) picked = picked.filter((k) => k !== key);
+        if (picked.includes(key)) picked = picked.filter((k) => k !== key);
         else if (picked.length >= max) { showToast(`${max} cartes maximum dans la vitrine.`); return; }
         else picked = [...picked, key];
-        render();
+        // Pas de reconstruction de la liste : on met juste à jour les marques sur place
+        // (sinon Safari remonte tout en haut du panneau à chaque toucher).
+        update();
       });
       return btn;
     }));
+    markPicked();
+    scroller.scrollTop = keepScroll;
     empty.hidden = visible.length > 0;
     empty.textContent = owned.length ? "Aucune carte ne correspond à ta recherche." : "Tu n'as pas encore de carte. Ouvre des boosters !";
+  }
+
+  /** Contour blanc + numéro d'ordre sur les cartes choisies, sans redessiner la liste. */
+  function markPicked() {
+    for (const btn of grid.children) {
+      const pos = picked.indexOf(btn.dataset.key);
+      const card = btn.firstElementChild;
+      btn.setAttribute("aria-pressed", String(pos >= 0));
+      card.classList.toggle("in-showcase", pos >= 0);
+      card.querySelector(".showcase-order")?.remove();
+      if (pos >= 0) card.append(el("span", "showcase-order", String(pos + 1)));
+    }
+  }
+
+  /** Après un ajout / retrait : cases du haut + marques sur la liste (la liste reste en place). */
+  function update() {
+    renderSlots();
+    markPicked();
   }
 
   function render() {
@@ -306,7 +328,7 @@ function openShowcaseEditor({ catalogue, current, max, onSaved }) {
   }
 
   for (const input of [search, brand, rarity]) input.addEventListener("input", renderGrid);
-  clear.addEventListener("click", () => { picked = []; render(); });
+  clear.addEventListener("click", () => { picked = []; update(); });
   save.addEventListener("click", async () => {
     save.disabled = true;
     try {
