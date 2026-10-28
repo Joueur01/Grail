@@ -17,20 +17,20 @@
 // préparée À L'AVANCE, à chaque changement de tenue, pour être prête au moment
 // où l'on touche le bouton (sinon le partage serait refusé).
 
-import { ALL_RARITIES, getRarity } from "./data.js?v=82";
-import { SLOTS, readBodyChoice } from "./avatar.js?v=82";
-import { getPseudo } from "./inventory.js?v=82";
-import { buildModel, renderModel, DEFAULT_YAW } from "./avatar3d.js?v=82";
-import { createOutfitShare } from "./api.js?v=82";
-import { showToast } from "./wallet.js?v=82";
-import { track } from "./analytics.js?v=82";
+import { ALL_RARITIES, getRarity } from "./data.js?v=83";
+import { SLOTS, readBodyChoice } from "./avatar.js?v=83";
+import { getPseudo } from "./inventory.js?v=83";
+import { buildModel, renderModel, DEFAULT_YAW } from "./avatar3d.js?v=83";
+import { createOutfitShare } from "./api.js?v=83";
+import { showToast } from "./wallet.js?v=83";
+import { track } from "./analytics.js?v=83";
 
 const IMG_W = 1080;
 const IMG_H = 1350;
 const PAD = 64;
 const SCALE = 6;           // avatar 3D 46 × 88 → 276 × 528 (facteur entier)
 const FONT = "Archivo, system-ui, sans-serif";
-const SITE_URL = "joueur01.github.io/Grail";
+const SITE_URL = "huntgrail.eu";
 const FILE_NAME = "grail-ma-tenue.png";
 // Ordre de la liste : de la tête aux pieds, comme la tenue, puis le sac.
 const LIST_ORDER = ["tete", "cou", "haut", "veste", "bas", "chaussures", "sac"];
