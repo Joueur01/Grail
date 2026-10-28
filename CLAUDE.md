@@ -33,7 +33,7 @@ Contraintes de la bêta :
 1. **Booster** : un bouton « Ouvrir un booster » qui ouvre un booster de 3 cartes **tiré par le serveur** selon les taux de rareté (section 6), avec une petite animation de révélation carte par carte. ✅ Fait.
 2. **Inventaire** : la collection du joueur, sauvegardée **sur le serveur**, avec filtres simples (marque, catégorie, rareté) et le nombre d'exemplaires de chaque carte. ✅ Fait : progression « X / 300 », filtres Marque / Type / Rareté (menus natifs, collés en haut), grille triée de la plus rare à la plus commune, badge « ×N » pour les doublons.
 3. **Avatar** : un personnage en pixel art sur lequel on équipe une pièce par emplacement (section 7). ✅ Fait pour la bêta (fiche de tenue, tenue « à plat »).
-4. **Partager ma tenue** : exporter l'avatar habillé en **image PNG** (canvas → PNG), avec le nom des pièces et leur rareté, puis partage natif (`navigator.share` avec fichier si disponible, sinon téléchargement). ✅ Fait : PNG 1080 × 1350 (tenue à plat ×6 + liste tête → pieds : nom, marque, coloris, rareté + adresse du jeu), **préparé à l'avance** à chaque changement de tenue (Safari n'ouvre le partage que juste après un toucher), repli téléchargement ; bouton désactivé tant que rien n'est porté.
+4. **Partager ma tenue** : **lien public** (principal, section 13 bis) ; l'export en image reste en option secondaire. Ancien fonctionnement de l'image : exporter l'avatar habillé en **image PNG** (canvas → PNG), avec le nom des pièces et leur rareté, puis partage natif (`navigator.share` avec fichier si disponible, sinon téléchargement). ✅ Fait : PNG 1080 × 1350 (tenue à plat ×6 + liste tête → pieds : nom, marque, coloris, rareté + adresse du jeu), **préparé à l'avance** à chaque changement de tenue (Safari n'ouvre le partage que juste après un toucher), repli téléchargement ; bouton désactivé tant que rien n'est porté.
 5. **Mise en ligne** sur GitHub Pages et test sur iPhone/Android.
 
 ### Hors périmètre de la bêta (ne pas coder pour l'instant)
@@ -75,7 +75,8 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 │   ├── market.js      # Market entre joueurs (offres et actions via le serveur)
 │   ├── friends.js     # écran Amis : pseudo, demandes, liste, tenue d'un ami (via le serveur)
 │   ├── avatar.js      # rendu de l'avatar en canvas
-│   └── share.js       # export PNG + partage
+│   ├── share.js       # partage de la tenue : lien public (principal) + export PNG (option)
+│   └── shared-outfit.js  # page publique d'une tenue partagée (?tenue=CODE), sans compte
 ├── data/
 │   └── pieces.json    # catalogue des pièces et coloris
 ├── assets/
@@ -89,7 +90,8 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 │   └── migrations/
 │       ├── 0005_amis.sql  # amis (à exécuter dans le SQL Editor de Supabase)
 │       ├── 0006_pseudo_30_jours.sql  # un changement de pseudo tous les 30 jours
-│       └── 0007_pseudos_interdits.sql  # mots interdits dans les pseudos
+│       ├── 0007_pseudos_interdits.sql  # mots interdits dans les pseudos
+│       └── 0008_tenue_partagee.sql  # lien public vers une tenue
 ├── tools/
 │   └── extraire_sprites.py   # découpe les planches → PNG + SVG (Python + Pillow)
 └── CLAUDE.md
@@ -338,7 +340,7 @@ Le développeur n'est pas juriste ; ces règles sont prudentes en attendant un a
 
 ## 13. Back end Supabase (comptes + serveur de jeu) — le serveur est la source de vérité
 
-- Projet Supabase : `https://qsueqvsbhytqrotlxmak.supabase.co`. Les migrations SQL (**0001 à 0007**, exécutées par le développeur dans le SQL Editor, **ne jamais les modifier depuis le front** ; les 0005, 0006 et 0007 sont dans `supabase/migrations/`) créent : catalogue (`brands`, `pieces`, `colorways`), `economy_config`, `profiles`, `inventory`, `transactions`, `market_listings`, la vue `market_best_offers` et toutes les fonctions du jeu.
+- Projet Supabase : `https://qsueqvsbhytqrotlxmak.supabase.co`. Les migrations SQL (**0001 à 0008**, exécutées par le développeur dans le SQL Editor, **ne jamais les modifier depuis le front** ; les 0005 à 0008 sont dans `supabase/migrations/`) créent : catalogue (`brands`, `pieces`, `colorways`), `economy_config`, `profiles`, `inventory`, `transactions`, `market_listings`, la vue `market_best_offers` et toutes les fonctions du jeu.
 - **Règle d'or : ne jamais remettre de logique de jeu côté client.** Le front ne tire pas de carte, ne calcule ni gain ni chance réelle, ne vérifie pas de règle (limite de ventes, verrou, solde…). Il appelle une fonction, affiche le résultat, et relit l'état. Toute nouvelle règle ou nouvelle valeur d'économie se code **dans une migration SQL** (puis, si besoin d'affichage, dans `js/economy-config.js`).
 - **Le jeu n'est accessible que connecté** : e-mail + mot de passe (écran de connexion / création de compte dans `index.html`, géré par `main.js`). À l'inscription, le message « Confirme ton e-mail » s'affiche : le compte ne peut se connecter qu'après avoir cliqué le lien reçu. Un profil (3 boosters, 0 pièce) est créé automatiquement par le serveur. Bouton « Se déconnecter » en bas de l'écran Tenue.
 - **Mot de passe oublié** : lien « Mot de passe oublié ? » sous le formulaire de connexion (pas à la création de compte) → e-mail de réinitialisation (`resetPasswordForEmail`, réponse toujours neutre pour ne pas révéler quelles adresses ont un compte). Le lien reçu ramène sur le site avec `type=recovery` : `api.js` le détecte (`isRecoveryLink`) et `main.js` affiche « Nouveau mot de passe » (6 caractères minimum, saisie en double, `updatePassword`) **avant** de lancer le jeu ; lien expiré → message + renvoi vers « Mot de passe oublié ? ». **À régler dans Supabase** (Authentication → URL Configuration) : Site URL `https://joueur01.github.io/Grail/` et Redirect URLs `https://joueur01.github.io/Grail/**`, sinon les liens (confirmation et réinitialisation) pointent vers localhost.
@@ -346,6 +348,14 @@ Le développeur n'est pas juriste ; ces règles sont prudentes en attendant un a
 - **Cache local** (`js/inventory.js`) : après chaque action, `refreshState()` relit profil, inventaire, ventes et état des boosters ; l'affichage lit cette copie (instantané). Ce n'est qu'un cache d'affichage, jamais une source de vérité.
 - Le catalogue affiché vient toujours de `data/pieces.json` (mêmes identifiants que la table `colorways`, vérifiés identiques : 75 coloris).
 - **Tests** : sans compte de test, on teste les écrans contre un faux serveur (format de réponses des fonctions SQL) ; un test réel demande un compte de test confirmé (jamais de mot de passe réel dans le dépôt).
+
+## 13 bis. Tenue partagée par lien (migration 0008, `js/share.js`, `js/shared-outfit.js`)
+
+- Bouton principal « Partager ma tenue » : `create_outfit_share()` enregistre une **copie** de la tenue portée sous un **code secret de 20 caractères** (même tenue = même lien ; 50 liens récents gardés par joueur) et renvoie le code ; le lien est `<page du jeu>?tenue=CODE`, envoyé par `navigator.share` ou copié (champ + bouton « Copier » toujours affichés). Safari n'ouvre le menu de partage que juste après un toucher : si la création du lien l'a fait expirer, le lien reste affiché et le 2e toucher partage tout de suite.
+- **Visible sans compte** : `main.js` détecte `?tenue=` avant toute connexion et affiche `shared-outfit.js` (tenue « à plat » sur case claire + liste des pièces avec rareté + bouton « Jouer à Grail »). `get_shared_outfit(code)` est la **seule** fonction appelable par `anon` ; la table `outfit_shares` est illisible directement.
+- La copie ne change plus : changer de tenue donne un nouveau lien. **Aucun pseudo ni autre donnée du joueur** n'est exposé (le pseudo n'apparaît jamais publiquement, section 9).
+- L'image PNG reste en bouton secondaire « Enregistrer en image » (`buildShareImage`, inchangée).
+- Pas d'aperçu riche (miniature) dans les messageries : le site est statique, il faudrait un serveur pour générer les balises Open Graph.
 
 ## 14. Amis (migration 0005, `js/friends.js`)
 
