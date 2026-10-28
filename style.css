@@ -2026,10 +2026,17 @@ main {
   font-weight: 800;
 }
 
+/* Pastilles de la barre du bas (badges.js) : nombre de boosters, point « Videur pas encore joué » */
+.tab > .tab-badge { top: 8px; right: auto; left: calc(50% + 16px); }
+.tab-main-pill .tab-badge { top: -9px; right: -9px; left: auto; }
+.tab-dot { min-width: 12px; height: 12px; padding: 0; }
+.tab > .tab-dot { top: 12px; left: calc(50% + 18px); }
+
 /* Booster au centre : bouton principal, plus grand, d'une autre couleur (crème sur le fond sombre).
    Il dépasse un peu au-dessus de la barre ; un anneau de la couleur du fond le « découpe » de la ligne. */
 .tab-main { flex: 0 0 92px; }
 .tab-main-pill {
+  position: relative;
   display: grid;
   place-items: center;
   min-width: 84px;

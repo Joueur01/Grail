@@ -6,9 +6,9 @@
 //   - relayer les actions simples (verrou, tenue) vers le serveur, puis relire l'état.
 // Il ne calcule rien d'important : pas de tirage, de gain ni de règle de jeu.
 
-import { RARITIES, matchesSearch, getRarity } from "./data.js?v=79";
-import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=79";
-import * as api from "./api.js?v=79";
+import { RARITIES, matchesSearch, getRarity } from "./data.js?v=80";
+import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=80";
+import * as api from "./api.js?v=80";
 
 // --- État en mémoire (rempli par refreshState) ---
 
@@ -21,6 +21,7 @@ const state = {
 };
 const coinListeners = [];
 const reputationListeners = [];
+const stateListeners = [];
 
 /** Clé unique d'une carte : un coloris + une rareté. */
 export function cardKey(colorwayId, rarityId) {
@@ -68,6 +69,7 @@ export function refreshState({ booster = true } = {}) {
     const reputation = getReputation();
     if (reputation && levelBefore !== undefined && reputation.level > levelBefore) for (const fn of reputationListeners) fn(reputation, levelBefore);
     for (const fn of reputationListeners) fn(reputation, null);
+    for (const fn of stateListeners) fn();
   };
   const result = queue.then(run);
   queue = result.catch(() => {}); // une erreur ne bloque pas les relectures suivantes
@@ -124,6 +126,11 @@ export function getCoins() {
 /** Appelle fn(solde) quand le solde change après une relecture (sert à l'animation du solde). */
 export function onCoinsChange(fn) {
   coinListeners.push(fn);
+}
+
+/** Appelle fn() après CHAQUE relecture de l'état (sert aux pastilles de notification : stock de boosters…). */
+export function onStateChange(fn) {
+  stateListeners.push(fn);
 }
 
 /** Appelle fn(réputation, ancienNiveau) après chaque relecture : ancienNiveau est le niveau d'avant si le niveau vient de monter, sinon null. */
