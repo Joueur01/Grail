@@ -1815,11 +1815,12 @@ main {
 body[data-auth="public"] .public {
   display: grid;
   place-items: start center;
-  min-height: 100dvh;
+  height: 100dvh;
+  overflow-y: auto; /* le corps de page est bloqué (overflow: hidden) : cette page défile elle-même */
+  -webkit-overflow-scrolling: touch;
   padding: calc(24px + env(safe-area-inset-top)) var(--gutter) 32px;
 }
 .public-card { display: flex; flex-direction: column; gap: 18px; width: min(460px, 100%); }
 .public-card .auth-title { text-align: center; }
 .public-canvas { align-self: center; display: block; margin: 0 auto 14px; background: #cccac4; border-radius: 28px; width: 128px; height: 192px; /* ×2 : facteur entier */ }
-@media (min-width: 600px) { .public-canvas { width: 256px; height: 384px; /* ×4 */ } }
 .public-cta { text-decoration: none; text-align: center; display: grid; place-items: center; }
