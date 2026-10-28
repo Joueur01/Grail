@@ -73,7 +73,8 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 │   ├── discard.js     # défausse : sélection de plusieurs cartes contre des pièces
 │   ├── atelier.js     # vue « Atelier » : progression par modèle + rareté
 │   ├── market.js      # Market entre joueurs (offres et actions via le serveur)
-│   ├── friends.js     # écran Amis : pseudo, demandes, liste, tenue d'un ami (via le serveur)
+│   ├── friends.js     # écran Amis : pseudo, demandes, liste, profil d'un ami (via le serveur)
+│   ├── profile.js     # page de profil (la sienne : bouton rond en haut ; celle d'un ami) : identité, avatar 3D, vitrine, statistiques
 │   ├── avatar.js      # écran Tenue : cases, tenue « à plat » (canvas), bascule 3D / À plat
 │   ├── avatar3d.js    # avatar 3D en voxels : construction, rendu (un rayon par pixel), glisser pour tourner
 │   ├── wear-models.js # modèles 3D « portés » : corps de base + un modèle par pièce
@@ -100,7 +101,8 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 │       ├── 0010_retention_stats.sql  # mesure de rétention + vues de statistiques
 │       ├── 0011_taxe_vente.sql  # taxe de 5 % sur les ventes du Market
 │       ├── 0012_videur.sql  # Videur V1 : portes, dress codes, Flow
-│       └── 0013_videur_regles_cachees.sql  # Videur V2 : Club et VIP à règles cachées
+│       ├── 0013_videur_regles_cachees.sql  # Videur V2 : Club et VIP à règles cachées
+│       └── 0014_profil.sql  # page de profil + choix Garçon / Fille enregistré sur le serveur
 ├── tools/
 │   └── extraire_sprites.py   # découpe les planches → PNG + SVG (Python + Pillow)
 └── CLAUDE.md
@@ -313,7 +315,7 @@ Ne pas passer plus de 30 minutes bloqué sur l'avatar : simplifier plutôt que p
 - **Cadre de l'avatar** : en vue 3D, fond **gris sombre** (un peu plus clair que le fond du jeu), en vue « à plat » fond clair `#cccac4` (les contours noirs des sprites). Le cadre garde la **même largeur dans les deux vues** pour que les cases ne changent pas de taille. Sur tablette / PC la fiche est centrée et limitée à 440 px. Sous le cadre (3D seulement) : « Glisse l'avatar pour le faire tourner », la pilule **Garçon / Fille** et la mention « Pas encore en 3D ».
 - **Corps de base** (`getBody(type, peau)` dans `js/wear-models.js`) : un **garçon** (cheveux courts, mèche sur le front) et une **fille** (cheveux mi-longs), avec visage simple en voxels, tenue de base (t-shirt, short, chaussettes) et 3 teintes de peau (`SKIN_TONES`, « moyenne » pour l'instant).
 - **RÈGLE : une SEULE mensuration pour tous les avatars** (décidée par le développeur). Carrure, taille, bras, jambes et tête sont **identiques** (`commonBody` + `commonTorso`) ; seuls les cheveux, le visage et la peau changent. Ainsi un modèle de pièce sert pour tous, y compris pour les **futurs skins** (skin personnalisable ou skins achetables plus tard : **à décider, rien n'est codé**). Tout nouveau corps ou skin doit réutiliser `commonBody` / `commonTorso` sans en changer les dimensions.
-- **Choix Garçon / Fille** : petite pilule sous l'avatar 3D, **réglage d'affichage gardé dans le navigateur** (`grail_avatar_body`), pas enregistré sur le serveur. Les amis et la page publique restent en vue « à plat » (pas d'avatar).
+- **Choix Garçon / Fille** : pilule sous le cadre de l'avatar 3D, **enregistré sur le serveur** (`profiles.avatar_body`, `set_avatar_body`, migration 0014) pour que les amis voient le bon avatar sur ton profil. Le navigateur en garde une copie (`grail_avatar_body`), utilisée seulement si le serveur ne connaît pas encore ce réglage (migration non exécutée). La page publique reste en vue « à plat ».
 - **Un modèle par PIÈCE, pas par coloris** (`WEAR_MODELS`) : des blocs (`box` = pavé, `lathe` = volume tourné pour les bonnets, `profile` = silhouette de profil extrudée pour les chaussures) + la zone du sprite à copier en façade. Les **couleurs sont lues dans le sprite du coloris porté** : les 75 coloris suivent automatiquement. Dos et côtés = couleur principale de la pièce (les bandes comme ourlets et poignets sont gardées, pas les logos). `keep` garde les bords du sprite à l'échelle 1 (ourlet, poignet), seul le milieu est étiré. `hiddenBy` cache un bloc sous une autre pièce (capuche du hoodie sous une veste).
 - **Ordre de dessin** : chaussures → bas (le pantalon tombe sur la chaussure) → haut → veste → cou → tête → sac.
 - **Les 20 pièces (75 coloris) ont leur modèle 3D.** Sacs : sacoche « Tournée » portée en banane devant (sangle autour de la taille), sac « Losange » et tote « Miettes » tenus à la hanche droite avec leurs anses ; écharpe : tour de cou + deux pans devant ; casquette : calotte + visière ; chaussures : silhouette de profil extrudée. Vérifié : les 75 coloris se construisent et se dessinent sans erreur sur les deux corps. Si une future pièce n'a pas de modèle, la mention « Pas encore en 3D : … » la liste sous l'avatar.
@@ -367,11 +369,11 @@ Le développeur n'est pas juriste ; ces règles sont prudentes en attendant un a
 
 ## 13. Back end Supabase (comptes + serveur de jeu) — le serveur est la source de vérité
 
-- Projet Supabase : `https://qsueqvsbhytqrotlxmak.supabase.co`. Les migrations SQL (**0001 à 0013**, exécutées par le développeur dans le SQL Editor, **ne jamais les modifier depuis le front** ; les 0005 à 0013 sont dans `supabase/migrations/`) créent : catalogue (`brands`, `pieces`, `colorways`), `economy_config`, `profiles`, `inventory`, `transactions`, `market_listings`, la vue `market_best_offers` et toutes les fonctions du jeu.
+- Projet Supabase : `https://qsueqvsbhytqrotlxmak.supabase.co`. Les migrations SQL (**0001 à 0014**, exécutées par le développeur dans le SQL Editor, **ne jamais les modifier depuis le front** ; les 0005 à 0014 sont dans `supabase/migrations/`) créent : catalogue (`brands`, `pieces`, `colorways`), `economy_config`, `profiles`, `inventory`, `transactions`, `market_listings`, la vue `market_best_offers` et toutes les fonctions du jeu.
 - **Règle d'or : ne jamais remettre de logique de jeu côté client.** Le front ne tire pas de carte, ne calcule ni gain ni chance réelle, ne vérifie pas de règle (limite de ventes, verrou, solde…). Il appelle une fonction, affiche le résultat, et relit l'état. Toute nouvelle règle ou nouvelle valeur d'économie se code **dans une migration SQL** (puis, si besoin d'affichage, dans `js/economy-config.js`).
 - **Le jeu n'est accessible que connecté** : e-mail + mot de passe (écran de connexion / création de compte dans `index.html`, géré par `main.js`). À l'inscription, le message « Confirme ton e-mail » s'affiche : le compte ne peut se connecter qu'après avoir cliqué le lien reçu. Un profil (3 boosters, 0 pièce) est créé automatiquement par le serveur. Bouton « Se déconnecter » en bas de l'écran Tenue.
 - **Mot de passe oublié** : lien « Mot de passe oublié ? » sous le formulaire de connexion (pas à la création de compte) → e-mail de réinitialisation (`resetPasswordForEmail`, réponse toujours neutre pour ne pas révéler quelles adresses ont un compte). Le lien reçu ramène sur le site avec `type=recovery` : `api.js` le détecte (`isRecoveryLink`) et `main.js` affiche « Nouveau mot de passe » (6 caractères minimum, saisie en double, `updatePassword`) **avant** de lancer le jeu ; lien expiré → message + renvoi vers « Mot de passe oublié ? ». **À régler dans Supabase** (Authentication → URL Configuration) : Site URL `https://joueur01.github.io/Grail/` et Redirect URLs `https://joueur01.github.io/Grail/**`, sinon les liens (confirmation et réinitialisation) pointent vers localhost.
-- **Écritures interdites en direct** : le front ne fait que des **lectures** (`profiles`, `inventory`, `market_listings` = ses propres ventes, `market_best_offers`) et des **appels de fonctions** (`rpc`). Les fonctions : `get_booster_state`, `open_booster`, `upgrade_cards`, `discard_cards`, `claim_daily_bonus`, `set_locked`, `set_equipped`, `set_tutorial_done`, `market_list`, `market_cancel`, `market_buy`, `market_ack_sales`, `market_history`, `track_events`, `get_videur_night`, `videur_preview`, `videur_enter` (wrappers dans `js/api.js`).
+- **Écritures interdites en direct** : le front ne fait que des **lectures** (`profiles`, `inventory`, `market_listings` = ses propres ventes, `market_best_offers`) et des **appels de fonctions** (`rpc`). Les fonctions : `get_booster_state`, `open_booster`, `upgrade_cards`, `discard_cards`, `claim_daily_bonus`, `set_locked`, `set_equipped`, `set_tutorial_done`, `market_list`, `market_cancel`, `market_buy`, `market_ack_sales`, `market_history`, `track_events`, `get_videur_night`, `videur_preview`, `videur_enter`, `get_player_profile`, `set_avatar_body` (wrappers dans `js/api.js`).
 - **Cache local** (`js/inventory.js`) : après chaque action, `refreshState()` relit profil, inventaire, ventes et état des boosters ; l'affichage lit cette copie (instantané). Ce n'est qu'un cache d'affichage, jamais une source de vérité.
 - Le catalogue affiché vient toujours de `data/pieces.json` (mêmes identifiants que la table `colorways`, vérifiés identiques : 75 coloris).
 - **Tests** : sans compte de test, on teste les écrans contre un faux serveur (format de réponses des fonctions SQL) ; un test réel demande un compte de test confirmé (jamais de mot de passe réel dans le dépôt).
@@ -394,6 +396,19 @@ Le développeur n'est pas juriste ; ces règles sont prudentes en attendant un a
 - **Règles côté serveur** (`friend_request`, `friend_respond`, `friend_remove`, `list_friends`, `get_friend_profile`, `set_pseudo`) : limite de 50 amis et 20 demandes en attente (`economy_config.FRIENDS`), pas de demande à soi-même ni en double, si l'autre joueur avait déjà invité on devient amis tout de suite, seuls les amis acceptés lisent un profil. La table `friendships` est illisible directement.
 - Si la migration 0005 n'est pas exécutée, l'écran affiche « Cette fonction n'est pas encore activée sur le serveur. ».
 - Hors périmètre pour l'instant : cadeaux, échanges de cartes, classement entre amis.
+
+## 14 bis. Page de profil (migration 0014, `js/profile.js`)
+
+- **Accès** : **bouton rond « profil »** en haut, à gauche du solde de pièces, sur toutes les pages (`#profile`, pas d'onglet : la barre du bas a déjà 6 onglets). Le bouton passe en blanc quand la page est ouverte.
+- **Contenu (choisi par le développeur : identité, statistiques, vitrine)** :
+  - **Identité** : pseudo (ou « Sans pseudo » + lien « Choisir mon pseudo › » vers l'écran Amis), « Membre depuis octobre 2026 ».
+  - **Avatar 3D** avec la tenue portée, sur fond gris sombre (×3 sur téléphone, ×4 tablette / PC), qu'on fait tourner en glissant ; « N pièces portées » et, sur son propre profil, bouton **« Modifier ma tenue »** (→ écran Tenue).
+  - **Vitrine** : les **3 cartes les plus rares** (puis les plus nombreuses), **choisies par le serveur** ; pas encore de choix manuel.
+  - **Statistiques** : Collection X / 300 (+ exemplaires, barre de progression), boosters ouverts, série au Videur (jours), Flow, amis, et **pièces (seulement sur son propre profil)** ; pastilles par rareté (Légendaire → Commun).
+- **Visible aussi par les amis** (choix du développeur) : toucher un ami dans l'écran Amis ouvre la **même page** dans le panneau (sans « Modifier ma tenue »), avec « Retirer cet ami » (2 touchers). **Un ami ne voit jamais le solde de pièces** (le serveur renvoie `coins: null`). Pas de réglages sur cette page.
+- **Serveur** : `get_player_profile(p_player)` (null = soi-même ; sinon seulement un ami **accepté**, sinon « Ce joueur n'est pas ton ami ») renvoie pseudo, date d'inscription, `avatar_body`, tenue portée **et encore possédée**, cartes possédées / total / exemplaires / par rareté, vitrine, boosters ouverts (`transactions.kind = 'booster'`), amis, Flow, série du Videur (même calcul que `get_videur_night`), pièces (soi-même seulement). Lecture seule, rien n'est calculé par le site.
+- **Si la migration 0014 n'est pas exécutée** : la page affiche « Cette fonction n'est pas encore activée sur le serveur. » ; le profil d'un ami retombe sur l'ancienne vue (tenue à plat + progression) ; le choix Garçon / Fille reste dans le navigateur.
+- **Vérifiée** sur une base PostgreSQL locale avec un faux schéma (migration lancée 2 fois, profil soi-même / ami / non-ami / non connecté, droits `anon` refusés).
 
 ## 15. Rétention et statistiques joueurs (migration 0010, `js/analytics.js`)
 

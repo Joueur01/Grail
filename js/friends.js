@@ -5,11 +5,12 @@
 // serveur renvoie et envoie les actions. Il n'existe aucune liste publique de joueurs :
 // on ne retrouve quelqu'un qu'avec son pseudo EXACT.
 
-import { getRarity } from "./data.js?v=57";
-import { setPseudo, listFriends, friendRequest, friendRespond, friendRemove, getFriendProfile } from "./api.js?v=57";
-import { SLOTS, initAvatar, drawAvatar } from "./avatar.js?v=57";
-import { showToast, reportError } from "./wallet.js?v=57";
-import { FRIENDS } from "./economy-config.js?v=57";
+import { getRarity } from "./data.js?v=58";
+import { setPseudo, listFriends, friendRequest, friendRespond, friendRemove, getFriendProfile, getPlayerProfile } from "./api.js?v=58";
+import { buildProfileView } from "./profile.js?v=58";
+import { SLOTS, initAvatar, drawAvatar } from "./avatar.js?v=58";
+import { showToast, reportError } from "./wallet.js?v=58";
+import { FRIENDS } from "./economy-config.js?v=58";
 
 /**
  * Branche l'écran Amis.
@@ -184,6 +185,23 @@ export function setupFriends({ catalogue }) {
     body.replaceChildren(el("p", "muted sheet-text", "Chargement…"));
     sheet.hidden = false;
 
+    // Page de profil complète (migration 0014) ; si elle n'est pas encore activée sur le
+    // serveur, on retombe sur l'ancienne vue (tenue à plat + progression).
+    let full = null;
+    try {
+      full = await getPlayerProfile(friend.friend_id);
+    } catch (err) {
+      if (!/pas encore activée/.test(err.message)) {
+        sheet.hidden = true;
+        reportError(err);
+        return;
+      }
+    }
+    if (full) {
+      body.replaceChildren(buildProfileView(full, catalogue, { showName: false }), removeFriendActions(friend));
+      return;
+    }
+
     let profile;
     try {
       profile = await getFriendProfile(friend.friend_id);
@@ -235,7 +253,12 @@ export function setupFriends({ catalogue }) {
     }
     nodes.push(el("p", "sheet-subtitle", `Collection : ${profile.cards_owned} / ${profile.cards_total} cartes`));
 
-    // Retirer un ami : 2 touchers pour éviter l'erreur.
+    nodes.push(removeFriendActions(friend));
+    body.replaceChildren(...nodes);
+  }
+
+  /** Bouton « Retirer cet ami » : 2 touchers pour éviter l'erreur. */
+  function removeFriendActions(friend) {
     let armed = false;
     const remove = button("Retirer cet ami", {
       onClick: async () => {
@@ -251,8 +274,7 @@ export function setupFriends({ catalogue }) {
     });
     const actions = el("div", "sheet-actions");
     actions.append(remove);
-    nodes.push(actions);
-    body.replaceChildren(...nodes);
+    return actions;
   }
 
   // --- Mise à jour ---------------------------------------------------------------------
