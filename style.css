@@ -2031,7 +2031,18 @@ body[data-auth="public"] .public {
 .rule.ok .rule-mark { color: #7fd99a; }
 .rule.no .rule-mark { color: #ff8a7a; }
 
-.videur-canvas { display: block; margin: 0 auto 14px; width: 128px; height: 192px; /* ×2 : facteur entier */ background: #cccac4; border-radius: 28px; }
+/* Tenue en 3D (même rendu que l'écran Tenue) : fond gris sombre, canvas 46×88 ×3 (×4 sur tablette / PC) */
+.videur-outfit { display: flex; flex-direction: column; align-items: center; gap: 6px; margin: 0 auto 14px; }
+.videur-stage {
+  --avatar3d-scale: 3;
+  display: flex;
+  justify-content: center;
+  padding: 8px 18px;
+  border-radius: 28px;
+  background: radial-gradient(ellipse at 50% 40%, #34353c 0%, #2a2b31 60%, #232429 100%);
+}
+@media (min-width: 700px) { .videur-stage { --avatar3d-scale: 4; } }
+.videur-outfit-hint { font-size: 12px; font-weight: 600; text-align: center; }
 .videur-empty { text-align: center; }
 .gauge { margin-bottom: 12px; }
 .gauge-head { display: flex; justify-content: space-between; font-weight: 700; font-size: 14px; margin-bottom: 6px; }

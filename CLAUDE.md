@@ -322,7 +322,8 @@ Ne pas passer plus de 30 minutes bloqué sur l'avatar : simplifier plutôt que p
 - **Ordre de dessin** : chaussures → bas (le pantalon tombe sur la chaussure) → haut → veste → cou → tête → sac.
 - **Les 20 pièces (75 coloris) ont leur modèle 3D.** Sacs : sacoche « Tournée » portée en banane devant (sangle autour de la taille), sac « Losange » et tote « Miettes » tenus à la hanche droite avec leurs anses ; écharpe : tour de cou + deux pans devant ; casquette : calotte + visière ; chaussures : silhouette de profil extrudée. Vérifié : les 75 coloris se construisent et se dessinent sans erreur sur les deux corps. Si une future pièce n'a pas de modèle, la mention « Pas encore en 3D : … » la liste sous l'avatar.
 - **Limites connues** : dos et côtés = couleur principale (pas de logo dans le dos) ; sacs tenus à la hanche vus de face un peu « flottants » ; chaussures longues et cachées sous les pantalons larges ; pas de poches ni de plis.
-- **Reste à faire (hors périmètre pour l'instant)** : skins (voir la règle de mensuration), avatar 3D éventuel sur la page publique, le profil d'un ami et le Videur, retouches de détail des modèles.
+- **Avatar 3D aussi** sur la page de profil (soi-même et amis) et dans l'écran **Videur** (aperçu de la tenue).
+- **Reste à faire (hors périmètre pour l'instant)** : skins (voir la règle de mensuration), avatar 3D éventuel sur la page publique, retouches de détail des modèles.
 
 ## 8. Direction artistique de l'interface
 
@@ -464,11 +465,11 @@ Chaque porte exige un minimum sur **les deux** ; le refus dit laquelle manque (�
 ### Interface (aucun décor illustré pour l'instant)
 
 - Nouvel écran **« Videur »**. La barre du bas a déjà 5 onglets : vérifier qu'un 6e tient à 320 px, sinon trouver une autre place.
-- Contenu : la soirée du jour (nom, dress code en 2-3 lignes) ; la tenue actuelle « à plat » avec accès rapide pour la changer ; les deux jauges avec leurs seuils (aperçu) ; bouton « Se présenter » ; verdict avec la réplique du videur et la liste de ce qui a joué ; Flow gagné et série.
+- Contenu : la soirée du jour (nom, dress code en 2-3 lignes) ; la tenue actuelle **en 3D** (même avatar que l'écran Tenue, Garçon / Fille du joueur, qu'on fait tourner en glissant ; fond gris sombre, ×3 sur téléphone, ×4 tablette / PC) avec accès rapide pour la changer ; les deux jauges avec leurs seuils (aperçu) ; bouton « Se présenter » ; verdict avec la réplique du videur et la liste de ce qui a joué ; Flow gagné et série.
 - Ambiance **sans illustration** : porte et enseigne en CSS (nom du lieu en Archivo, couleur par porte : bleu Bar, violet Club, or VIP comme les raretés), halo derrière la tenue, flash vert / rouge au verdict, sons synthétisés (coup à la porte, basse étouffée, son d'entrée / de refus). Le pixel art reste réservé aux vêtements et à l'avatar (section 8).
 - Ton du videur : **sobre et sec** (défaut, à confirmer).
 - Mesure : chaque essai est enregistré dans `videur_attempts` ; la vue `analytics_videur_daily` (essais, réussites, joueurs, Flow distribué par jour et par porte) se lit dans le SQL Editor, avec les vues de la section 15. L'écran compte aussi dans `screen_view`.
-- **Code** : `js/videur.js` (écran : onglets des portes, enseigne CSS, règles ✔/✖ de l'aperçu, tenue à plat, jauges Style / Rareté avec trait du seuil, bouton « Se présenter », fiche de verdict avec réplique) ; barre du bas : Booster, Collection, Market, **Videur**, Amis, Tenue (6 onglets, testés jusqu'à 320 px). Contenu de départ : 12 dress codes (4 par porte), 36 répliques, étiquettes de couleur des 75 coloris. Seul le **titre sur la tenue partagée** et la **boutique de Flow** restent à faire.
+- **Code** : `js/videur.js` (écran : onglets des portes, enseigne CSS, règles ✔/✖ de l'aperçu, tenue en 3D (`createAvatar3D`), jauges Style / Rareté avec trait du seuil, bouton « Se présenter », fiche de verdict avec réplique) ; barre du bas : Booster, Collection, Market, **Videur**, Amis, Tenue (6 onglets, testés jusqu'à 320 px). Contenu de départ : 12 dress codes (4 par porte), 36 répliques, étiquettes de couleur des 75 coloris. Seul le **titre sur la tenue partagée** et la **boutique de Flow** restent à faire.
 - **Tenue évaluée** : seulement les pièces portées ET encore possédées ; une carte vendue ou misée ne compte plus.
 
 ### V2 — règles CACHÉES par paliers de difficulté (migration 0013)

@@ -13,12 +13,13 @@
 // Pour le Club et le VIP, le serveur n'envoie jamais les règles, les seuils ni le score : il n'y a donc
 // ici aucun aperçu, aucune jauge, aucune coche. La règle du jour n'arrive qu'à la fin (`reveal`).
 
-import { getRarity } from "./data.js?v=61";
-import { getVideurNight, videurPreview, videurEnter } from "./api.js?v=61";
-import { SLOTS, initAvatar, drawAvatar } from "./avatar.js?v=61";
-import { refreshState, getEquipped } from "./inventory.js?v=61";
-import { showToast, reportError } from "./wallet.js?v=61";
-import { playSound, vibrate } from "./effects.js?v=61";
+import { getRarity } from "./data.js?v=62";
+import { getVideurNight, videurPreview, videurEnter } from "./api.js?v=62";
+import { SLOTS, readBodyChoice } from "./avatar.js?v=62";
+import { createAvatar3D } from "./avatar3d.js?v=62";
+import { refreshState, getEquipped } from "./inventory.js?v=62";
+import { showToast, reportError } from "./wallet.js?v=62";
+import { playSound, vibrate } from "./effects.js?v=62";
 
 /** Couleur d'enseigne de chaque porte (comme les raretés : bleu, violet, or). */
 const DOOR_COLOR = { bar: "var(--rarity-rare)", club: "var(--rarity-epique)", vip: "var(--rarity-legendaire)" };
@@ -129,17 +130,26 @@ export function setupVideur({ catalogue }) {
     return wrap;
   }
 
-  /** Tenue portée « à plat » (pièces renvoyées par le serveur : seulement celles encore possédées). */
+  /**
+   * Tenue portée en 3D, sur l'avatar du joueur (Garçon / Fille), qu'on fait tourner en glissant.
+   * Pièces renvoyées par le serveur : seulement celles encore possédées.
+   */
   function outfitCanvas(pieces) {
     const worn = {};
     for (const p of pieces) {
       const colorway = catalogue.colorwayById.get(p.colorway_id);
       if (colorway) worn[p.slot] = colorway;
     }
-    const canvas = el("canvas", "pixel videur-canvas");
-    initAvatar(canvas);
-    drawAvatar(canvas, worn).catch(() => {});
-    return canvas;
+    const stage = el("div", "videur-stage");
+    const canvas = el("canvas", "pixel avatar-3d videur-avatar");
+    canvas.width = 46;  // même canvas que l'écran Tenue (recadré sur l'avatar)
+    canvas.height = 88;
+    canvas.setAttribute("aria-label", "Ta tenue en 3D : glisse pour la faire tourner");
+    stage.append(canvas);
+    createAvatar3D(canvas).setOutfit(worn, { type: readBodyChoice() }).catch((err) => console.error("Avatar 3D :", err));
+    const wrap = el("div", "videur-outfit");
+    wrap.append(stage, el("p", "muted videur-outfit-hint", "Glisse pour tourner"));
+    return wrap;
   }
 
   function rulesList(rules) {
@@ -153,7 +163,7 @@ export function setupVideur({ catalogue }) {
     return list;
   }
 
-  /** Tenue portée « à plat », lue dans le cache du jeu (pour le Club et le VIP, sans passer par un aperçu). */
+  /** Tenue portée, lue dans le cache du jeu (pour le Club et le VIP, sans passer par un aperçu). */
   function worn() {
     const pieces = [];
     for (const slot of SLOTS) {
