@@ -6,13 +6,13 @@
 // et envoie les actions (market_list / market_cancel / market_buy / market_ack_sales).
 // Aucune règle du Market n'est calculée ici ; les messages d'erreur viennent du serveur.
 
-import { RARITIES, getRarity, matchesSearch } from "./data.js?v=41";
-import { MARKET } from "./economy-config.js?v=41";
-import { getOwnedCards, getCoins, getMyListings, refreshState } from "./inventory.js?v=41";
-import { getBestOffers, marketList, marketCancel, marketBuy, marketAckSales } from "./api.js?v=41";
-import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=41";
-import { playSound, vibrate } from "./effects.js?v=41";
-import { flyCoins, showToast, reportError } from "./wallet.js?v=41";
+import { RARITIES, getRarity, matchesSearch } from "./data.js?v=42";
+import { MARKET } from "./economy-config.js?v=42";
+import { getOwnedCards, getCoins, getMyListings, refreshState } from "./inventory.js?v=42";
+import { getBestOffers, marketList, marketCancel, marketBuy, marketAckSales, marketHistory } from "./api.js?v=42";
+import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=42";
+import { playSound, vibrate } from "./effects.js?v=42";
+import { flyCoins, showToast, reportError } from "./wallet.js?v=42";
 
 const CATEGORIES = [
   { id: "haut", name: "Haut" },
@@ -63,6 +63,7 @@ export function setupMarket({ catalogue, onChange }) {
     renderSell();
     renderMine();
     renderSummary();
+    loadHistory();
     onChange?.();
   }
 
@@ -404,6 +405,70 @@ export function setupMarket({ catalogue, onChange }) {
     }));
     mineEmpty.hidden = listings.length > 0;
   }
+
+  // --- 4. Historique : mes achats et mes ventes (lus sur le serveur) -----------------
+
+  const historyList = document.getElementById("market-history-list");
+  const historyEmpty = document.getElementById("market-history-empty");
+  const historyTotals = document.getElementById("market-history-totals");
+  const historyMore = document.getElementById("market-history-more");
+  let history = []; // lignes reçues, du plus récent au plus ancien
+
+  const dateFmt = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+
+  function historyRow(t) {
+    const colorway = catalogue.colorwayById.get(t.colorway_id);
+    if (!colorway) return null;
+    const bought = t.kind === "market_buy";
+    const row = document.createElement("div");
+    row.className = "market-row";
+    row.dataset.rarity = t.rarity;
+    const tile = document.createElement("span");
+    tile.className = "atelier-chip-tile";
+    const img = document.createElement("img");
+    img.className = "pixel";
+    img.src = colorway.sprite;
+    img.width = 32;
+    img.height = 32;
+    img.alt = "";
+    tile.append(img);
+    const info = document.createElement("div");
+    info.className = "market-row-info";
+    const name = document.createElement("span");
+    name.className = "market-row-name";
+    name.textContent = colorway.piece.name;
+    const sub = document.createElement("span");
+    sub.className = "market-row-sub history-sub";
+    sub.textContent = `${bought ? "Acheté" : "Vendu"} · ${colorway.name} · ${getRarity(t.rarity).name} · ${dateFmt.format(new Date(t.created_at))}`;
+    info.append(name, sub);
+    const amount = coinText(t.coins);
+    amount.classList.add("market-row-price", bought ? "history-out" : "history-in");
+    amount.prepend(document.createTextNode(bought ? "−" : "+"));
+    row.append(tile, info, amount);
+    return row;
+  }
+
+  function renderHistory() {
+    historyList.replaceChildren(...history.map(historyRow).filter(Boolean));
+    historyEmpty.hidden = history.length > 0;
+  }
+
+  /** Relit l'historique (les plus récentes lignes) ; « Voir plus » ajoute les plus anciennes. */
+  async function loadHistory({ more = false } = {}) {
+    try {
+      const data = await marketHistory(more && history.length ? history[history.length - 1].id : null);
+      history = more ? history.concat(data.items) : data.items;
+      historyTotals.textContent = `Dépensé : ${data.total_spent.toLocaleString("fr-FR")} pièces · Gagné : ${data.total_earned.toLocaleString("fr-FR")} pièces`;
+      historyTotals.hidden = false;
+      historyMore.hidden = !data.has_more;
+      renderHistory();
+    } catch (err) {
+      reportError(err);
+    }
+  }
+
+  historyMore.addEventListener("click", () => loadHistory({ more: true }));
+  document.querySelector('.view-tab[data-view="market-history"]').addEventListener("click", () => loadHistory());
 
   // --- Ensemble ---------------------------------------------------------------------
 

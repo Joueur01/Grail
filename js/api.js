@@ -6,7 +6,7 @@
 // amélioration. Ne remettre AUCUNE logique de jeu ici ni ailleurs côté client.
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase-config.js?v=41";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase-config.js?v=42";
 
 // Le lien « mot de passe oublié » reçu par e-mail ramène sur le site avec « type=recovery » dans
 // l'adresse. On le note AVANT que supabase-js ne traite (et n'efface) l'adresse.
@@ -164,6 +164,9 @@ export const marketCancel = (id) => rpc("market_cancel", { p_id: id });
 export const marketBuy = (id, expectedPrice) => rpc("market_buy", { p_id: id, p_expected_price: expectedPrice });
 /** → [{ id, colorway_id, rarity, price }] : ventes terminées pas encore vues */
 export const marketAckSales = () => rpc("market_ack_sales");
+/** Historique de MES achats et ventes (migration 0009), du plus récent au plus ancien. p_before = id de la dernière ligne reçue.
+ *  → { items: [{ id, kind: "market_buy" | "market_sale", coins, colorway_id, rarity, created_at }], has_more, total_spent, total_earned } */
+export const marketHistory = (before = null) => rpc("market_history", { p_limit: 30, p_before: before });
 
 // --- Amis (migration 0005) ---------------------------------------------------------
 
