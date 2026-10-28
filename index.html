@@ -17,7 +17,7 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=37">
+  <link rel="stylesheet" href="style.css?v=38">
 </head>
 <body>
   <header class="topbar">
@@ -45,6 +45,30 @@
         <input class="auth-input" id="auth-password" type="password" autocomplete="current-password" minlength="6" required>
         <p class="auth-message" id="auth-message" role="status" hidden></p>
         <button class="btn btn-primary" id="auth-submit" type="submit">Se connecter</button>
+        <button class="auth-link" id="auth-forgot" type="button">Mot de passe oublié ?</button>
+      </form>
+
+      <!-- Mot de passe oublié : on envoie un lien par e-mail -->
+      <form class="auth-form" id="reset-form" novalidate hidden>
+        <h2 class="auth-title">Mot de passe oublié</h2>
+        <p class="muted auth-hint">Entre l'adresse e-mail de ton compte : on t'envoie un lien pour choisir un nouveau mot de passe.</p>
+        <label class="auth-label" for="reset-email">E-mail</label>
+        <input class="auth-input" id="reset-email" type="email" inputmode="email" autocomplete="email" autocapitalize="none" required>
+        <p class="auth-message" id="reset-message" role="status" hidden></p>
+        <button class="btn btn-primary" id="reset-submit" type="submit">Envoyer le lien</button>
+        <button class="auth-link" id="reset-back" type="button">Retour à la connexion</button>
+      </form>
+
+      <!-- Arrivée par le lien reçu par e-mail : nouveau mot de passe -->
+      <form class="auth-form" id="recovery-form" novalidate hidden>
+        <h2 class="auth-title">Nouveau mot de passe</h2>
+        <label class="auth-label" for="recovery-password">Nouveau mot de passe</label>
+        <input class="auth-input" id="recovery-password" type="password" autocomplete="new-password" minlength="6" required>
+        <label class="auth-label" for="recovery-confirm">Confirme-le</label>
+        <input class="auth-input" id="recovery-confirm" type="password" autocomplete="new-password" minlength="6" required>
+        <p class="auth-message" id="recovery-message" role="status" hidden></p>
+        <button class="btn btn-primary" id="recovery-submit" type="submit">Enregistrer</button>
+        <button class="auth-link" id="recovery-back" type="button">Lien expiré ? Redemander un e-mail</button>
       </form>
     </div>
   </div>
@@ -323,6 +347,6 @@
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=37"></script>
+  <script type="module" src="js/main.js?v=38"></script>
 </body>
 </html>

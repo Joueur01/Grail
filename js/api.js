@@ -6,11 +6,23 @@
 // amélioration. Ne remettre AUCUNE logique de jeu ici ni ailleurs côté client.
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase-config.js?v=37";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase-config.js?v=38";
+
+// Le lien « mot de passe oublié » reçu par e-mail ramène sur le site avec « type=recovery » dans
+// l'adresse. On le note AVANT que supabase-js ne traite (et n'efface) l'adresse.
+let recoveryLink = /[#&?]type=recovery\b/.test(location.hash + location.search);
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
 });
+
+supabase.auth.onAuthStateChange((event) => {
+  if (event === "PASSWORD_RECOVERY") recoveryLink = true;
+});
+
+/** true si le joueur arrive depuis le lien « mot de passe oublié » (il doit choisir un nouveau mot de passe). */
+export const isRecoveryLink = () => recoveryLink;
+export const endRecovery = () => { recoveryLink = false; };
 
 // --- Erreurs lisibles ------------------------------------------------------------
 
@@ -86,6 +98,20 @@ export async function getSession() {
   return data.session;
 }
 
+/** Envoie le lien de réinitialisation. Le message affiché reste le même que le compte existe ou non. */
+export async function requestPasswordReset(email) {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: location.origin + location.pathname,
+  });
+  if (error) throw new ApiError(authMessage(error));
+}
+
+/** Choisit un nouveau mot de passe (le joueur est connecté par le lien de réinitialisation). */
+export async function updatePassword(password) {
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) throw new ApiError(authMessage(error));
+}
+
 /** Messages de connexion en français. */
 function authMessage(error) {
   const msg = String(error?.message || "");
@@ -94,7 +120,10 @@ function authMessage(error) {
   if (/already registered|already been registered/i.test(msg)) return "Un compte existe déjà avec cet e-mail. Connecte-toi.";
   if (/password.*(at least|short|characters)/i.test(msg)) return "Mot de passe trop court (6 caractères minimum).";
   if (/valid email|invalid email|unable to validate email/i.test(msg)) return "Adresse e-mail invalide.";
-  if (/rate limit|too many/i.test(msg)) return "Trop de tentatives. Patiente un moment puis réessaie.";
+  if (/rate limit|too many|only request this after/i.test(msg)) return "Trop de tentatives. Patiente un moment puis réessaie.";
+  if (/different from the old|same as the old/i.test(msg)) return "Choisis un mot de passe différent de l'ancien.";
+  if (/session missing|session expired|expired|invalid token/i.test(msg)) return "Ce lien a expiré. Redemande un e-mail de réinitialisation.";
+  if (/weak password|should contain|password should/i.test(msg)) return "Mot de passe trop faible : ajoute des caractères (6 minimum).";
   return friendlyMessage(error);
 }
 

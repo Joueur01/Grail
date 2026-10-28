@@ -154,6 +154,21 @@ body[data-auth="out"] .auth {
 .auth-message[data-kind="error"] { color: #ff7a6b; }
 .auth-message[data-kind="ok"] { color: var(--rarity-legendaire); }
 .auth-form .btn { margin-top: 8px; }
+.auth-title { margin: 0; font-size: 22px; font-weight: 900; font-stretch: 125%; text-align: center; }
+.auth-hint { margin: 0; font-size: 14px; text-align: center; }
+.auth-link {
+  align-self: center;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
 .signout {
   align-self: center;
   margin-top: 8px;
