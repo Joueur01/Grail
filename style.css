@@ -2135,8 +2135,8 @@ body[data-auth="public"] .public {
 /* Cases de la vitrine (en haut de l'éditeur) : sprite ×1 sur case claire, numéro d'ordre */
 .showcase-slots {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 6px;
+  grid-template-columns: repeat(3, minmax(0, 1fr)); /* remplacé par le maximum du serveur (profile.js) */
+  gap: 8px;
 }
 .showcase-slot {
   position: relative;
@@ -2152,6 +2152,8 @@ body[data-auth="public"] .public {
 }
 .showcase-slot:disabled { background: var(--surface); border: 1.5px dashed var(--border); cursor: default; }
 .showcase-slot img { width: 32px; height: 32px; }
+.showcase-slots.few { max-width: 300px; margin: 0 auto; width: 100%; }
+.showcase-slots.few .showcase-slot img { width: 64px; height: 64px; } /* ×2, facteur entier */
 .showcase-slot-num,
 .showcase-order {
   position: absolute;
