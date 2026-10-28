@@ -17,7 +17,7 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=38">
+  <link rel="stylesheet" href="style.css?v=39">
 </head>
 <body>
   <header class="topbar">
@@ -30,6 +30,15 @@
       </span>
     </div>
   </header>
+  <!-- Tenue partagée par lien : visible SANS compte (main.js, shared-outfit.js) -->
+  <div class="public" id="public-outfit" hidden>
+    <div class="public-card">
+      <h1 class="logo auth-logo">GRAIL</h1>
+      <h2 class="auth-title">Tenue partagée</h2>
+      <div id="public-body"><p class="muted">Chargement…</p></div>
+      <a class="btn btn-primary public-cta" id="public-cta" href="./">Jouer à Grail</a>
+    </div>
+  </div>
   <!-- Connexion / création de compte : le jeu n'est accessible que connecté (main.js) -->
   <div class="auth" id="auth">
     <div class="auth-card">
@@ -299,9 +308,14 @@
         </div>
         <div class="outfit-col" id="outfit-right"></div>
       </div>
-      <!-- Partage : image PNG de la tenue (share.js) -->
+      <!-- Partage : lien public vers la tenue (principal) ou image PNG (secondaire) — share.js -->
       <button class="btn btn-primary" id="btn-share" disabled>Partager ma tenue</button>
+      <div class="share-link" id="share-link" hidden>
+        <input class="auth-input" id="share-link-input" type="text" readonly aria-label="Lien de ma tenue">
+        <button class="btn" id="btn-copy-link" type="button">Copier</button>
+      </div>
       <p class="muted share-status" id="share-status" aria-live="polite"></p>
+      <button class="btn share-image" id="btn-share-image" disabled>Enregistrer en image</button>
       <button class="signout" id="btn-signout">Se déconnecter</button>
     </section>
   </main>
@@ -347,6 +361,6 @@
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=38"></script>
+  <script type="module" src="js/main.js?v=39"></script>
 </body>
 </html>

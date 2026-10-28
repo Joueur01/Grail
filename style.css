@@ -115,7 +115,11 @@ body {
 /* Écran de connexion : tant qu'on n'est pas connecté, le jeu est caché */
 body[data-auth="out"] .topbar,
 body[data-auth="out"] main,
-body[data-auth="out"] .tabbar { display: none; }
+body[data-auth="out"] .tabbar,
+body[data-auth="public"] .topbar,
+body[data-auth="public"] main,
+body[data-auth="public"] .tabbar,
+body[data-auth="public"] .auth { display: none; }
 .auth { display: none; }
 body[data-auth="out"] .auth {
   display: grid;
@@ -1799,3 +1803,23 @@ main {
   color: var(--text);
   font-weight: 800;
 }
+
+/* Partage de la tenue par lien */
+.share-link { display: flex; gap: 8px; margin-top: 10px; }
+.share-link .auth-input { flex: 1; min-width: 0; }
+.share-link .btn { width: auto; padding-inline: 18px; }
+.share-image { margin-top: 10px; background: none; color: var(--muted); border: 1px solid var(--border); }
+
+/* Page publique d'une tenue partagée (sans compte) */
+.public { display: none; }
+body[data-auth="public"] .public {
+  display: grid;
+  place-items: start center;
+  min-height: 100dvh;
+  padding: calc(24px + env(safe-area-inset-top)) var(--gutter) 32px;
+}
+.public-card { display: flex; flex-direction: column; gap: 18px; width: min(460px, 100%); }
+.public-card .auth-title { text-align: center; }
+.public-canvas { align-self: center; display: block; margin: 0 auto 14px; background: #cccac4; border-radius: 28px; width: 128px; height: 192px; /* ×2 : facteur entier */ }
+@media (min-width: 600px) { .public-canvas { width: 256px; height: 384px; /* ×4 */ } }
+.public-cta { text-decoration: none; text-align: center; display: grid; place-items: center; }
