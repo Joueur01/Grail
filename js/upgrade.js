@@ -12,13 +12,13 @@
 //   - les cartes misées sont perdues dans tous les cas ; une Légendaire ne s'améliore pas.
 // La défausse est dans discard.js (le bouton de la fiche l'ouvre).
 
-import { RARITIES, getRarity } from "./data.js?v=82";
-import { UPGRADE, DISCARD_VALUES } from "./economy-config.js?v=82";
-import { getOwnedCards, countCard, isLocked, setLocked, refreshState } from "./inventory.js?v=82";
-import { upgradeCards } from "./api.js?v=82";
-import { reportError } from "./wallet.js?v=82";
-import { createCardFace, createCardShell } from "./cards.js?v=82";
-import { playSound, vibrate, burst } from "./effects.js?v=82";
+import { RARITIES, getRarity } from "./data.js?v=83";
+import { UPGRADE, DISCARD_VALUES } from "./economy-config.js?v=83";
+import { getOwnedCards, countCard, isLocked, setLocked, refreshState } from "./inventory.js?v=83";
+import { upgradeCards } from "./api.js?v=83";
+import { reportError } from "./wallet.js?v=83";
+import { createCardFace, createCardShell } from "./cards.js?v=83";
+import { playSound, vibrate, burst } from "./effects.js?v=83";
 
 const SPIN_TIME = 3200; // durée de la roue (identique au CSS)
 
