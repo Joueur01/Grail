@@ -6,11 +6,11 @@
 // Si le serveur change une valeur, la mettre à jour dans ce fichier-là, pas ici.
 // Les règles cachées du Videur (Club, VIP) ne sont volontairement PAS décrites.
 
-import { RARITIES } from "./data.js?v=85";
+import { RARITIES } from "./data.js?v=86";
 import {
   DROP_RATES, BOOSTER, PITY, UPGRADE, DISCARD_VALUES, MARKET, SHOP, FRIENDS, saleTax, saleNet,
   DAILY_BONUS, REPUTATION, SHOWCASE, VIDEUR_INFO,
-} from "./economy-config.js?v=85";
+} from "./economy-config.js?v=86";
 
 function el(tag, className, text) {
   const e = document.createElement(tag);
@@ -127,7 +127,7 @@ function buildSections(catalogue) {
     ]),
     sub("Règles du Market"),
     bullets([
-      "Prix fixes, pas d'enchères. Pour chaque carte, seule l'offre la moins chère est affichée.",
+      "Prix fixes, pas d'enchères. Le Market est un catalogue : choisis un modèle, un coloris puis une rareté pour voir toutes les offres de la carte, de la moins chère à la plus chère. Tu ne vois jamais qui vend : seulement « Joueur » ou « Boutique Grail ».",
       `${MARKET.maxListings} ventes en même temps au maximum ; prix de ${MARKET.minPrice} à ${MARKET.maxPrice.toLocaleString("fr-FR")} pièces.`,
       "Une carte en vente quitte ta collection ; si tu retires l'offre, elle revient.",
       "Une carte verrouillée ne peut pas être vendue. Si le prix a changé au moment d'acheter, l'achat est refusé.",

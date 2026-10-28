@@ -29,7 +29,7 @@ let catalogue = null;
 export async function loadCatalogue() {
   if (catalogue) return catalogue;
 
-  const response = await fetch("data/pieces.json?v=85");
+  const response = await fetch("data/pieces.json?v=86");
   if (!response.ok) throw new Error(`Catalogue introuvable (${response.status})`);
   const raw = await response.json();
 

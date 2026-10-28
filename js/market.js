@@ -2,17 +2,18 @@
 //
 // ⚠️ Le Market est géré par le SERVEUR : prix fixes, limite de 10 ventes, cartes verrouillées
 // non vendables, paiement du vendeur à l'achat… Ce fichier affiche les offres reçues
-// (market_best_offers : UNE seule offre par carte, la moins chère, jamais le nombre d'offres)
-// et envoie les actions (market_list / market_cancel / market_buy / market_ack_sales).
+// (catalogue du Marché : nombre d'offres, meilleur prix, dernières ventes ; toutes les offres d'une carte ;
+// jamais l'identité d'un vendeur : voir market-browse.js) et envoie les actions (market_list / market_cancel / market_buy / market_ack_sales).
 // Aucune règle du Market n'est calculée ici ; les messages d'erreur viennent du serveur.
 
-import { RARITIES, getRarity, matchesSearch } from "./data.js?v=85";
-import { MARKET, saleTax, saleNet } from "./economy-config.js?v=85";
-import { getOwnedCards, getCoins, getMyListings, refreshState } from "./inventory.js?v=85";
-import { getBestOffers, getMarketShop, marketList, marketCancel, marketBuy, marketAckSales, marketHistory } from "./api.js?v=85";
-import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=85";
-import { playSound, vibrate } from "./effects.js?v=85";
-import { flyCoins, showToast, reportError } from "./wallet.js?v=85";
+import { RARITIES, getRarity, matchesSearch } from "./data.js?v=86";
+import { MARKET, saleTax, saleNet } from "./economy-config.js?v=86";
+import { getOwnedCards, getCoins, getMyListings, refreshState } from "./inventory.js?v=86";
+import { getBestOffers, getMarketShop, getMarketCatalog, getMarketCardOffers, marketList, marketCancel, marketBuy, marketAckSales, marketHistory } from "./api.js?v=86";
+import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=86";
+import { createMarketBrowse } from "./market-browse.js?v=86";
+import { playSound, vibrate } from "./effects.js?v=86";
+import { flyCoins, showToast, reportError } from "./wallet.js?v=86";
 
 const CATEGORIES = [
   { id: "haut", name: "Haut" },
@@ -76,9 +77,13 @@ export function setupMarket({ catalogue, onChange }) {
   async function loadOffers() {
     try {
       await loadShop(); // avant de lire les offres : la sélection du jour est renouvelée par le serveur au besoin
-      offers = (await getBestOffers()).map((o) => ({
+      // Meilleures offres (pour la fiche « Vendre ») + catalogue du Marché (nombre d'offres, dernières ventes).
+      // Sans la migration 0028, le catalogue est absent : le Marché retombe sur les seules meilleures offres.
+      const [best, catalog] = await Promise.all([getBestOffers(), getMarketCatalog().catch(() => null)]);
+      offers = best.map((o) => ({
         id: o.id, colorwayId: o.colorway_id, rarity: o.rarity, price: o.price, mine: o.is_mine, shop: !!o.is_shop,
       }));
+      browse.setData(catalog, offers);
       renderBuy();
     } catch (err) {
       reportError(err);
@@ -155,87 +160,15 @@ export function setupMarket({ catalogue, onChange }) {
     return el;
   }
 
-  // --- 1. Acheter -------------------------------------------------------------------
+  // --- 1. Acheter : catalogue (modèle → coloris et rareté → offres), voir market-browse.js ----------
 
-  const buyGrid = document.getElementById("market-grid");
-  const buyEmpty = document.getElementById("market-empty");
-  const buySearch = document.getElementById("search-market");
-  const buyRarity = document.getElementById("market-rarity");
-  const buyType = document.getElementById("market-type");
-  const buySort = document.getElementById("market-sort");
-
-  for (const [select, items] of [[buyRarity, [...RARITIES].reverse()], [buyType, CATEGORIES]]) {
-    for (const item of items) select.append(new Option(item.name, item.id));
-  }
-
-  function renderBuy() {
-    const sorters = {
-      price: (a, b) => a.price - b.price,
-      priceDesc: (a, b) => b.price - a.price,
-      rarity: (a, b) => (rank.get(b.rarity) - rank.get(a.rarity)) || (a.price - b.price),
-      catalogue: (a, b) => order.get(a.colorwayId) - order.get(b.colorwayId),
-    };
-    const visible = offers
-      .filter((o) => {
-        const cw = catalogue.colorwayById.get(o.colorwayId);
-        return cw
-          && matchesSearch(buySearch.value, [cw.piece.name, cw.name, cw.brand.name, getRarity(o.rarity).name])
-          && (!buyRarity.value || o.rarity === buyRarity.value)
-          && (!buyType.value || cw.piece.category === buyType.value);
-      })
-      .sort((a, b) => (sorters[buySort.value] || sorters.price)(a, b) || (order.get(a.colorwayId) - order.get(b.colorwayId)));
-
-    buyGrid.replaceChildren(...visible.map((o) => {
-      const el = gridCard(o.colorwayId, o.rarity, () => openOffer(o), `${o.price} pièces${o.mine ? ", ton offre" : ""}${o.shop ? `, ${shopName()}` : ""}`);
-      const badge = document.createElement("span");
-      badge.className = o.mine ? "price-badge mine" : "price-badge";
-      badge.append(coinText(o.price));
-      el.append(badge);
-      if (o.mine) {
-        const mine = document.createElement("span");
-        mine.className = "mine-badge";
-        mine.textContent = "Ton offre";
-        el.append(mine);
-      }
-      if (o.shop) {
-        const tag = document.createElement("span");
-        tag.className = "shop-badge";
-        tag.textContent = "Boutique";
-        el.append(tag);
-      }
-      return el;
-    }));
-    buyEmpty.hidden = visible.length > 0;
-  }
-
-  /** Fiche d'une offre : acheter, ou retirer si c'est la mienne. */
-  function openOffer(offer) {
-    const colorway = catalogue.colorwayById.get(offer.colorwayId);
-    const owned = getOwnedCards().find((c) => c.colorwayId === offer.colorwayId && c.rarity === offer.rarity);
-    const price = document.createElement("p");
-    price.className = "market-price";
-    price.append(coinText(offer.price));
-    const actions = document.createElement("div");
-    actions.className = "sheet-actions";
-
-    if (offer.mine) {
-      actions.append(
-        button("Retirer mon offre", { primary: true, onClick: () => cancelOffer(offer.id) }),
-      );
-      open(colorway.piece.name, bigCard(offer.colorwayId, offer.rarity), price, para("C'est ton offre : c'est la moins chère du market pour cette carte."), actions);
-      return;
-    }
-    const missing = offer.price - getCoins();
-    actions.append(button(missing > 0 ? `Il te manque ${missing} pièces` : `Acheter · ${offer.price} pièces`, {
-      primary: true,
-      disabled: missing > 0,
-      onClick: () => confirmBuy(offer),
-    }));
-    open(colorway.piece.name, bigCard(offer.colorwayId, offer.rarity), price,
-      ...(offer.shop ? [para(`Offre de la ${shopName()}, pas d'un joueur. Aucune taxe : les pièces dépensées ici disparaissent du jeu.`)] : []),
-      para(`Ton solde : ${getCoins().toLocaleString("fr-FR")} pièces${owned ? ` · tu en as déjà ${owned.count}` : " · nouvelle carte pour toi"}`),
-      actions);
-  }
+  const browse = createMarketBrowse({
+    catalogue,
+    root: document.getElementById("market-browse"),
+    ui: { coinText, button, bigCard, shopName, confirmBuy, cancelOffer, openSell },
+    loadCardOffers: getMarketCardOffers,
+  });
+  const renderBuy = () => browse.render();
 
   /** Achète l'offre : le serveur vérifie le solde et le prix affiché (« Le prix a changé »). */
   async function confirmBuy(offer) {
@@ -553,7 +486,6 @@ export function setupMarket({ catalogue, onChange }) {
     await ackSales();
   }
 
-  for (const el of [buySearch, buyRarity, buyType, buySort]) el.addEventListener(el === buySearch ? "input" : "change", renderBuy);
   for (const el of [sellSearch, sellRarity, sellType]) el.addEventListener(el === sellSearch ? "input" : "change", renderSell);
 
   renderBuy();
