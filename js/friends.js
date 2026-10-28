@@ -5,11 +5,11 @@
 // serveur renvoie et envoie les actions. Il n'existe aucune liste publique de joueurs :
 // on ne retrouve quelqu'un qu'avec son pseudo EXACT.
 
-import { getRarity } from "./data.js?v=37";
-import { setPseudo, listFriends, friendRequest, friendRespond, friendRemove, getFriendProfile } from "./api.js?v=37";
-import { SLOTS, initAvatar, drawAvatar } from "./avatar.js?v=37";
-import { showToast, reportError } from "./wallet.js?v=37";
-import { FRIENDS } from "./economy-config.js?v=37";
+import { getRarity } from "./data.js?v=38";
+import { setPseudo, listFriends, friendRequest, friendRespond, friendRemove, getFriendProfile } from "./api.js?v=38";
+import { SLOTS, initAvatar, drawAvatar } from "./avatar.js?v=38";
+import { showToast, reportError } from "./wallet.js?v=38";
+import { FRIENDS } from "./economy-config.js?v=38";
 
 /**
  * Branche l'écran Amis.

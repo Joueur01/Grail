@@ -7,18 +7,18 @@
 // ?v=… sur les imports : même numéro que dans index.html, et le même partout
 // (un module importé sous deux adresses différentes serait chargé deux fois).
 
-import { loadCatalogue } from "./data.js?v=37";
-import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=37";
-import { initAvatar, setupOutfit } from "./avatar.js?v=37";
-import { setupBooster } from "./booster.js?v=37";
-import { setupShare } from "./share.js?v=37";
-import { setupUpgrade } from "./upgrade.js?v=37";
-import { setupAtelier, setupViewSwitch } from "./atelier.js?v=37";
-import { setupWallet, reportError } from "./wallet.js?v=37";
-import { setupDiscard, createSelection } from "./discard.js?v=37";
-import { setupMarket } from "./market.js?v=37";
-import { setupFriends } from "./friends.js?v=37";
-import { getSession, signIn, signUp, signOut, supabase } from "./api.js?v=37";
+import { loadCatalogue } from "./data.js?v=38";
+import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=38";
+import { initAvatar, setupOutfit } from "./avatar.js?v=38";
+import { setupBooster } from "./booster.js?v=38";
+import { setupShare } from "./share.js?v=38";
+import { setupUpgrade } from "./upgrade.js?v=38";
+import { setupAtelier, setupViewSwitch } from "./atelier.js?v=38";
+import { setupWallet, reportError, showToast } from "./wallet.js?v=38";
+import { setupDiscard, createSelection } from "./discard.js?v=38";
+import { setupMarket } from "./market.js?v=38";
+import { setupFriends } from "./friends.js?v=38";
+import { getSession, signIn, signUp, signOut, supabase, requestPasswordReset, updatePassword, isRecoveryLink, endRecovery } from "./api.js?v=38";
 
 const SCREENS = ["booster", "collection", "market", "friends", "avatar"];
 
@@ -48,14 +48,28 @@ function blockPinchZoom() {
 
 // --- Écran de connexion / création de compte ---------------------------------------
 
-/** Montre l'écran de connexion (le jeu reste caché tant qu'on n'est pas connecté). */
-function showAuth({ message = "", tab = "signin" } = {}) {
+/**
+ * Panneau affiché dans l'écran de connexion :
+ * "main" (connexion / création de compte), "reset" (mot de passe oublié),
+ * "recovery" (choisir un nouveau mot de passe, depuis le lien reçu par e-mail).
+ */
+function showPanel(name) {
   document.body.dataset.auth = "out";
+  document.getElementById("auth-form").hidden = name !== "main";
+  document.getElementById("reset-form").hidden = name !== "reset";
+  document.getElementById("recovery-form").hidden = name !== "recovery";
+  document.querySelector(".auth-card .view-switch").hidden = name !== "main";
+}
+
+/** Montre l'écran de connexion (le jeu reste caché tant qu'on n'est pas connecté). */
+function showAuth({ message = "", tab = "signin", kind = "ok" } = {}) {
+  showPanel("main");
   const form = document.getElementById("auth-form");
   const tabs = document.querySelectorAll(".auth-tab");
   const submit = document.getElementById("auth-submit");
   const note = document.getElementById("auth-message");
   const password = document.getElementById("auth-password");
+  const forgot = document.getElementById("auth-forgot");
   let mode = tab;
 
   const setMode = (m) => {
@@ -63,11 +77,17 @@ function showAuth({ message = "", tab = "signin" } = {}) {
     for (const t of tabs) t.setAttribute("aria-selected", String(t.dataset.mode === m));
     submit.textContent = m === "signin" ? "Se connecter" : "Créer mon compte";
     password.autocomplete = m === "signin" ? "current-password" : "new-password";
+    forgot.hidden = m !== "signin"; // « mot de passe oublié » n'a de sens qu'à la connexion
   };
   const say = (text, kind = "") => { note.textContent = text; note.dataset.kind = kind; note.hidden = !text; };
 
   setMode(mode);
-  say(message, "ok");
+  say(message, kind);
+  forgot.onclick = () => {
+    // L'adresse déjà tapée est reprise dans le formulaire « mot de passe oublié ».
+    document.getElementById("reset-email").value = document.getElementById("auth-email").value.trim();
+    showPanel("reset");
+  };
   for (const t of tabs) t.onclick = () => { setMode(t.dataset.mode); say(""); };
 
   form.onsubmit = async (e) => {
@@ -96,6 +116,65 @@ function showAuth({ message = "", tab = "signin" } = {}) {
       submit.disabled = false;
     }
   };
+}
+
+// --- Mot de passe oublié -------------------------------------------------------------
+
+let recovering = false; // le joueur doit d'abord choisir un nouveau mot de passe
+
+/** Branche les formulaires « mot de passe oublié » et « nouveau mot de passe ». */
+function setupPasswordRecovery() {
+  const $ = (id) => document.getElementById(id);
+  const sayIn = (id, text, kind = "") => { const n = $(id); n.textContent = text; n.dataset.kind = kind; n.hidden = !text; };
+
+  $("reset-back").onclick = () => showAuth();
+  $("recovery-back").onclick = () => { recovering = false; endRecovery(); showPanel("reset"); };
+
+  // 1. Demander le lien par e-mail
+  $("reset-form").onsubmit = async (e) => {
+    e.preventDefault();
+    const email = $("reset-email").value.trim();
+    if (!email) { sayIn("reset-message", "Entre ton adresse e-mail.", "error"); return; }
+    $("reset-submit").disabled = true;
+    sayIn("reset-message", "");
+    try {
+      await requestPasswordReset(email);
+      // Même réponse que le compte existe ou non : on ne révèle pas quelles adresses ont un compte.
+      sayIn("reset-message", "Si un compte existe avec cette adresse, un e-mail vient d'être envoyé. Pense à regarder tes courriers indésirables.", "ok");
+    } catch (err) {
+      sayIn("reset-message", err.message, "error");
+    } finally {
+      $("reset-submit").disabled = false;
+    }
+  };
+
+  // 2. Choisir le nouveau mot de passe (arrivée par le lien de l'e-mail)
+  $("recovery-form").onsubmit = async (e) => {
+    e.preventDefault();
+    const pass = $("recovery-password").value;
+    if (pass.length < 6) { sayIn("recovery-message", "Mot de passe trop court (6 caractères minimum).", "error"); return; }
+    if (pass !== $("recovery-confirm").value) { sayIn("recovery-message", "Les deux mots de passe ne sont pas identiques.", "error"); return; }
+    $("recovery-submit").disabled = true;
+    sayIn("recovery-message", "");
+    try {
+      await updatePassword(pass);
+      recovering = false;
+      endRecovery();
+      showToast("Mot de passe modifié.");
+      history.replaceState(null, "", location.pathname); // retire les jetons de l'adresse
+      boot();
+    } catch (err) {
+      sayIn("recovery-message", err.message, "error");
+    } finally {
+      $("recovery-submit").disabled = false;
+    }
+  };
+}
+
+/** Écran « nouveau mot de passe », sans le jeu derrière. */
+function showRecovery() {
+  recovering = true;
+  showPanel("recovery");
 }
 
 // --- Le jeu --------------------------------------------------------------------------
@@ -165,12 +244,17 @@ async function start() {
   } catch (err) {
     console.warn("Session :", err);
   }
-  if (session) boot();
+  setupPasswordRecovery();
+  const linkExpired = /error_code=otp_expired|error=access_denied/.test(location.hash);
+  if (isRecoveryLink()) showRecovery();                // lien « mot de passe oublié » : nouveau mot de passe d'abord
+  else if (session) boot();
+  else if (linkExpired) showAuth({ message: "Ce lien a expiré. Utilise « Mot de passe oublié ? » pour en recevoir un nouveau.", kind: "error" });
   else showAuth();
 
   // Connexion réussie (ou retour du lien de confirmation e-mail) : le jeu démarre.
   supabase.auth.onAuthStateChange((event, newSession) => {
-    if (newSession && !booted) boot();
+    if (event === "PASSWORD_RECOVERY") { showRecovery(); return; }
+    if (newSession && !booted && !recovering) boot();
     if (event === "SIGNED_OUT" && booted) location.reload();
   });
 }
