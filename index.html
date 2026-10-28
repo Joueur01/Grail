@@ -17,13 +17,18 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=78">
+  <link rel="stylesheet" href="style.css?v=79">
 </head>
 <body>
   <header class="topbar">
     <h1 class="logo">GRAIL</h1>
     <div class="topbar-right">
-      <!-- Mon profil (profile.js) : pas d'onglet en bas, la barre en a déjà 6 -->
+      <!-- Amis (friends.js) : pastille ronde à côté du profil ; le point rouge = demandes reçues -->
+      <a class="friends-button" href="#friends" data-tab="friends" aria-label="Amis">
+        <svg viewBox="0 0 22 20" width="20" height="18" aria-hidden="true"><circle cx="8" cy="6" r="3.3" fill="currentColor"/><path d="M1.5 17.5c.5-3.6 3.1-5.6 6.5-5.6s6 2 6.5 5.6" fill="currentColor"/><circle cx="16" cy="7" r="2.6" fill="currentColor" opacity=".7"/><path d="M15.6 12.2c2.8.1 4.8 1.8 5.2 4.8h-4.6" fill="currentColor" opacity=".7"/></svg>
+        <span class="tab-badge" id="friends-badge" hidden></span>
+      </a>
+      <!-- Mon profil (profile.js) : pas d'onglet en bas, la barre du bas n'en a que 5 -->
       <a class="profile-button" href="#profile" data-tab="profile" aria-label="Mon profil">
         <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><circle cx="10" cy="6.5" r="3.6" fill="currentColor"/><path d="M2.8 18c.6-3.9 3.6-6.2 7.2-6.2s6.6 2.3 7.2 6.2" fill="currentColor"/></svg>
         <!-- Réputation (reputation.js) : niveau dans une pastille + anneau de progression autour du bouton -->
@@ -453,14 +458,14 @@
 
   <!-- Barre d'onglets en bas : à portée de pouce -->
   <nav class="tabbar" aria-label="Navigation">
-    <a class="tab" href="#booster" data-tab="booster">Booster</a>
     <a class="tab" href="#collection" data-tab="collection">Collection</a>
     <a class="tab" href="#market" data-tab="market">Market</a>
+    <!-- Booster : au centre, plus grand et d'une autre couleur (bouton principal du jeu) -->
+    <a class="tab tab-main" href="#booster" data-tab="booster"><span class="tab-main-pill">Booster</span></a>
     <a class="tab" href="#videur" data-tab="videur">Videur</a>
-    <a class="tab" href="#friends" data-tab="friends">Amis<span class="tab-badge" id="friends-badge" hidden></span></a>
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=78"></script>
+  <script type="module" src="js/main.js?v=79"></script>
 </body>
 </html>

@@ -98,10 +98,11 @@ body {
   letter-spacing: -0.02em;
 }
 
-.topbar-right { display: flex; align-items: center; gap: 10px; }
+.topbar-right { display: flex; align-items: center; gap: 14px; }
 
-/* Bouton rond « Mon profil », à gauche du solde (la barre du bas a déjà 6 onglets) */
-.profile-button {
+/* Boutons ronds « Amis » et « Mon profil », à gauche du solde (la barre du bas n'a que 5 onglets) */
+.profile-button,
+.friends-button {
   display: grid;
   place-items: center;
   width: 38px;
@@ -111,7 +112,9 @@ body {
   background: var(--surface);
   color: var(--muted);
 }
-.profile-button[aria-current="page"] { background: var(--text); border-color: var(--text); color: var(--bg); }
+.profile-button[aria-current="page"],
+.friends-button[aria-current="page"] { background: var(--text); border-color: var(--text); color: var(--bg); }
+.friends-button { position: relative; }
 
 /* Réputation : anneau de progression vers le niveau suivant autour du bouton + pastille du niveau (reputation.js) */
 .profile-button { position: relative; }
@@ -1094,12 +1097,14 @@ main {
   cursor: pointer;
 }
 
-/* Amis (friends.js) */
+/* Amis (friends.js) : point rouge des demandes reçues, en haut à droite de la pastille ronde */
 .tab { position: relative; }
 .tab-badge {
   position: absolute;
-  top: 9px;
-  left: calc(50% + 14px);
+  top: -6px;
+  right: -8px;
+  box-sizing: border-box;
+  border: 2px solid var(--bg);
   min-width: 18px;
   padding: 1px 5px;
   border-radius: 999px;
@@ -2014,12 +2019,38 @@ main {
 @media (max-width: 460px) {
   .tabbar { padding-left: 4px; padding-right: 4px; }
   .tab { font-size: 12px; }
-  .tab-badge { top: 6px; left: calc(50% + 12px); }
 }
 
 .tab[aria-current="page"] {
   color: var(--text);
   font-weight: 800;
+}
+
+/* Booster au centre : bouton principal, plus grand, d'une autre couleur (crème sur le fond sombre).
+   Il dépasse un peu au-dessus de la barre ; un anneau de la couleur du fond le « découpe » de la ligne. */
+.tab-main { flex: 0 0 92px; }
+.tab-main-pill {
+  display: grid;
+  place-items: center;
+  min-width: 84px;
+  height: 48px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: var(--text);
+  color: #0b0b0d;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  transform: translateY(-9px);
+  box-shadow: 0 0 0 4px var(--bg);
+  transition: box-shadow 0.2s;
+}
+.tab-main[aria-current="page"] { color: #0b0b0d; }
+.tab-main[aria-current="page"] .tab-main-pill { box-shadow: 0 0 0 4px var(--bg), 0 0 16px 2px rgba(242, 241, 238, 0.4); }
+.tab-main:active .tab-main-pill { transform: translateY(-8px) scale(0.97); }
+@media (max-width: 460px) {
+  .tab-main { flex-basis: 84px; }
+  .tab-main-pill { min-width: 76px; padding: 0 12px; font-size: 13px; }
 }
 
 /* Partage de la tenue : un bouton ; sur ordinateur, petit menu posé AU-DESSUS (n'occupe pas de place dans la page) */

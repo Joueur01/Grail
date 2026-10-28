@@ -7,27 +7,27 @@
 // ?v=… sur les imports : même numéro que dans index.html, et le même partout
 // (un module importé sous deux adresses différentes serait chargé deux fois).
 
-import { loadCatalogue } from "./data.js?v=78";
-import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=78";
-import { initAvatar, setupOutfit } from "./avatar.js?v=78";
-import { setupBooster } from "./booster.js?v=78";
-import { setupShare } from "./share.js?v=78";
-import { setupUpgrade } from "./upgrade.js?v=78";
-import { setupAtelier, setupViewSwitch } from "./atelier.js?v=78";
-import { setupAlbum } from "./album.js?v=78";
-import { setupWallet, reportError, showToast } from "./wallet.js?v=78";
-import { setupReputation } from "./reputation.js?v=78";
-import { setupDiscard, createSelection } from "./discard.js?v=78";
-import { setupMarket } from "./market.js?v=78";
-import { setupFriends } from "./friends.js?v=78";
-import { setupVideur } from "./videur.js?v=78";
-import { setupProfile } from "./profile.js?v=78";
-import { setupRules } from "./rules.js?v=78";
-import { startAnalytics, track } from "./analytics.js?v=78";
-import { showSharedOutfit } from "./shared-outfit.js?v=78";
-import { getSession, signIn, signUp, signOut, supabase, requestPasswordReset, updatePassword, isRecoveryLink, endRecovery, sharedOutfitToken } from "./api.js?v=78";
+import { loadCatalogue } from "./data.js?v=79";
+import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=79";
+import { initAvatar, setupOutfit } from "./avatar.js?v=79";
+import { setupBooster } from "./booster.js?v=79";
+import { setupShare } from "./share.js?v=79";
+import { setupUpgrade } from "./upgrade.js?v=79";
+import { setupAtelier, setupViewSwitch } from "./atelier.js?v=79";
+import { setupAlbum } from "./album.js?v=79";
+import { setupWallet, reportError, showToast } from "./wallet.js?v=79";
+import { setupReputation } from "./reputation.js?v=79";
+import { setupDiscard, createSelection } from "./discard.js?v=79";
+import { setupMarket } from "./market.js?v=79";
+import { setupFriends } from "./friends.js?v=79";
+import { setupVideur } from "./videur.js?v=79";
+import { setupProfile } from "./profile.js?v=79";
+import { setupRules } from "./rules.js?v=79";
+import { startAnalytics, track } from "./analytics.js?v=79";
+import { showSharedOutfit } from "./shared-outfit.js?v=79";
+import { getSession, signIn, signUp, signOut, supabase, requestPasswordReset, updatePassword, isRecoveryLink, endRecovery, sharedOutfitToken } from "./api.js?v=79";
 
-// « profile » n'a pas d'onglet : on y va par le bouton rond en haut (#profile). « rules » non plus : par le profil ou un lien « ? » (#rules, #rules/market…).
+// « profile » et « friends » n'ont pas d'onglet : on y va par les boutons ronds en haut (#profile, #friends). « rules » non plus : par le profil ou un lien « ? » (#rules, #rules/market…).
 const SCREENS = ["booster", "collection", "market", "videur", "friends", "avatar", "profile", "rules"];
 
 /** Affiche l'écran demandé et met à jour l'onglet actif. */
@@ -37,7 +37,7 @@ function showScreen(name) {
   for (const section of document.querySelectorAll(".screen")) {
     section.hidden = section.dataset.screen !== name;
   }
-  for (const tab of document.querySelectorAll(".tab, .profile-button")) {
+  for (const tab of document.querySelectorAll(".tab, .profile-button, .friends-button")) {
     if (tab.dataset.tab === name) tab.setAttribute("aria-current", "page");
     else tab.removeAttribute("aria-current");
   }
