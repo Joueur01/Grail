@@ -57,6 +57,8 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 /
 ├── index.html
 ├── style.css
+├── favicon.ico      # logo de l'onglet / de Google (16, 32, 48 px ; tools/creer_logo.py)
+├── manifest.webmanifest  # nom et icônes pour l'écran d'accueil Android
 ├── js/
 │   ├── main.js        # navigation entre écrans
 │   ├── api.js         # SEUL contact avec le serveur : connexion, lectures, une fonction par action
@@ -93,6 +95,7 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 │   └── pieces.json    # catalogue des pièces et coloris
 ├── assets/
 │   ├── pieces/        # un PNG 32×32 par coloris, fond transparent
+│   ├── brand/         # logo : icon.svg, icon-<N>.png, logo-email.png (section 18)
 │   └── avatar/        # corps de base et éventuels calques « portés »
 ├── visuels/           # référence, ne pas servir au jeu
 │   ├── sources/       # planches PNG d'origine fournies (une par marque)
@@ -121,11 +124,13 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 │       ├── 0023_nouvelles_marques.sql  # 4 nouvelles marques : 28 pièces, 100 coloris (catalogue du serveur)
 │       ├── 0024_videur_nouvelles_marques.sql  # Videur : dress codes du Bar et énigmes du Club / VIP pour les 4 nouvelles marques
 │       └── 0025_suppression_compte.sql  # delete_my_account : suppression définitive de son compte et de ses données
+│   └── email-templates/   # e-mails de Supabase en français, avec le logo (à coller dans Supabase, section 18)
 ├── tools/
 │   ├── extraire_sprites.py   # découpe les planches → PNG + SVG (Python + Pillow)
 │   ├── creer_ultimes.py      # crée les sprites « Ultime » (album) depuis les coloris (48)
 │   ├── ajouter_marques.py    # 2e vague : extrait les sprites des 4 nouvelles marques + catalogue + migration 0023
 │   ├── modele_0023.sql       # modèle de la migration 0023
+│   ├── creer_logo.py         # dessine le logo (graal 16 × 16) → favicon.ico + assets/brand/
 │   └── ecrire_enigmes_0024.py  # écrit la migration 0024 (dress codes et énigmes des nouvelles marques, vérifiées réalisables)
 └── CLAUDE.md
 ```
@@ -663,3 +668,12 @@ Le Videur devient un **jeu de déduction** (façon Wordle / Mastermind) : plus o
 2. Coffres gagnés au Videur (pièces, ou très petite chance d'objet collector), toujours gratuits, avec les chances affichées.
 3. Objets collector numérotés (exemplaires en nombre limité, revente au Market contre pièces uniquement : demande une vue de Market à part, annonces individuelles).
 4. Saisons et classement entre amis ; puis, plus tard, un mode histoire (chapitres par marque) si le Videur est bien joué.
+
+## 18. Logo et e-mails (`tools/creer_logo.py`, `assets/brand/`, `supabase/email-templates/`)
+
+- **Logo** : un **graal** (coupe) en pixel art **16 × 16**, crème et or sur le fond du jeu (`#0f0f11`), coins arrondis, petit éclat doré en haut à droite. Dessiné en lettres dans `DESSIN` de `tools/creer_logo.py` ; pour le modifier, changer le dessin et relancer `python3 tools/creer_logo.py`. Tous les agrandissements sont des **facteurs entiers** (section 4).
+- **Fichiers produits** : `favicon.ico` à la racine (16, 32 et 48 px, chaque taille agrandie sans flou ; **Google demande au moins 48 px** pour l'icône des résultats), `assets/brand/icon.svg` (onglet des navigateurs récents), `icon-180.png` (écran d'accueil iPhone), `icon-192.png` / `icon-512.png` (Android, `manifest.webmanifest`), `icon-32.png` / `icon-48.png`. Liens dans le `<head>` d'`index.html`. Le manifeste ne change pas le comportement du site (pas de `display` : le jeu s'ouvre toujours dans le navigateur).
+- **Google** met à jour l'icône des résultats à son rythme (de quelques jours à quelques semaines) ; rien à faire de plus.
+- **Logo des e-mails** : `assets/brand/logo-email.png` (576 × 160, affiché en 288 × 80 pour rester net sur les écrans Retina) = l'icône ×7 + « GRAIL » en **Archivo 900 étirée** (police du titre du jeu), crème sur un rectangle arrondi sombre (lisible sur fond clair comme sombre). Rendu une fois avec un navigateur (Playwright) et la police Archivo ; PNG car beaucoup de messageries n'affichent pas le SVG. Les e-mails l'appellent par son adresse publique `https://huntgrail.eu/assets/brand/logo-email.png` : **ne pas déplacer ce fichier** (les e-mails déjà envoyés perdraient leur logo).
+- **E-mails de Supabase** (`supabase/email-templates/`, en français, fond sombre, bouton crème en pilule, mise en page en tableaux pour les messageries) : `confirmation.html` (Confirm sign up), `mot-de-passe.html` (Reset password), `changement-email.html` (Change email address), `lien-magique.html` (Magic link ; pas utilisé par le jeu pour l'instant). L'en-tête de chaque fichier donne l'onglet Supabase et l'objet conseillé. **À coller par le développeur** dans Supabase → Authentication → Emails (ou Email Templates) : objet + contenu HTML, puis « Save ». Le bouton utilise `{{ .ConfirmationURL }}` (variable de Supabase). Si un texte change, modifier le fichier du dépôt **et** le recoller dans Supabase.
+- **Limite** : avec le service d'e-mail intégré de Supabase, l'expéditeur reste celui de Supabase et le nombre d'e-mails par heure est limité ; un expéditeur « @huntgrail.eu » demanderait un service SMTP (souvent gratuit jusqu'à un certain volume) : à décider, rien n'est fait.
