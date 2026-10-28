@@ -10,7 +10,7 @@
 //      sprites. Le canvas est agrandi d'un facteur entier en CSS : rendu pixel art.
 //   Aucune bibliothèque : tout est calculé ici, en JavaScript.
 
-import { getBody, BODY_COLOR, DRAW_ORDER, WEAR_MODELS } from "./wear-models.js?v=77";
+import { getBody, BODY_COLOR, DRAW_ORDER, WEAR_MODELS } from "./wear-models.js?v=78";
 
 // --- La grille ---
 const GX = 48, GY = 84, GZ = 48;      // taille en voxels
@@ -234,12 +234,13 @@ function paintLathe(grid, part, sprite) {
 
 /** Silhouette de profil extrudée sur la largeur (chaussures). */
 function paintProfile(grid, part, sprite) {
-  const [sx, sy, sw, sh] = part.rect;
+  const [sx, sy0, sw, sh] = part.rect;
   const s = part.scale || 1;
-  const len = Math.round(sw * s), hgt = Math.round(sh * s);
+  const sy = part.scaleY || s; // échelle en hauteur (par défaut la même qu'en longueur)
+  const len = Math.round(sw * s), hgt = Math.round(sh * sy);
   const [x0, x1] = part.x;
   for (let j = 0; j < hgt; j++) {
-    const row = sy + sh - 1 - Math.floor(j / s); // du bas vers le haut
+    const row = sy0 + sh - 1 - Math.floor(j / sy); // du bas vers le haut
     for (let i = 0; i < len; i++) {
       const col = sx + Math.floor(i / s); // le sprite regarde vers la droite = vers l'avant
       const color = sprite.color(col, row);

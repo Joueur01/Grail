@@ -114,12 +114,14 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 │       ├── 0020_pseudo_sur_le_lien.sql  # le pseudo de la personne qui partage s'affiche sur la page du lien
 │       ├── 0021_reputation.sql  # le Flow devient une réputation (niveaux)
 │       ├── 0022_album.sql  # album (cartes placées pour de bon) et items Ultimes
-│       └── 0023_nouvelles_marques.sql  # 4 nouvelles marques : 28 pièces, 100 coloris (catalogue du serveur)
+│       ├── 0023_nouvelles_marques.sql  # 4 nouvelles marques : 28 pièces, 100 coloris (catalogue du serveur)
+│       └── 0024_videur_nouvelles_marques.sql  # Videur : dress codes du Bar et énigmes du Club / VIP pour les 4 nouvelles marques
 ├── tools/
 │   ├── extraire_sprites.py   # découpe les planches → PNG + SVG (Python + Pillow)
 │   ├── creer_ultimes.py      # crée les sprites « Ultime » (album) depuis les coloris (48)
 │   ├── ajouter_marques.py    # 2e vague : extrait les sprites des 4 nouvelles marques + catalogue + migration 0023
-│   └── modele_0023.sql       # modèle de la migration 0023
+│   ├── modele_0023.sql       # modèle de la migration 0023
+│   └── ecrire_enigmes_0024.py  # écrit la migration 0024 (dress codes et énigmes des nouvelles marques, vérifiées réalisables)
 └── CLAUDE.md
 ```
 
@@ -267,8 +269,8 @@ Chacune a **7 pièces et 25 coloris** (veste 6 · haut 5 · bas 4 · bas 3 · ch
 | Bob « Fréquence » | Tête | Chrome / Violet · Rose / Bleu |
 | Sac « Pastille » | Sac | Violet / Chrome · Rose / Chrome |
 
-- **Serveur** : la migration 0023 ajoute les marques, pièces, coloris et étiquettes de couleur (`colorway_tags`) en **copiant** une ligne existante de chaque table (les migrations 0001 à 0004 ne sont pas dans le dépôt : leurs colonnes sont inconnues), puis en remplaçant id, nom, marque, emplacement, etc. Les nouveaux coloris entrent dans les boosters, la roue, le Market et l'album **si** les fonctions du serveur lisent la table `colorways` (non vérifié). Les dress codes et énigmes du Videur ne ciblent que les 3 marques de la 1re vague (les règles `same_brand`, `palette`… marchent avec les nouvelles).
-- **Limites 3D** : les chaussures de cette vague sont dessinées **de face, par paire** : en 3D, chaque pied est un pavé qui reçoit le sprite sur sa face avant (pas de silhouette de profil) ; le sac à dos « Lichen » est posé dans le dos, sangles devant ; les pompons et l'étiquette du bonnet « Docker » sont approximatifs ; le « 78 » et l'étoile des marques ne sont pas mis en avant sur les Ultimes.
+- **Serveur** : la migration 0023 ajoute les marques, pièces, coloris et étiquettes de couleur (`colorway_tags`) en **copiant** une ligne existante de chaque table (les migrations 0001 à 0004 ne sont pas dans le dépôt : leurs colonnes sont inconnues), puis en remplaçant id, nom, marque, emplacement, etc. Les nouveaux coloris entrent dans les boosters, la roue, le Market et l'album **si** les fonctions du serveur lisent la table `colorways` (non vérifié). Le **Videur** connaît les nouvelles marques grâce à la migration **0024** (voir la section 16).
+- **3D de cette vague** (vérifiée sur les 175 coloris et les 48 Ultimes, deux corps, quatre angles, sans rognage du cadre) : les chaussures sont les **pieds de profil** de chaque paire (le pied droit sert aux deux pieds ; `profile` accepte maintenant `scaleY`, échelle en hauteur séparée de l'échelle en longueur) ; les jambes des pantalons et shorts n'incluent plus les traits de séparation du sprite (sinon une raie noire apparaissait entre les jambes) ; le bonnet « Docker » porte son étiquette orange sur le côté, les bonnets « Givre » et « Virage » un vrai pompon (le haut de l'avatar ne doit pas dépasser ~80 voxels, sinon le cadre du canvas le coupe) ; le sac à dos « Lichen » est dans le dos avec poche et languette, sangles devant ; le bob « Fréquence » est posé un cran plus bas qu'un bonnet. Limites : pas de logo dans le dos ; épaulettes du pull « Sentier » en panneaux plats ; le « 78 » et l'étoile des marques ne sont pas mis en avant sur les Ultimes.
 
 Pièces à retoucher plus tard (ne pas bloquer la bêta) : Manteau « Atelier » (plus long), Casquette « Perchoir » (de profil), anses du Tote « Miettes » (arrondies).
 
@@ -462,7 +464,7 @@ Le développeur n'est pas juriste ; ces règles sont prudentes en attendant un a
 
 ## 13. Back end Supabase (comptes + serveur de jeu) — le serveur est la source de vérité
 
-- Projet Supabase : `https://qsueqvsbhytqrotlxmak.supabase.co`. Les migrations SQL (**0001 à 0023**, exécutées par le développeur dans le SQL Editor, **ne jamais les modifier depuis le front** ; les 0005 à 0023 sont dans `supabase/migrations/`) créent : catalogue (`brands`, `pieces`, `colorways`), `economy_config`, `profiles`, `inventory`, `transactions`, `market_listings`, la vue `market_best_offers` et toutes les fonctions du jeu.
+- Projet Supabase : `https://qsueqvsbhytqrotlxmak.supabase.co`. Les migrations SQL (**0001 à 0024**, exécutées par le développeur dans le SQL Editor, **ne jamais les modifier depuis le front** ; les 0005 à 0024 sont dans `supabase/migrations/`) créent : catalogue (`brands`, `pieces`, `colorways`), `economy_config`, `profiles`, `inventory`, `transactions`, `market_listings`, la vue `market_best_offers` et toutes les fonctions du jeu.
 - **Règle d'or : ne jamais remettre de logique de jeu côté client.** Le front ne tire pas de carte, ne calcule ni gain ni chance réelle, ne vérifie pas de règle (limite de ventes, verrou, solde…). Il appelle une fonction, affiche le résultat, et relit l'état. Toute nouvelle règle ou nouvelle valeur d'économie se code **dans une migration SQL** (puis, si besoin d'affichage, dans `js/economy-config.js`).
 - **Le jeu n'est accessible que connecté** : e-mail + mot de passe (écran de connexion / création de compte dans `index.html`, géré par `main.js`). À l'inscription, le message « Confirme ton e-mail » s'affiche : le compte ne peut se connecter qu'après avoir cliqué le lien reçu. Un profil (3 boosters, 0 pièce) est créé automatiquement par le serveur. Bouton « Se déconnecter » **tout en bas de la page de profil** (bouton rond en haut ; il était dans l'écran Tenue), hors de la zone que le profil recharge : il reste visible même si le profil ne charge pas.
 - **Mot de passe oublié** : lien « Mot de passe oublié ? » sous le formulaire de connexion (pas à la création de compte) → e-mail de réinitialisation (`resetPasswordForEmail`, réponse toujours neutre pour ne pas révéler quelles adresses ont un compte). Le lien reçu ramène sur le site avec `type=recovery` : `api.js` le détecte (`isRecoveryLink`) et `main.js` affiche « Nouveau mot de passe » (6 caractères minimum, saisie en double, `updatePassword`) **avant** de lancer le jeu ; lien expiré → message + renvoi vers « Mot de passe oublié ? ». **À régler dans Supabase** (Authentication → URL Configuration) : Site URL `https://joueur01.github.io/Grail/` et Redirect URLs `https://joueur01.github.io/Grail/**`, sinon les liens (confirmation et réinitialisation) pointent vers localhost.
@@ -602,6 +604,13 @@ Le Videur devient un **jeu de déduction** (façon Wordle / Mastermind) : plus o
 - **Partage sans spoiler** : bouton « Partager mon résultat » une fois la porte terminée : `Grail · Videur · Club 28/10`, `3/5` (ou `X/5`), puis une ligne de carrés (🟩 entré, 🟨 « presque » au Club seulement, ⬛ loin) ; jamais les critères. Menu natif sur téléphone, copie sinon.
 - **Inchangé** : le Flow (Bar 5 · Club 12 · VIP 25), le bonus de série (Bar, +1 par jour, plafond +5) et le verrou des portes dans l'ordre.
 - **Statistiques** : `analytics_videur_daily` ajoute le pourcentage moyen de critères respectés.
+
+### 2e vague de marques au Videur (migration 0024, `tools/ecrire_enigmes_0024.py`)
+
+- **Bar** : 4 dress codes visibles ajoutés, un par marque (« Bleu de travail », « Sortie en forêt », « Match à domicile », « Nuit chromée »).
+- **Club et VIP** : **8 énigmes cachées par porte** ajoutées (deux par marque), soit **28 par porte** ; l'indice du critère de marque ne nomme pas la marque (« T'as jamais bossé de tes mains. », « Tu sors jamais de la ville, toi. », « T'as pas l'air de supporter grand monde. », « Il manque de l'éclat, ce soir. »). Chaque énigme a été **vérifiée réalisable** par recherche (un coloris par emplacement au plus, rareté au choix) avec les étiquettes de couleur des 175 coloris. Les anciens critères et l'ordre du cycle ne changent pas, mais le cycle passe de 20 à 28 jours : la rotation change une fois, le jour de la migration.
+- **Secret** : inchangé (le site ne contient aucune règle ; la 0024 n'écrit que dans des tables illisibles par le site).
+- Hors Videur : un Ultime porté compte 15 points de rareté (voir la section 6 bis).
 
 **Points non tranchés (le développeur doit décider ; rien n'est implémenté)**
 1. ~~Rôle exact du Flow~~ : **tranché** (il fait monter la réputation, voir ci-dessus). **Reste à préciser** : la série au Club et au VIP, et le bonus de série.
