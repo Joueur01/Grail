@@ -1049,6 +1049,32 @@ main {
   font-size: 11px;
   font-weight: 800;
 }
+/* Boutique Grail : badge sur les offres du vendeur système (elles ne passent pas pour des offres de joueurs) */
+.shop-badge {
+  position: absolute;
+  top: 20px; /* une ligne sous la pastille de prix : à 320 px les deux ne tiennent pas côte à côte */
+  left: -6px;
+  z-index: 1;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #2bb28a;
+  color: #04140f;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.shop-banner {
+  margin: 0 0 12px;
+  padding: 8px 14px;
+  border: 1px solid #2bb28a;
+  border-radius: 999px;
+  color: #2bb28a;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+.shop-banner[hidden] { display: none; }
 .market-price { margin: 0; text-align: center; font-size: 30px; }
 .market-price .coin-dot { width: 22px; height: 22px; }
 .price-row { display: flex; gap: 8px; align-items: stretch; }

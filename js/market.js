@@ -6,13 +6,13 @@
 // et envoie les actions (market_list / market_cancel / market_buy / market_ack_sales).
 // Aucune règle du Market n'est calculée ici ; les messages d'erreur viennent du serveur.
 
-import { RARITIES, getRarity, matchesSearch } from "./data.js?v=84";
-import { MARKET, saleTax, saleNet } from "./economy-config.js?v=84";
-import { getOwnedCards, getCoins, getMyListings, refreshState } from "./inventory.js?v=84";
-import { getBestOffers, marketList, marketCancel, marketBuy, marketAckSales, marketHistory } from "./api.js?v=84";
-import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=84";
-import { playSound, vibrate } from "./effects.js?v=84";
-import { flyCoins, showToast, reportError } from "./wallet.js?v=84";
+import { RARITIES, getRarity, matchesSearch } from "./data.js?v=85";
+import { MARKET, saleTax, saleNet } from "./economy-config.js?v=85";
+import { getOwnedCards, getCoins, getMyListings, refreshState } from "./inventory.js?v=85";
+import { getBestOffers, getMarketShop, marketList, marketCancel, marketBuy, marketAckSales, marketHistory } from "./api.js?v=85";
+import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=85";
+import { playSound, vibrate } from "./effects.js?v=85";
+import { flyCoins, showToast, reportError } from "./wallet.js?v=85";
 
 const CATEGORIES = [
   { id: "haut", name: "Haut" },
@@ -33,7 +33,39 @@ export function setupMarket({ catalogue, onChange }) {
 
   const rank = new Map(RARITIES.map((r, i) => [r.id, i]));
   const order = new Map(catalogue.colorways.map((c, i) => [c.id, i]));
-  let offers = []; // meilleures offres reçues du serveur : { id, colorwayId, rarity, price, mine }
+  let offers = []; // meilleures offres reçues du serveur : { id, colorwayId, rarity, price, mine, shop }
+  let shop = null; // Boutique Grail (migration 0027) : { name, deadline } ou null (coupée / pas encore activée)
+  const shopBanner = document.getElementById("market-shop-banner");
+  const shopName = () => shop?.name || "Boutique Grail";
+
+  /** « 5 h 12 » / « 42 min » : décompte jusqu'à la prochaine sélection (échéance donnée par le serveur). */
+  function shopCountdown() {
+    const min = Math.max(1, Math.ceil((shop.deadline - Date.now()) / 60000));
+    return min >= 60 ? `${Math.floor(min / 60)} h ${String(min % 60).padStart(2, "0")}` : `${min} min`;
+  }
+
+  function renderShopBanner() {
+    shopBanner.hidden = !shop;
+    if (shop) shopBanner.textContent = `${shop.name} · Nouvelle sélection dans ${shopCountdown()}`;
+  }
+
+  /** Demande l'état de la boutique : le SERVEUR renouvelle la sélection s'il est l'heure, puis donne le décompte. */
+  async function loadShop() {
+    try {
+      const s = await getMarketShop();
+      shop = s?.enabled ? { name: s.name, deadline: Date.now() + s.next_in_seconds * 1000 } : null;
+    } catch {
+      shop = null; // migration 0027 pas encore exécutée : pas de boutique, le reste du Market marche comme avant
+    }
+    renderShopBanner();
+  }
+
+  // Le décompte se met à jour chaque minute ; à zéro, on redemande la nouvelle sélection au serveur.
+  setInterval(() => {
+    if (!shop) return;
+    if (Date.now() >= shop.deadline) loadOffers();
+    else renderShopBanner();
+  }, 30000);
 
   // --- Offres : UNE seule par carte (la moins chère), choisie par le serveur ------------
 
@@ -43,8 +75,9 @@ export function setupMarket({ catalogue, onChange }) {
   /** Relit les offres du serveur et redessine. */
   async function loadOffers() {
     try {
+      await loadShop(); // avant de lire les offres : la sélection du jour est renouvelée par le serveur au besoin
       offers = (await getBestOffers()).map((o) => ({
-        id: o.id, colorwayId: o.colorway_id, rarity: o.rarity, price: o.price, mine: o.is_mine,
+        id: o.id, colorwayId: o.colorway_id, rarity: o.rarity, price: o.price, mine: o.is_mine, shop: !!o.is_shop,
       }));
       renderBuy();
     } catch (err) {
@@ -153,7 +186,7 @@ export function setupMarket({ catalogue, onChange }) {
       .sort((a, b) => (sorters[buySort.value] || sorters.price)(a, b) || (order.get(a.colorwayId) - order.get(b.colorwayId)));
 
     buyGrid.replaceChildren(...visible.map((o) => {
-      const el = gridCard(o.colorwayId, o.rarity, () => openOffer(o), `${o.price} pièces${o.mine ? ", ton offre" : ""}`);
+      const el = gridCard(o.colorwayId, o.rarity, () => openOffer(o), `${o.price} pièces${o.mine ? ", ton offre" : ""}${o.shop ? `, ${shopName()}` : ""}`);
       const badge = document.createElement("span");
       badge.className = o.mine ? "price-badge mine" : "price-badge";
       badge.append(coinText(o.price));
@@ -163,6 +196,12 @@ export function setupMarket({ catalogue, onChange }) {
         mine.className = "mine-badge";
         mine.textContent = "Ton offre";
         el.append(mine);
+      }
+      if (o.shop) {
+        const tag = document.createElement("span");
+        tag.className = "shop-badge";
+        tag.textContent = "Boutique";
+        el.append(tag);
       }
       return el;
     }));
@@ -193,6 +232,7 @@ export function setupMarket({ catalogue, onChange }) {
       onClick: () => confirmBuy(offer),
     }));
     open(colorway.piece.name, bigCard(offer.colorwayId, offer.rarity), price,
+      ...(offer.shop ? [para(`Offre de la ${shopName()}, pas d'un joueur. Aucune taxe : les pièces dépensées ici disparaissent du jeu.`)] : []),
       para(`Ton solde : ${getCoins().toLocaleString("fr-FR")} pièces${owned ? ` · tu en as déjà ${owned.count}` : " · nouvelle carte pour toi"}`),
       actions);
   }
@@ -447,7 +487,7 @@ export function setupMarket({ catalogue, onChange }) {
     name.textContent = colorway.piece.name;
     const sub = document.createElement("span");
     sub.className = "market-row-sub history-sub";
-    sub.textContent = `${bought ? "Acheté" : "Vendu"} · ${colorway.name} · ${getRarity(t.rarity).name} · ${dateFmt.format(new Date(t.created_at))}`;
+    sub.textContent = `${bought ? "Acheté" : "Vendu"}${t.shop ? ` · ${shopName()}` : ""} · ${colorway.name} · ${getRarity(t.rarity).name} · ${dateFmt.format(new Date(t.created_at))}`;
     info.append(name, sub);
     const amount = coinText(t.coins);
     amount.classList.add("market-row-price", bought ? "history-out" : "history-in");

@@ -20,7 +20,21 @@ export const BOOSTER = {
 };
 
 // Bonus de connexion quotidien (page « Règles du jeu » ; le serveur verse le vrai montant).
-export const DAILY_BONUS = { coins: 20 };
+// Bonus de connexion : 20 pièces par jour, 50 pour le tout premier bonus du compte (migration 0027).
+export const DAILY_BONUS = { coins: 20, signup: 50 };
+
+// Boutique Grail (migration 0027, economy_config.SHOP) : copie pour la page « Règles du jeu » seulement.
+// chance = % qu'un coloris apparaisse à cette rareté ; price = référence du Market + 25 %, arrondi.
+export const SHOP = {
+  name: "Boutique Grail",
+  refreshHour: 6, // nouvelle sélection chaque jour à 6 h, heure de Paris
+  rarities: {
+    commun: { chance: 25, price: 10 },
+    rare: { chance: 8, price: 50 },
+    epique: { chance: 0.5, price: 200 },
+    legendaire: { chance: 0.1, price: 750 },
+  },
+};
 
 // Réputation (le Flow devenu niveaux) : le niveau n → n+1 coûte costStep × (n + 1) Flow.
 export const REPUTATION = { costStep: 50 };

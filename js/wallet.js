@@ -4,8 +4,9 @@
 // Le solde vient du SERVEUR (lu via inventory.js) ; ce fichier ne fait que l'afficher.
 // Le bonus quotidien est décidé et versé par le serveur (claim_daily_bonus).
 
-import { getCoins, onCoinsChange, refreshState } from "./inventory.js?v=84";
-import { claimDailyBonus } from "./api.js?v=84";
+import { getCoins, onCoinsChange, refreshState } from "./inventory.js?v=85";
+import { claimDailyBonus } from "./api.js?v=85";
+import { DAILY_BONUS } from "./economy-config.js?v=85";
 
 let toastTimer = null;
 
@@ -34,7 +35,9 @@ async function checkDailyBonus() {
   try {
     const gained = await claimDailyBonus();
     if (gained > 0) {
-      showToast(`+${gained} pièces · bonus du jour`);
+      showToast(gained === DAILY_BONUS.signup && gained !== DAILY_BONUS.coins
+        ? `+${gained} pièces · bienvenue sur Grail !`
+        : `+${gained} pièces · bonus du jour`);
       await refreshState({ booster: false }); // le solde change : l'animation du solde se déclenche
     }
   } catch (err) {
