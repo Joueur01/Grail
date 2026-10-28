@@ -6,8 +6,8 @@
 //   - Videur  : un point tant que le joueur n'a joué AUCUNE porte aujourd'hui (jour de Paris, décidé par le serveur) ;
 //   - Amis    : le nombre de demandes d'ami reçues, sur la pastille ronde du haut (c'est friends.js qui la remplit).
 
-import { getBoosterState, onStateChange, refreshState } from "./inventory.js?v=83";
-import { getVideurNight } from "./api.js?v=83";
+import { getBoosterState, onStateChange, refreshState } from "./inventory.js?v=84";
+import { getVideurNight } from "./api.js?v=84";
 
 const VIDEUR_RECHECK_MS = 5 * 60 * 1000; // le jour change à minuit (Paris) : on relit de temps en temps
 
@@ -27,9 +27,9 @@ export function setupBadges() {
 
   /** Pastille Booster : le stock lu sur le serveur (copie en mémoire d'inventory.js). */
   function renderBooster() {
-    const { stock, canOpen } = getBoosterState();
+    const { stock, bonus, canOpen } = getBoosterState();
     boosterBadge.hidden = !canOpen;
-    boosterBadge.textContent = canOpen ? String(stock) : "";
+    boosterBadge.textContent = canOpen ? String(stock + bonus) : "";
   }
   onStateChange(renderBooster);
   renderBooster();

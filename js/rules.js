@@ -6,11 +6,11 @@
 // Si le serveur change une valeur, la mettre à jour dans ce fichier-là, pas ici.
 // Les règles cachées du Videur (Club, VIP) ne sont volontairement PAS décrites.
 
-import { RARITIES } from "./data.js?v=83";
+import { RARITIES } from "./data.js?v=84";
 import {
   DROP_RATES, BOOSTER, PITY, UPGRADE, DISCARD_VALUES, MARKET, FRIENDS, saleTax, saleNet,
   DAILY_BONUS, REPUTATION, SHOWCASE, VIDEUR_INFO,
-} from "./economy-config.js?v=83";
+} from "./economy-config.js?v=84";
 
 function el(tag, className, text) {
   const e = document.createElement(tag);
@@ -86,6 +86,7 @@ function buildSections(catalogue) {
     bullets([
       `1 booster est généré toutes les ${BOOSTER.refillHours} h, jusqu'à ${BOOSTER.maxStock} en stock. Tu peux fermer le jeu : le stock se remplit sur le serveur.`,
       "Les boosters ne s'achètent pas et le minuteur ne s'accélère pas : aucun argent réel dans le jeu.",
+      "Le Videur offre des boosters en plus (voir « Le Videur »). Ils suivent les mêmes taux et les mêmes garanties.",
       "Les cartes sont enregistrées dès que tu déchires le paquet : recharger la page ne permet pas de retirer.",
     ]),
   ]);
@@ -137,14 +138,15 @@ function buildSections(catalogue) {
     table(RARITIES.map((r) => [chip(r.id), `${MARKET.referencePrice[r.id]} pièces`])),
   ]);
 
-  const videur = section("videur", "Le Videur", "3 portes par jour, essais, Flow", [
+  const videur = section("videur", "Le Videur", "3 portes par jour, essais, Flow, boosters", [
     para("Chaque jour, un videur juge la tenue que tu portes (seulement les pièces que tu possèdes encore). Il y a 3 portes, à passer dans l'ordre : Bar, Club, VIP."),
-    table(VIDEUR_INFO.doors.map((d) => [d.name, `${d.tries} essais · +${d.flow} Flow`])),
+    table(VIDEUR_INFO.doors.map((d) => [d.name, `${d.tries} essais · +${d.flow} Flow · +${d.boosters} booster${d.boosters > 1 ? "s" : ""}`])),
     bullets([
       "Au Bar, les règles du jour sont visibles et tu as un aperçu gratuit de ta tenue.",
       "Au Club et au VIP, les règles sont cachées : à toi de les deviner grâce aux indices du videur.",
       "Quand la porte est réussie ou que tes essais sont épuisés, la règle du jour est révélée.",
-      "Une porte réussie ne rapporte du Flow qu'une fois par jour. Les essais sont comptés par le serveur.",
+      "Une porte réussie rapporte du Flow et des boosters, une seule fois par jour. Les essais sont comptés par le serveur.",
+      "Les boosters offerts s'ajoutent à ton stock sans la limite de " + BOOSTER.maxStock + " et s'ouvrent après tes boosters gratuits : rien n'est perdu.",
       `Série : +1 Flow de bonus par jour d'affilée avec au moins le Bar réussi, jusqu'à +${VIDEUR_INFO.streakBonusCap}.`,
     ]),
   ]);

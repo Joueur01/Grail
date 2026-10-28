@@ -15,14 +15,14 @@
 // Effets de révélation, du plus discret au plus fort : Rare (reflet + particules),
 // Épique (éclair violet, gerbe de particules, titre), Légendaire (plein écran).
 
-import { RARITIES, getRarity } from "./data.js?v=83";
-import { BOOSTER, DROP_RATES, PITY } from "./economy-config.js?v=83";
-import { getPity, getPityEpic, isTutorialDone, markTutorialDone, getBoosterState, refreshState } from "./inventory.js?v=83";
-import { openBooster } from "./api.js?v=83";
-import { reportError } from "./wallet.js?v=83";
-import { createCardFace, createCardShell } from "./cards.js?v=83";
-import { playSound, vibrate, burst } from "./effects.js?v=83";
-import { attachGesture } from "./gestures.js?v=83";
+import { RARITIES, getRarity } from "./data.js?v=84";
+import { BOOSTER, DROP_RATES, PITY } from "./economy-config.js?v=84";
+import { getPity, getPityEpic, isTutorialDone, markTutorialDone, getBoosterState, refreshState } from "./inventory.js?v=84";
+import { openBooster } from "./api.js?v=84";
+import { reportError } from "./wallet.js?v=84";
+import { createCardFace, createCardShell } from "./cards.js?v=84";
+import { playSound, vibrate, burst } from "./effects.js?v=84";
+import { attachGesture } from "./gestures.js?v=84";
 
 // Durées (en millisecondes), faciles à ajuster.
 const TEAR_TIME = 550;    // la bande s'envole, le paquet descend
@@ -92,6 +92,7 @@ export function setupBooster({ catalogue, onOpened }) {
   const eyebrow = document.getElementById("booster-eyebrow");
   const stockPips = document.getElementById("stock-pips");
   const stockTimer = document.getElementById("stock-timer");
+  const stockBonus = document.getElementById("stock-bonus");
   const stockSignature = document.getElementById("stock-signature");
 
   packTop.style.clipPath = tearClip(true);
@@ -154,6 +155,9 @@ export function setupBooster({ catalogue, onOpened }) {
       return pip;
     }));
     stockPips.setAttribute("aria-label", `${state.stock} booster${state.stock > 1 ? "s" : ""} gratuit${state.stock > 1 ? "s" : ""} sur ${state.max}`);
+    // Boosters offerts (Videur) : en plus du stock gratuit, sans plafond.
+    stockBonus.hidden = state.bonus <= 0;
+    stockBonus.textContent = `+${state.bonus} offert${state.bonus > 1 ? "s" : ""}`;
     stockTimer.textContent = state.nextInMs === null
       ? "Stock plein"
       : `Prochain dans ${formatDuration(state.nextInMs)}`;
