@@ -334,6 +334,7 @@ Le développeur n'est pas juriste ; ces règles sont prudentes en attendant un a
 - Test sur 2 semaines avec 15 à 30 amis ; signal positif si 3 à 4 reviennent d'eux-mêmes chaque jour.
 - Ensuite, progressivement : comptes, tenue du jour avec vote, éditions limitées, plus de marques (5 à 10 au total, 1 à 2 pièces par catégorie chacune), puis échanges entre joueurs en monnaie virtuelle.
 - Monétisation éventuelle (boosters supplémentaires ou abonnement) **seulement après avis juridique**.
+- **Le Videur** (jeu quotidien de tenue : portes, dress codes, Flow) est décidé : voir la **section 16** (spécification, pas encore codée).
 
 ## 12. Migration vers les serveurs Hetzner (en cours, décidée par le développeur)
 
@@ -382,3 +383,63 @@ Le développeur n'est pas juriste ; ces règles sont prudentes en attendant un a
 - **Tables** : `analytics_events` (événements), `player_days` (par joueur et par jour de Paris : sessions, secondes actives, événements). Visites des tenues partagées : colonnes `views` / `last_viewed_at` de `outfit_shares` (incrémentées par `get_shared_outfit`).
 - **Vues à lire dans le SQL Editor / Table Editor de Supabase** (illisibles par le site et les joueurs) : `analytics_retention_curve` (% actifs à J+0, 1, 2, 3, 7, 14, 30…), `analytics_retention_cohorts` (par jour d'inscription), `analytics_activity_daily` (nouveaux joueurs, DAU / WAU / MAU, « stickiness », minutes actives), `analytics_player_summary` (un joueur par ligne : ancienneté, statut actif / à risque / perdu, jours actifs, séries, sessions, temps, boosters, roue, défausse, Market, pièces, cartes, amis, partages, minutes avant le 1er booster…), `analytics_funnel` (entonnoir d'activation), `analytics_events_daily`, `analytics_screens`, `analytics_devices`, `analytics_hours`. Exemple : `select * from analytics_retention_curve;`
 - **Vie privée (RGPD)** : données pseudonymes (identifiant de joueur ; les vues n'affichent ni e-mail ni pseudo), aucune adresse IP, tout est supprimé avec le compte. Avant d'ouvrir le jeu à un large public, **ajouter une mention d'information dans le jeu** (page « Confidentialité ») : le développeur doit la valider (avis juridique, section 9).
+
+## 16. Le Videur — spécification de la V1 (à construire ; fonctionnalité décidée par le développeur, après la bêta du 1er novembre)
+
+**Statut : spécification validée, rien n'est codé.** Les valeurs marquées « (défaut) » sont des propositions de Claude que le développeur n'a pas encore confirmées : elles vivent dans `economy_config` et se changent sans toucher au site.
+
+### Idée
+
+Chaque jour, un videur de soirée juge la tenue du joueur. **3 portes par jour**, de plus en plus difficiles : **Bar, Club, VIP**. Le but : donner à la tenue une **utilité** (style + rareté) et une raison de revenir chaque jour. Le serveur décide de tout (règle d'or, section 13) : le site affiche, il ne calcule rien.
+
+### Déroulement
+
+- **Jour = jour calendaire à Paris** (comme le bonus quotidien). Chaque jour, chaque porte a un **dress code** tiré par le serveur dans un lot de codes (au hasard déterministe selon la date).
+- Les portes se passent **dans l'ordre** : réussir le Bar déverrouille le Club, etc.
+- **Se présenter** utilise la **tenue enregistrée sur le serveur** (colonne `equipped`, déjà validée par `set_equipped`), jamais une tenue envoyée par le site.
+- **Essais limités par porte et par jour** : 2 (défaut, `VIDEUR.triesPerDoor`), pour pousser à avoir plusieurs tenues. Un refus n'a aucune autre pénalité. Une porte réussie ne rapporte qu'**une fois par jour**.
+- **Aperçu gratuit et illimité** : le joueur peut demander au serveur le score de sa tenue actuelle pour une porte, sans consommer d'essai, et voir ce qui manque.
+
+### Le score : deux jauges séparées
+
+Chaque porte exige un minimum sur **les deux** ; le refus dit laquelle manque (« il te manque du style » / « il te manque de la rareté »).
+
+- **Rareté** : points par pièce portée (`VIDEUR.rarityPoints`, défaut Commune 1 · Rare 3 · Épique 6 · Légendaire 10), somme des pièces portées (7 emplacements au maximum).
+- **Style (0 à 100)** : le dress code est une liste de **règles pondérées** (la somme des poids fait 100) ; le score est la somme des poids des règles respectées. Types de règles : `brand` (au moins N pièces d'une marque), `same_brand` (toute la tenue d'une même marque), `palette` (au moins N pièces dont les couleurs sont dans une liste), `forbid_tag` (aucune pièce d'une couleur interdite), `complete` (haut, bas et chaussures portés), `slot` (un emplacement précis rempli, ex. un accessoire), `min_pieces` (au moins N pièces).
+- **Seuils par porte** (défaut, à régler avec les tests) : Bar style 50 · rareté 4 ; Club style 70 · rareté 14 ; VIP style 85 · rareté 28.
+- **Couleurs** : le catalogue n'a que le nom du coloris en texte. Une table `colorway_tags` (75 lignes, créée par la migration) étiquette chaque coloris (`sombre`, `clair`, `vif`, `neutre`, `delave`, `metal`…) pour que le serveur puisse évaluer les règles `palette` et `forbid_tag`.
+- **Dress codes** : table `videur_codes` (porte, nom du lieu, texte d'introduction, règles en JSON, répliques du videur). Sobre, « street », jamais de marque réelle (section 9).
+
+### Récompenses de la V1
+
+- **Flow** (nouvelle monnaie, `profiles.flow`) : **garanti à chaque porte réussie**, par défaut Bar 5 · Club 12 · VIP 25 (`VIDEUR.doors[].flow`), plus un **bonus de série** (+1 par jour d'affilée avec au moins le Bar réussi, plafonné à +5, `VIDEUR.streakBonusCap`). Aucune pénalité si on rate un jour.
+- **Règles du Flow (non négociables)** : jamais convertible en pièces, jamais échangeable entre joueurs, jamais acheté avec des pièces ni de l'argent réel ; il ne servira qu'à des **cosmétiques purement visuels** (aucun avantage de jeu).
+- **Pas de coffre, pas d'objet collector, pas de saison dans la V1.**
+
+### Fonctions serveur (migration à écrire)
+
+- `get_videur_night()` → les 3 portes du jour (nom du lieu, intro, règles lisibles, seuils), l'état de chacune (verrouillée / ouverte / passée, essais restants), le Flow, la série.
+- `videur_preview(p_door)` → détail du score de la tenue actuelle : chaque règle ✔/✖ avec ses points, style obtenu / seuil, rareté obtenue / seuil. **Ne consomme rien.**
+- `videur_enter(p_door)` → consomme un essai, renvoie le verdict (entrée / refus), le détail, la réplique du videur, le Flow gagné. Tout est enregistré dans une table `videur_attempts` (joueur, jour, porte, essai, scores, tenue au moment de l'essai, réussite) et dans un journal du Flow (la contrainte de `transactions.kind` ne connaît pas les nouveaux types : prévoir une table dédiée ou l'élargir dans la migration).
+- Lecture seule pour le site ; jamais d'écriture directe (section 13).
+
+### Interface (aucun décor illustré pour l'instant)
+
+- Nouvel écran **« Videur »**. La barre du bas a déjà 5 onglets : vérifier qu'un 6e tient à 320 px, sinon trouver une autre place.
+- Contenu : la soirée du jour (nom, dress code en 2-3 lignes) ; la tenue actuelle « à plat » avec accès rapide pour la changer ; les deux jauges avec leurs seuils (aperçu) ; bouton « Se présenter » ; verdict avec la réplique du videur et la liste de ce qui a joué ; Flow gagné et série.
+- Ambiance **sans illustration** : porte et enseigne en CSS (nom du lieu en Archivo, couleur par porte : bleu Bar, violet Club, or VIP comme les raretés), halo derrière la tenue, flash vert / rouge au verdict, sons synthétisés (coup à la porte, basse étouffée, son d'entrée / de refus). Le pixel art reste réservé aux vêtements et à l'avatar (section 8).
+- Ton du videur : **sobre et sec** (défaut, à confirmer).
+- Mesure : ajouter des événements `videur_*` dans la liste blanche de `track_events` (migration), et lire l'effet sur la rétention (section 15).
+
+### Points de vigilance
+
+- **« Location » de cartes** : on peut acheter une carte chère, passer la porte, puis la revendre ; le coût réel est la taxe de 5 % (section 6, Market). C'est acceptable (cela alimente le Market et c'est un retrait de pièces), à surveiller.
+- **Trop de portes difficiles = abandon** : le Bar doit se réussir avec une tenue commune bien choisie.
+- Réglages à faire avec les amis testeurs : seuils, valeurs de Flow, nombre d'essais.
+
+### Étapes suivantes (hors V1)
+
+1. Boutique de cosmétiques payée en Flow (cadres, fonds, effets, tenues visibles en plus) et **titres** affichés sur la tenue partagée.
+2. Coffres gagnés au Videur (pièces, ou très petite chance d'objet collector), toujours gratuits, avec les chances affichées.
+3. Objets collector numérotés (exemplaires en nombre limité, revente au Market contre pièces uniquement : demande une vue de Market à part, annonces individuelles).
+4. Saisons et classement entre amis ; puis, plus tard, un mode histoire (chapitres par marque) si le Videur est bien joué.
