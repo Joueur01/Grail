@@ -97,7 +97,8 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 │       ├── 0009_historique_market.sql  # historique achats / ventes du Market
 │       ├── 0010_retention_stats.sql  # mesure de rétention + vues de statistiques
 │       ├── 0011_taxe_vente.sql  # taxe de 5 % sur les ventes du Market
-│       └── 0012_videur.sql  # Videur V1 : portes, dress codes, Flow
+│       ├── 0012_videur.sql  # Videur V1 : portes, dress codes, Flow
+│       └── 0013_videur_regles_cachees.sql  # Videur V2 : Club et VIP à règles cachées
 ├── tools/
 │   └── extraire_sprites.py   # découpe les planches → PNG + SVG (Python + Pillow)
 └── CLAUDE.md
@@ -336,7 +337,7 @@ Le développeur n'est pas juriste ; ces règles sont prudentes en attendant un a
 - Test sur 2 semaines avec 15 à 30 amis ; signal positif si 3 à 4 reviennent d'eux-mêmes chaque jour.
 - Ensuite, progressivement : comptes, tenue du jour avec vote, éditions limitées, plus de marques (5 à 10 au total, 1 à 2 pièces par catégorie chacune), puis échanges entre joueurs en monnaie virtuelle.
 - Monétisation éventuelle (boosters supplémentaires ou abonnement) **seulement après avis juridique**.
-- **Le Videur** (jeu quotidien de tenue : portes, dress codes, Flow) est décidé : voir la **section 16** (spécification, pas encore codée).
+- **Le Videur** (jeu quotidien de tenue : portes, dress codes, Flow ; règles cachées au Club et au VIP) est codé : voir la **section 16**.
 
 ## 12. Migration vers les serveurs Hetzner (en cours, décidée par le développeur)
 
@@ -349,7 +350,7 @@ Le développeur n'est pas juriste ; ces règles sont prudentes en attendant un a
 
 ## 13. Back end Supabase (comptes + serveur de jeu) — le serveur est la source de vérité
 
-- Projet Supabase : `https://qsueqvsbhytqrotlxmak.supabase.co`. Les migrations SQL (**0001 à 0012**, exécutées par le développeur dans le SQL Editor, **ne jamais les modifier depuis le front** ; les 0005 à 0012 sont dans `supabase/migrations/`) créent : catalogue (`brands`, `pieces`, `colorways`), `economy_config`, `profiles`, `inventory`, `transactions`, `market_listings`, la vue `market_best_offers` et toutes les fonctions du jeu.
+- Projet Supabase : `https://qsueqvsbhytqrotlxmak.supabase.co`. Les migrations SQL (**0001 à 0013**, exécutées par le développeur dans le SQL Editor, **ne jamais les modifier depuis le front** ; les 0005 à 0013 sont dans `supabase/migrations/`) créent : catalogue (`brands`, `pieces`, `colorways`), `economy_config`, `profiles`, `inventory`, `transactions`, `market_listings`, la vue `market_best_offers` et toutes les fonctions du jeu.
 - **Règle d'or : ne jamais remettre de logique de jeu côté client.** Le front ne tire pas de carte, ne calcule ni gain ni chance réelle, ne vérifie pas de règle (limite de ventes, verrou, solde…). Il appelle une fonction, affiche le résultat, et relit l'état. Toute nouvelle règle ou nouvelle valeur d'économie se code **dans une migration SQL** (puis, si besoin d'affichage, dans `js/economy-config.js`).
 - **Le jeu n'est accessible que connecté** : e-mail + mot de passe (écran de connexion / création de compte dans `index.html`, géré par `main.js`). À l'inscription, le message « Confirme ton e-mail » s'affiche : le compte ne peut se connecter qu'après avoir cliqué le lien reçu. Un profil (3 boosters, 0 pièce) est créé automatiquement par le serveur. Bouton « Se déconnecter » en bas de l'écran Tenue.
 - **Mot de passe oublié** : lien « Mot de passe oublié ? » sous le formulaire de connexion (pas à la création de compte) → e-mail de réinitialisation (`resetPasswordForEmail`, réponse toujours neutre pour ne pas révéler quelles adresses ont un compte). Le lien reçu ramène sur le site avec `type=recovery` : `api.js` le détecte (`isRecoveryLink`) et `main.js` affiche « Nouveau mot de passe » (6 caractères minimum, saisie en double, `updatePassword`) **avant** de lancer le jeu ; lien expiré → message + renvoi vers « Mot de passe oublié ? ». **À régler dans Supabase** (Authentication → URL Configuration) : Site URL `https://joueur01.github.io/Grail/` et Redirect URLs `https://joueur01.github.io/Grail/**`, sinon les liens (confirmation et réinitialisation) pointent vers localhost.
@@ -388,7 +389,7 @@ Le développeur n'est pas juriste ; ces règles sont prudentes en attendant un a
 
 ## 16. Le Videur — spécification de la V1 (à construire ; fonctionnalité décidée par le développeur, après la bêta du 1er novembre)
 
-**Statut : V1 codée (migration 0012, `js/videur.js`, onglet « Videur »).** Les valeurs marquées « (défaut) » sont des propositions de Claude que le développeur n'a pas encore confirmées : elles vivent dans `economy_config` et se changent sans toucher au site.
+**Statut : V1 codée (migration 0012) puis V2 « règles cachées » codée (migration 0013) ; `js/videur.js`, onglet « Videur ».** Les valeurs marquées « (défaut) » sont des propositions de Claude que le développeur n'a pas encore confirmées : elles vivent dans `economy_config` et se changent sans toucher au site.
 
 ### Idée
 
@@ -399,10 +400,10 @@ Chaque jour, un videur de soirée juge la tenue du joueur. **3 portes par jour**
 - **Jour = jour calendaire à Paris** (comme le bonus quotidien). Chaque jour, chaque porte a un **dress code** tiré par le serveur dans un lot de codes (au hasard déterministe selon la date).
 - Les portes se passent **dans l'ordre** : réussir le Bar déverrouille le Club, etc.
 - **Se présenter** utilise la **tenue enregistrée sur le serveur** (colonne `equipped`, déjà validée par `set_equipped`), jamais une tenue envoyée par le site.
-- **Essais limités par porte et par jour** : 2 (défaut, `VIDEUR.triesPerDoor`), pour pousser à avoir plusieurs tenues. Un refus n'a aucune autre pénalité. Une porte réussie ne rapporte qu'**une fois par jour**.
-- **Aperçu gratuit et illimité** : le joueur peut demander au serveur le score de sa tenue actuelle pour une porte, sans consommer d'essai, et voir ce qui manque.
+- **Essais limités par porte et par jour** (voir la V2 ci-dessous : Bar 3, Club 5, VIP 5, `VIDEUR.doors[].tries`). Un refus n'a aucune autre pénalité. Une porte réussie ne rapporte qu'**une fois par jour**.
+- **Aperçu gratuit et illimité : au Bar seulement** (V2). Le joueur peut demander au serveur le score de sa tenue actuelle, sans consommer d'essai. Il n'existe plus au Club ni au VIP (il révélerait les règles).
 
-### Le score : deux jauges séparées
+### Le score du Bar : deux jauges séparées (le Club et le VIP n'ont plus de jauges : voir la V2)
 
 Chaque porte exige un minimum sur **les deux** ; le refus dit laquelle manque (« il te manque du style » / « il te manque de la rareté »).
 
@@ -434,6 +435,30 @@ Chaque porte exige un minimum sur **les deux** ; le refus dit laquelle manque (�
 - Mesure : chaque essai est enregistré dans `videur_attempts` ; la vue `analytics_videur_daily` (essais, réussites, joueurs, Flow distribué par jour et par porte) se lit dans le SQL Editor, avec les vues de la section 15. L'écran compte aussi dans `screen_view`.
 - **Code** : `js/videur.js` (écran : onglets des portes, enseigne CSS, règles ✔/✖ de l'aperçu, tenue à plat, jauges Style / Rareté avec trait du seuil, bouton « Se présenter », fiche de verdict avec réplique) ; barre du bas : Booster, Collection, Market, **Videur**, Amis, Tenue (6 onglets, testés jusqu'à 320 px). Contenu de départ : 12 dress codes (4 par porte), 36 répliques, étiquettes de couleur des 75 coloris. Seul le **titre sur la tenue partagée** et la **boutique de Flow** restent à faire.
 - **Tenue évaluée** : seulement les pièces portées ET encore possédées ; une carte vendue ou misée ne compte plus.
+
+### V2 — règles CACHÉES par paliers de difficulté (migration 0013)
+
+Le Videur devient un **jeu de déduction** (façon Wordle / Mastermind) : plus on monte, moins on voit les règles.
+
+| Porte | Mode | Règles | Retour après chaque essai | Essais / jour |
+| --- | --- | --- | --- | --- |
+| **Bar** | `visible` | visibles (tutoriel) | verdict détaillé, aperçu gratuit, jauges Style et Rareté | 3 |
+| **Club** | `count` | **cachées** | « X critères sur N » + un indice vague sur UN critère raté | 5 |
+| **VIP** | `hint` | **cachées** | **uniquement** l'indice vague (pas de compte) | 5 |
+
+- **Entrer au Club ou au VIP** = respecter **tous** les critères du jour (4 au Club, 5 au VIP). Le seuil de rareté est un critère comme les autres : `rarity_min` (au moins N points) ou `rarity_max` (pas plus de N points), en alternance d'un jour à l'autre pour que les débutants et les cartes communes restent utiles. Nouveaux types de règles : `min_brands`, `no_slot`, `max_pieces`, `rarity_min`, `rarity_max`.
+- **Contenu** : table `videur_riddles` (illisible par le site) : **20 énigmes au Club et 20 au VIP**, écrites à la main à partir d'une bibliothèque de critères ; chacun porte un `label` (révélé à la fin) et un `hint` (indice vague, ex. « Trop flashy. », « T'es pas du coin. », « Il fait nuit dehors, t'as pas vu ? »). Les 40 énigmes ont été vérifiées **réalisables** (recherche d'une tenue valide, puis rejouée dans le SQL). Une énigme par jour et par porte, **la même pour tous les joueurs**, en avançant d'un cran par jour dans la liste (cycle de 20 jours). Les anciens dress codes du Club et du VIP (visibles) sont désactivés.
+- **Révélation** : à la réussite, ou quand les essais de la porte sont épuisés, le serveur renvoie la règle du jour (`reveal`) ; le joueur la revoit en rechargeant. Jamais avant.
+- **Secret côté serveur (non négociable)** : pour le Club et le VIP, `get_videur_night` et `videur_enter` ne renvoient **jamais** les règles, les seuils, les points par critère, le score de style ni les points de rareté : seulement accepté / refusé, le compte (Club), l'indice, les essais restants, l'historique des essais du jour et, à la fin, la règle. Le lieu et l'introduction de ces portes sont **neutres** (« Le Sous-sol », « Le Toit ») pour ne rien laisser deviner. `videur_preview` est **refusé** au Club et au VIP (« Pas d'aperçu pour cette porte »). Le site n'a aucune règle ni aucun seuil dans son code (`economy-config.js` n'en contient pas). **Toute évolution doit conserver cette propriété.**
+- **Essais comptés par le serveur** (table `videur_attempts`, par joueur, jour de Paris et porte) : recharger la page ne rend rien ; pas d'essai supplémentaire achetable (refusé).
+- **Interface** : au Club et au VIP, aucun aperçu, aucune jauge, aucune coche ; on voit la tenue, les essais restants, la série, et l'historique « Ce que le videur t'a dit » (indices, « X sur N » au Club). Fiche de verdict : ENTRÉE / REFUSÉ + indice (+ « X critères sur N » au Club) + règle du jour à la fin.
+- **Partage sans spoiler** : bouton « Partager mon résultat » une fois la porte terminée : `Grail · Videur · Club 28/10`, `3/5` (ou `X/5`), puis une ligne de carrés (🟩 entré, 🟨 « presque » au Club seulement, ⬛ loin) ; jamais les critères. Menu natif sur téléphone, copie sinon.
+- **Inchangé** : le Flow (Bar 5 · Club 12 · VIP 25), le bonus de série (Bar, +1 par jour, plafond +5) et le verrou des portes dans l'ordre.
+- **Statistiques** : `analytics_videur_daily` ajoute le pourcentage moyen de critères respectés.
+
+**Points non tranchés (le développeur doit décider ; rien n'est implémenté)**
+1. **Rôle exact du Flow et de la Série** (usage du Flow, série au Club et au VIP, bonus) : à préciser avant de les modifier.
+2. **Règle du jour impossible avec la petite collection d'un nouveau joueur** (ex. « au moins 18 points de rareté » avec quelques communes) : pistes à valider, dont **règles plus faciles au Club pour un joueur qui a peu de cartes**, ou **tenue d'essai prêtée** ; pour l'instant le joueur peut simplement échouer et lire la règle le soir.
 
 ### Points de vigilance
 
