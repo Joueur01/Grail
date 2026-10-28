@@ -7,21 +7,21 @@
 // ?v=… sur les imports : même numéro que dans index.html, et le même partout
 // (un module importé sous deux adresses différentes serait chargé deux fois).
 
-import { loadCatalogue } from "./data.js?v=50";
-import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=50";
-import { initAvatar, setupOutfit } from "./avatar.js?v=50";
-import { setupBooster } from "./booster.js?v=50";
-import { setupShare } from "./share.js?v=50";
-import { setupUpgrade } from "./upgrade.js?v=50";
-import { setupAtelier, setupViewSwitch } from "./atelier.js?v=50";
-import { setupWallet, reportError, showToast } from "./wallet.js?v=50";
-import { setupDiscard, createSelection } from "./discard.js?v=50";
-import { setupMarket } from "./market.js?v=50";
-import { setupFriends } from "./friends.js?v=50";
-import { setupVideur } from "./videur.js?v=50";
-import { startAnalytics, track } from "./analytics.js?v=50";
-import { showSharedOutfit } from "./shared-outfit.js?v=50";
-import { getSession, signIn, signUp, signOut, supabase, requestPasswordReset, updatePassword, isRecoveryLink, endRecovery, sharedOutfitToken } from "./api.js?v=50";
+import { loadCatalogue } from "./data.js?v=51";
+import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=51";
+import { initAvatar, setupOutfit } from "./avatar.js?v=51";
+import { setupBooster } from "./booster.js?v=51";
+import { setupShare } from "./share.js?v=51";
+import { setupUpgrade } from "./upgrade.js?v=51";
+import { setupAtelier, setupViewSwitch } from "./atelier.js?v=51";
+import { setupWallet, reportError, showToast } from "./wallet.js?v=51";
+import { setupDiscard, createSelection } from "./discard.js?v=51";
+import { setupMarket } from "./market.js?v=51";
+import { setupFriends } from "./friends.js?v=51";
+import { setupVideur } from "./videur.js?v=51";
+import { startAnalytics, track } from "./analytics.js?v=51";
+import { showSharedOutfit } from "./shared-outfit.js?v=51";
+import { getSession, signIn, signUp, signOut, supabase, requestPasswordReset, updatePassword, isRecoveryLink, endRecovery, sharedOutfitToken } from "./api.js?v=51";
 
 const SCREENS = ["booster", "collection", "market", "videur", "friends", "avatar"];
 

@@ -4,13 +4,13 @@
 //   1. On construit une grille de petits cubes (voxels) : le corps de base, puis
 //      chaque pièce portée qui a un modèle (wear-models.js), dans l'ordre de dessin.
 //      Les couleurs de chaque pièce sont lues dans le sprite 32 × 32 du coloris.
-//   2. Pour dessiner, on lance un rayon par pixel du canvas (petit : 48 × 96) à
+//   2. Pour dessiner, on lance un rayon par pixel du canvas (petit : 46 × 88, recadré sur l'avatar) à
 //      travers la grille ; le premier cube touché donne la couleur, assombrie
 //      selon l'orientation de sa face. Puis un contour noir d'1 pixel, comme les
 //      sprites. Le canvas est agrandi d'un facteur entier en CSS : rendu pixel art.
 //   Aucune bibliothèque : tout est calculé ici, en JavaScript.
 
-import { getBody, BODY_COLOR, DRAW_ORDER, WEAR_MODELS } from "./wear-models.js?v=50";
+import { getBody, BODY_COLOR, DRAW_ORDER, WEAR_MODELS } from "./wear-models.js?v=51";
 
 // --- La grille ---
 const GX = 48, GY = 84, GZ = 48;      // taille en voxels

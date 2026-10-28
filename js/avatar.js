@@ -6,24 +6,31 @@
 // bas, chaussures) avec un petit espace, et l'écharpe et le sac sont posés à côté.
 // Les sprites sont utilisés TELS QUELS, à leur taille réelle (×1 dans le canvas).
 
-import { RARITIES } from "./data.js?v=50";
-import { getOwnedCards, getEquipped, equip } from "./inventory.js?v=50";
-import { reportError } from "./wallet.js?v=50";
-import { createCardFace, createCardShell } from "./cards.js?v=50";
-import { createAvatar3D } from "./avatar3d.js?v=50";
-import { hasWearModel } from "./wear-models.js?v=50";
+import { RARITIES } from "./data.js?v=51";
+import { getOwnedCards, getEquipped, equip } from "./inventory.js?v=51";
+import { reportError } from "./wallet.js?v=51";
+import { createCardFace, createCardShell } from "./cards.js?v=51";
+import { createAvatar3D } from "./avatar3d.js?v=51";
+import { hasWearModel } from "./wear-models.js?v=51";
 
-// Les 7 emplacements, avec leur colonne sur la fiche.
-// Les identifiants correspondent au champ "slot" de pieces.json.
+// Les 7 emplacements.
+// Les identifiants correspondent au champ "slot" de pieces.json. L'ordre de cette liste
+// sert aux listes « tête → pieds » (image partagée, profil d'un ami…) : ne pas la changer.
 export const SLOTS = [
-  { id: "tete", name: "Tête", side: "left" },
-  { id: "cou", name: "Cou", side: "left" },
-  { id: "haut", name: "Haut", side: "left" },
-  { id: "veste", name: "Veste", side: "left" },
-  { id: "sac", name: "Sac", side: "right" },
-  { id: "bas", name: "Bas", side: "right" },
-  { id: "chaussures", name: "Chaussures", side: "right" },
+  { id: "tete", name: "Tête" },
+  { id: "cou", name: "Cou" },
+  { id: "haut", name: "Haut" },
+  { id: "veste", name: "Veste" },
+  { id: "sac", name: "Sac" },
+  { id: "bas", name: "Bas" },
+  { id: "chaussures", name: "Chaussures" },
 ];
+
+// Place des cases autour de l'avatar, de haut en bas (ordre voulu par le développeur).
+const OUTFIT_LAYOUT = {
+  left: ["tete", "haut", "bas", "chaussures"],
+  right: ["cou", "veste", "sac"],
+};
 
 // --- La tenue à plat (mesures en pixels « logiques » du canvas) ---
 const FLAT_W = 64;
@@ -185,6 +192,17 @@ export function setupOutfit({ catalogue, onChange }) {
   // les autres sont listées sous l'avatar (« Pas encore en 3D : … »).
   const avatar3d = createAvatar3D(document.getElementById("avatar-3d"));
   const note3d = document.getElementById("outfit-3d-note");
+  // Vue 3D : cadre gris sombre + outils (Garçon / Fille…) ; vue « à plat » : cadre clair (les contours noirs des sprites).
+  const frame = document.querySelector(".outfit-body");
+  const tools3d = document.getElementById("outfit-3d-tools");
+  const viewTabs = document.querySelectorAll(".outfit-switch .view-tab");
+  const syncView = (is3d) => {
+    frame.classList.toggle("is-3d", is3d);
+    tools3d.hidden = !is3d;
+  };
+  // On lit la vue choisie sur l'onglet touché (l'état des onglets est mis à jour par un autre code, après celui-ci).
+  for (const tab of viewTabs) tab.addEventListener("click", () => syncView(tab.dataset.view === "avatar3d"));
+  syncView(true); // la vue 3D est affichée au départ
   // Garçon / Fille : un simple réglage d'affichage, gardé dans ce navigateur (les skins viendront plus tard).
   let bodyType = readBodyChoice();
   const bodyButtons = document.querySelectorAll(".body-tab");
@@ -202,6 +220,7 @@ export function setupOutfit({ catalogue, onChange }) {
     rightCol.replaceChildren();
     const worn = {};   // emplacement → coloris porté (pour le dessin)
     const outfit = {}; // emplacement → { colorway, rarity } (pour l'image partagée)
+    const slotButtons = new Map(); // emplacement → bouton de la case
     for (const slot of SLOTS) {
       const card = getEquipped(slot.id);
       const colorway = card && catalogue.colorwayById.get(card.colorwayId);
@@ -209,8 +228,11 @@ export function setupOutfit({ catalogue, onChange }) {
         worn[slot.id] = colorway;
         outfit[slot.id] = { colorway, rarity: card.rarity };
       }
-      (slot.side === "left" ? leftCol : rightCol).append(createSlotButton(slot, colorway, card));
+      slotButtons.set(slot.id, createSlotButton(slot, colorway, card));
     }
+    // Les cases sont posées dans l'ordre de OUTFIT_LAYOUT, pas dans celui de SLOTS.
+    leftCol.append(...OUTFIT_LAYOUT.left.map((id) => slotButtons.get(id)));
+    rightCol.append(...OUTFIT_LAYOUT.right.map((id) => slotButtons.get(id)));
     const count = Object.keys(worn).length;
     summary.textContent = `${count} / ${SLOTS.length} pièces portées`;
     hint.hidden = count > 0; // invitation affichée tant que rien n'est porté
