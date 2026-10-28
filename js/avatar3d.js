@@ -10,7 +10,7 @@
 //      sprites. Le canvas est agrandi d'un facteur entier en CSS : rendu pixel art.
 //   Aucune bibliothèque : tout est calculé ici, en JavaScript.
 
-import { getBody, BODY_COLOR, DRAW_ORDER, WEAR_MODELS } from "./wear-models.js?v=49";
+import { getBody, BODY_COLOR, DRAW_ORDER, WEAR_MODELS } from "./wear-models.js?v=50";
 
 // --- La grille ---
 const GX = 48, GY = 84, GZ = 48;      // taille en voxels
@@ -149,7 +149,10 @@ function paintBox(grid, part, sprite) {
   const w = x1 - x0, h = y1 - y0;
   const [top = 0, bottom = 0, left = 0, right = 0] = part.keep || [];
   // Partie du corps (sans sprite) : sa couleur propre ; pièce : couleur lue dans le sprite.
-  const plain = sprite ? (part.plain ? sprite.color(...part.plain) : null) : (part.color || BODY_COLOR);
+  // Si le pixel demandé est vide ou sur le trait, on retombe sur la couleur principale de la pièce.
+  const plain = sprite
+    ? (part.plain ? sprite.color(...part.plain) || dominant(sprite, 0, sprite.width, 0, sprite.height)?.c || BODY_COLOR : null)
+    : (part.color || BODY_COLOR);
 
   /** Couleur de façade au voxel (colonne i, ligne j depuis le haut). */
   function frontColor(i, j) {
@@ -445,10 +448,13 @@ export function createAvatar3D(canvas) {
   canvas.addEventListener("pointercancel", release);
 
   return {
-    /** Habille l'avatar : { emplacement: coloris } ; seules les pièces avec un modèle sont dessinées. */
-    async setOutfit(pieces) {
+    /**
+     * Habille l'avatar : { emplacement: coloris } ; seules les pièces avec un modèle sont dessinées.
+     * body : { type: "homme" | "femme", skin } (voir getBody).
+     */
+    async setOutfit(pieces, body) {
       const token = ++buildToken;
-      const built = await buildModel(pieces);
+      const built = await buildModel(pieces, body);
       if (token !== buildToken) return; // une tenue plus récente a été demandée entre-temps
       grid = built;
       schedule();

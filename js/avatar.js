@@ -6,12 +6,12 @@
 // bas, chaussures) avec un petit espace, et l'écharpe et le sac sont posés à côté.
 // Les sprites sont utilisés TELS QUELS, à leur taille réelle (×1 dans le canvas).
 
-import { RARITIES } from "./data.js?v=49";
-import { getOwnedCards, getEquipped, equip } from "./inventory.js?v=49";
-import { reportError } from "./wallet.js?v=49";
-import { createCardFace, createCardShell } from "./cards.js?v=49";
-import { createAvatar3D } from "./avatar3d.js?v=49";
-import { hasWearModel } from "./wear-models.js?v=49";
+import { RARITIES } from "./data.js?v=50";
+import { getOwnedCards, getEquipped, equip } from "./inventory.js?v=50";
+import { reportError } from "./wallet.js?v=50";
+import { createCardFace, createCardShell } from "./cards.js?v=50";
+import { createAvatar3D } from "./avatar3d.js?v=50";
+import { hasWearModel } from "./wear-models.js?v=50";
 
 // Les 7 emplacements, avec leur colonne sur la fiche.
 // Les identifiants correspondent au champ "slot" de pieces.json.
@@ -32,6 +32,23 @@ const MARGIN = 2;     // marge en haut et en bas du canvas
 const GAP = 2;        // espace entre deux pièces de la pile…
 const MAX_OVERLAP = 4; // …qui devient un chevauchement si la tenue est trop haute
 const SIDE_SHIFT = 8; // avec écharpe ou sac, la pile se décale à gauche pour leur faire de la place
+
+// Réglage « Garçon / Fille » : affichage seulement, gardé dans ce navigateur.
+const BODY_KEY = "grail_avatar_body";
+function readBodyChoice() {
+  try {
+    return localStorage.getItem(BODY_KEY) === "femme" ? "femme" : "homme";
+  } catch {
+    return "homme"; // stockage indisponible : sans importance
+  }
+}
+function saveBodyChoice(type) {
+  try {
+    localStorage.setItem(BODY_KEY, type);
+  } catch {
+    // stockage indisponible : sans importance
+  }
+}
 
 /** Prépare le canvas (64 × 96, net, sans lissage). */
 export function initAvatar(canvas) {
@@ -168,6 +185,16 @@ export function setupOutfit({ catalogue, onChange }) {
   // les autres sont listées sous l'avatar (« Pas encore en 3D : … »).
   const avatar3d = createAvatar3D(document.getElementById("avatar-3d"));
   const note3d = document.getElementById("outfit-3d-note");
+  // Garçon / Fille : un simple réglage d'affichage, gardé dans ce navigateur (les skins viendront plus tard).
+  let bodyType = readBodyChoice();
+  const bodyButtons = document.querySelectorAll(".body-tab");
+  for (const btn of bodyButtons) {
+    btn.addEventListener("click", () => {
+      bodyType = btn.dataset.body;
+      saveBodyChoice(bodyType);
+      render();
+    });
+  }
 
   /** Redessine les 7 cases de la fiche et la tenue à plat. */
   function render() {
@@ -188,7 +215,8 @@ export function setupOutfit({ catalogue, onChange }) {
     summary.textContent = `${count} / ${SLOTS.length} pièces portées`;
     hint.hidden = count > 0; // invitation affichée tant que rien n'est porté
     drawAvatar(canvas, worn).catch((err) => console.error("Tenue :", err));
-    avatar3d.setOutfit(worn).catch((err) => console.error("Avatar 3D :", err));
+    for (const btn of bodyButtons) btn.setAttribute("aria-pressed", String(btn.dataset.body === bodyType));
+    avatar3d.setOutfit(worn, { type: bodyType }).catch((err) => console.error("Avatar 3D :", err));
     const flatOnly = Object.values(worn).filter((c) => !hasWearModel(c.piece.id));
     note3d.hidden = flatOnly.length === 0;
     note3d.textContent = `Pas encore en 3D : ${flatOnly.map((c) => c.piece.name).join(", ")}`;
