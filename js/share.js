@@ -9,24 +9,25 @@
 // L'URL n'est jamais affichée.
 //
 // Image :
-// L'image (1080 × 1350, format portrait des réseaux) montre la tenue à plat
-// agrandie ×6 (facteur entier, sans lissage) et la liste des pièces avec leur
-// nom, coloris, marque et rareté.
+// L'image (1080 × 1350, format portrait des réseaux) montre l'avatar EN 3D (Garçon / Fille du
+// joueur, vu de trois quarts comme dans le jeu) agrandi ×6 (facteur entier, sans lissage) sur un
+// cadre gris sombre, et la liste des pièces avec leur nom, coloris, marque et rareté.
 //
 // Safari n'ouvre le menu de partage QUE juste après un toucher. L'image est donc
 // préparée À L'AVANCE, à chaque changement de tenue, pour être prête au moment
 // où l'on touche le bouton (sinon le partage serait refusé).
 
-import { RARITIES } from "./data.js?v=62";
-import { SLOTS, drawAvatar } from "./avatar.js?v=62";
-import { createOutfitShare } from "./api.js?v=62";
-import { showToast } from "./wallet.js?v=62";
-import { track } from "./analytics.js?v=62";
+import { RARITIES } from "./data.js?v=63";
+import { SLOTS, readBodyChoice } from "./avatar.js?v=63";
+import { buildModel, renderModel, DEFAULT_YAW } from "./avatar3d.js?v=63";
+import { createOutfitShare } from "./api.js?v=63";
+import { showToast } from "./wallet.js?v=63";
+import { track } from "./analytics.js?v=63";
 
 const IMG_W = 1080;
 const IMG_H = 1350;
 const PAD = 64;
-const SCALE = 6;           // tenue à plat 64 × 96 → 384 × 576
+const SCALE = 6;           // avatar 3D 46 × 88 → 276 × 528 (facteur entier)
 const FONT = "Archivo, system-ui, sans-serif";
 const SITE_URL = "joueur01.github.io/Grail";
 const FILE_NAME = "grail-ma-tenue.png";
@@ -78,12 +79,13 @@ async function loadFonts() {
 export async function buildShareImage(outfit) {
   await loadFonts();
 
-  // 1. La tenue à plat, dessinée en taille réelle dans un petit canvas.
-  const flat = document.createElement("canvas");
-  flat.width = 64;
-  flat.height = 96;
+  // 1. L'avatar en 3D, dessiné en taille réelle (46 × 88) dans un petit canvas, de trois quarts
+  //    comme dans le jeu. Il porte le choix Garçon / Fille du joueur.
+  const avatar = document.createElement("canvas");
+  avatar.width = 46;
+  avatar.height = 88;
   const worn = Object.fromEntries(Object.entries(outfit).map(([slot, o]) => [slot, o.colorway]));
-  await drawAvatar(flat, worn);
+  renderModel(avatar, await buildModel(worn, { type: readBodyChoice() }), DEFAULT_YAW);
 
   // 2. L'image finale.
   const canvas = document.createElement("canvas");
@@ -112,12 +114,17 @@ export async function buildShareImage(outfit) {
     + (best ? ` · ${best.n} ${best.r.name.toLowerCase()}${best.n > 1 ? "s" : ""}` : "");
   ctx.fillText(summary, PAD, PAD + 112);
 
-  // Vitrine claire + tenue agrandie ×6
-  const tileX = PAD, tileY = 236, tilePad = 32;
-  const tileW = 64 * SCALE + tilePad * 2, tileH = 96 * SCALE + tilePad * 2;
-  ctx.fillStyle = "#cccac4";
+  // Cadre gris sombre (comme l'écran Tenue) + avatar 3D agrandi ×6, centré
+  const avW = avatar.width * SCALE, avH = avatar.height * SCALE;
+  const tileX = PAD, tileY = 236;
+  const tileW = avW + 112, tileH = avH + 56; // cadre resserré autour de l'avatar
+  const glow = ctx.createRadialGradient(tileX + tileW / 2, tileY + tileH * 0.4, 0, tileX + tileW / 2, tileY + tileH * 0.4, tileH * 0.75);
+  glow.addColorStop(0, "#34353c");
+  glow.addColorStop(0.6, "#2a2b31");
+  glow.addColorStop(1, "#232429");
+  ctx.fillStyle = glow;
   roundRect(ctx, tileX, tileY, tileW, tileH, 32);
-  ctx.drawImage(flat, tileX + tilePad, tileY + tilePad, 64 * SCALE, 96 * SCALE);
+  ctx.drawImage(avatar, tileX + (tileW - avW) / 2, tileY + (tileH - avH) / 2, avW, avH);
 
   // Liste des pièces, de la tête aux pieds
   const listX = tileX + tileW + 40;
