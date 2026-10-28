@@ -7,24 +7,25 @@
 // ?v=… sur les imports : même numéro que dans index.html, et le même partout
 // (un module importé sous deux adresses différentes serait chargé deux fois).
 
-import { loadCatalogue } from "./data.js?v=74";
-import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=74";
-import { initAvatar, setupOutfit } from "./avatar.js?v=74";
-import { setupBooster } from "./booster.js?v=74";
-import { setupShare } from "./share.js?v=74";
-import { setupUpgrade } from "./upgrade.js?v=74";
-import { setupAtelier, setupViewSwitch } from "./atelier.js?v=74";
-import { setupWallet, reportError, showToast } from "./wallet.js?v=74";
-import { setupReputation } from "./reputation.js?v=74";
-import { setupDiscard, createSelection } from "./discard.js?v=74";
-import { setupMarket } from "./market.js?v=74";
-import { setupFriends } from "./friends.js?v=74";
-import { setupVideur } from "./videur.js?v=74";
-import { setupProfile } from "./profile.js?v=74";
-import { setupRules } from "./rules.js?v=74";
-import { startAnalytics, track } from "./analytics.js?v=74";
-import { showSharedOutfit } from "./shared-outfit.js?v=74";
-import { getSession, signIn, signUp, signOut, supabase, requestPasswordReset, updatePassword, isRecoveryLink, endRecovery, sharedOutfitToken } from "./api.js?v=74";
+import { loadCatalogue } from "./data.js?v=75";
+import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=75";
+import { initAvatar, setupOutfit } from "./avatar.js?v=75";
+import { setupBooster } from "./booster.js?v=75";
+import { setupShare } from "./share.js?v=75";
+import { setupUpgrade } from "./upgrade.js?v=75";
+import { setupAtelier, setupViewSwitch } from "./atelier.js?v=75";
+import { setupAlbum } from "./album.js?v=75";
+import { setupWallet, reportError, showToast } from "./wallet.js?v=75";
+import { setupReputation } from "./reputation.js?v=75";
+import { setupDiscard, createSelection } from "./discard.js?v=75";
+import { setupMarket } from "./market.js?v=75";
+import { setupFriends } from "./friends.js?v=75";
+import { setupVideur } from "./videur.js?v=75";
+import { setupProfile } from "./profile.js?v=75";
+import { setupRules } from "./rules.js?v=75";
+import { startAnalytics, track } from "./analytics.js?v=75";
+import { showSharedOutfit } from "./shared-outfit.js?v=75";
+import { getSession, signIn, signUp, signOut, supabase, requestPasswordReset, updatePassword, isRecoveryLink, endRecovery, sharedOutfitToken } from "./api.js?v=75";
 
 // « profile » n'a pas d'onglet : on y va par le bouton rond en haut (#profile). « rules » non plus : par le profil ou un lien « ? » (#rules, #rules/market…).
 const SCREENS = ["booster", "collection", "market", "videur", "friends", "avatar", "profile", "rules"];
@@ -236,9 +237,11 @@ async function boot() {
         selection.setActive(true);
       },
     });
+    // Album (définitif) : une carte placée quitte la collection ; un modèle complet donne son Ultime.
+    const refreshAlbum = setupAlbum({ catalogue, onChange: () => { refreshCards(); refreshOutfit(); } });
     setupViewSwitch();
     let market = null; // Market (créé en dernier) : redessiné avec la collection
-    const refreshCards = () => { refreshCollection(); refreshAtelier(); market?.render(); };
+    const refreshCards = () => { refreshCollection(); refreshAtelier(); refreshAlbum(); market?.render(); };
     setupBooster({ catalogue, onOpened: refreshCards });
     // Market entre joueurs (géré par le serveur) : acheter, vendre, mes ventes.
     market = setupMarket({ catalogue, onChange });

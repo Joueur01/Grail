@@ -6,7 +6,7 @@
 // amélioration. Ne remettre AUCUNE logique de jeu ici ni ailleurs côté client.
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase-config.js?v=74";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase-config.js?v=75";
 
 // Le lien « mot de passe oublié » reçu par e-mail ramène sur le site avec « type=recovery » dans
 // l'adresse. On le note AVANT que supabase-js ne traite (et n'efface) l'adresse.
@@ -155,6 +155,9 @@ export const setLocked = (colorway, rarity, locked) =>
 /** colorway = null : vide l'emplacement */
 export const setEquipped = (slot, colorway, rarity) =>
   rpc("set_equipped", { p_slot: slot, p_colorway: colorway, p_rarity: rarity });
+/** Porter un Ultime (migration 0022) : piece = id du modèle ("signal9_shell_relais"). */
+export const setEquippedUltimate = (slot, piece) =>
+  rpc("set_equipped_ultimate", { p_slot: slot, p_piece: piece });
 export const setTutorialDone = () => rpc("set_tutorial_done");
 /** → id de la vente */
 export const marketList = (colorway, rarity, price) =>
@@ -167,6 +170,13 @@ export const marketAckSales = () => rpc("market_ack_sales");
 /** Historique de MES achats et ventes (migration 0009), du plus récent au plus ancien. p_before = id de la dernière ligne reçue.
  *  → { items: [{ id, kind: "market_buy" | "market_sale", coins, colorway_id, rarity, created_at }], has_more, total_spent, total_earned } */
 export const marketHistory = (before = null) => rpc("market_history", { p_limit: 30, p_before: before });
+
+// --- Album (migration 0022) ---------------------------------------------------------
+
+/** → { cards: ["coloris|rareté", …], ultimates: ["modèle", …] } */
+export const getAlbum = () => rpc("get_album");
+/** Place UNE carte dans l'album (définitif). → { colorway_id, rarity, piece_id, have, total, ultimate_unlocked } */
+export const albumAdd = (colorway, rarity) => rpc("album_add", { p_colorway: colorway, p_rarity: rarity });
 
 // --- Amis (migration 0005) ---------------------------------------------------------
 

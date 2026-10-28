@@ -1,16 +1,16 @@
 // rules.js — page « Règles du jeu » : taux de drop et spécificités techniques, en sections repliables.
 //
 // Ouverte depuis le profil (#rules) ou par un lien « ? » d'un écran (#rules/boosters, #rules/roue,
-// #rules/market, #rules/videur, #rules/reputation) : la section demandée s'ouvre toute seule.
+// #rules/market, #rules/album, #rules/videur, #rules/reputation) : la section demandée s'ouvre toute seule.
 // ⚠️ Les valeurs affichées viennent de js/economy-config.js (copie d'AFFICHAGE : le serveur décide).
 // Si le serveur change une valeur, la mettre à jour dans ce fichier-là, pas ici.
 // Les règles cachées du Videur (Club, VIP) ne sont volontairement PAS décrites.
 
-import { RARITIES } from "./data.js?v=74";
+import { RARITIES } from "./data.js?v=75";
 import {
   DROP_RATES, BOOSTER, PITY, UPGRADE, DISCARD_VALUES, MARKET, FRIENDS, saleTax, saleNet,
   DAILY_BONUS, REPUTATION, SHOWCASE, VIDEUR_INFO,
-} from "./economy-config.js?v=74";
+} from "./economy-config.js?v=75";
 
 function el(tag, className, text) {
   const e = document.createElement(tag);
@@ -163,6 +163,24 @@ function buildSections(catalogue) {
     ]),
   ]);
 
+  const album = section("album", "Album et Ultimes", "Une vraie collection, définitive", [
+    para("L'album est l'endroit où tu ranges tes cartes pour de bon. Il commence vide, et tu y places les cartes que tu veux."),
+    bullets([
+      `Une case par coloris et par rareté : ${colorways} coloris × ${RARITIES.length} raretés = ${colorways * RARITIES.length} cases. Chaque case ne se remplit qu'une seule fois.`,
+      "C'est définitif : une carte placée dans l'album ne peut jamais en être retirée. Elle quitte ta collection et n'est plus utilisable (ni portée, ni vendue, ni misée à la roue, ni défaussée, ni en vitrine).",
+      "Une carte placée compte toujours dans ta progression « X / 300 ».",
+      "Si tu as plusieurs exemplaires d'une carte, un seul part dans l'album : les autres restent à toi.",
+    ]),
+    sub("L'Ultime"),
+    bullets([
+      "Quand un modèle est complet dans l'album (tous ses coloris, dans toutes les raretés), tu obtiens son Ultime.",
+      "L'Ultime est une carte unique de rareté « Ultime », au-dessus de Légendaire : un seul par modèle.",
+      "Il ne se vend pas, ne s'échange pas, ne se mise pas et ne se défausse pas.",
+      "En revanche, il se porte comme n'importe quelle pièce et se met en vitrine, y compris sur l'image de ta tenue partagée.",
+      "Son dessin est le même pour tous les joueurs : noir profond, reflets irisés.",
+    ]),
+  ]);
+
   const profil = section("profil", "Profil, tenue et amis", "Vitrine, pseudo, partage", [
     bullets([
       `Vitrine : tu choisis jusqu'à ${SHOWCASE.max} cartes à montrer à tes amis. Une carte vendue, défaussée ou misée en disparaît toute seule.`,
@@ -174,7 +192,7 @@ function buildSections(catalogue) {
     ]),
   ]);
 
-  return [boosters, roue, defausse, market, videur, reputation, profil];
+  return [boosters, roue, defausse, market, album, videur, reputation, profil];
 }
 
 /** Branche la page #rules : construit les sections, ouvre celle demandée par l'adresse (#rules/market…). */

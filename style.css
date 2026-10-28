@@ -21,6 +21,8 @@
   --rarity-rare: #4d8dff;
   --rarity-epique: #a56bff;
   --rarity-legendaire: #f2c230;
+  --rarity-ultime: #c9a7ff;   /* Ultime (album) : au-dessus de Légendaire, irisé sur les cartes */
+  --ultime-gradient: linear-gradient(100deg, #5ae6e6, #78a0ff 30%, #be78ff 50%, #ff78d2 70%, #ffc88c);
 
   /* Couleur d'accent de chaque marque (section 5 du CLAUDE.md) :
      cartes ET image partagée (share.js les lit ici) */
@@ -1662,6 +1664,7 @@ main {
 [data-rarity="rare"]       { --rarity-color: var(--rarity-rare); }
 [data-rarity="epique"]     { --rarity-color: var(--rarity-epique); }
 [data-rarity="legendaire"] { --rarity-color: var(--rarity-legendaire); }
+[data-rarity="ultime"]     { --rarity-color: var(--rarity-ultime); }
 
 /* --- Auras (de la plus discrète à la plus forte) ---
    Face cachée : rester appuyé fait monter l'aura palier par palier (booster.js
@@ -2384,3 +2387,116 @@ ul.rules-list { margin: 0; padding-left: 18px; display: flex; flex-direction: co
 @media (prefers-reduced-motion: reduce) { .rules-chevron { transition: none; } }
 
 .rules-more { margin: -2px 0 0; font-size: 14px; font-weight: 700; font-style: italic; color: var(--muted); }
+
+/* =========================================================
+   Ultime (rareté au-dessus de Légendaire) et Album (album.js)
+   ========================================================= */
+
+/* Carte Ultime : bordure irisée, léger halo violet, étiquette dégradée, case du sprite nacrée */
+.card[data-rarity="ultime"] .card-face {
+  border-color: transparent;
+  background:
+    linear-gradient(var(--surface), var(--surface)) padding-box,
+    conic-gradient(#5ae6e6, #78a0ff, #be78ff, #ff78d2, #ffc88c, #96ffbe, #5ae6e6) border-box;
+  box-shadow: 0 0 14px -2px rgba(190, 120, 255, 0.55);
+}
+.card[data-rarity="ultime"] .rarity-tag { background: var(--ultime-gradient); }
+.card[data-rarity="ultime"] .sprite-tile { background: linear-gradient(160deg, #d6d3dc, #c4c2cc); }
+.rules-chip[data-rarity="ultime"], .rarity-chip[data-rarity="ultime"] { border-color: transparent; background: var(--ultime-gradient); color: #0f0f11; }
+
+/* Album : un bloc par modèle, dépliable */
+.album-list { display: flex; flex-direction: column; gap: 10px; }
+.album-piece {
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  overflow: hidden;
+}
+/* Modèle complet : cadre irisé, comme l'Ultime */
+.album-piece.complete {
+  border-color: transparent;
+  background:
+    linear-gradient(var(--surface), var(--surface)) padding-box,
+    conic-gradient(#5ae6e6, #78a0ff, #be78ff, #ff78d2, #ffc88c, #96ffbe, #5ae6e6) border-box;
+  box-shadow: 0 0 14px -4px rgba(190, 120, 255, 0.55);
+}
+.album-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font-family: var(--font);
+  text-align: left;
+  cursor: pointer;
+}
+/* L'Ultime du modèle : silhouette tant qu'il n'est pas gagné */
+.album-ult {
+  flex: none;
+  display: flex;
+  padding: 1px;
+  border-radius: 6px;
+  background: linear-gradient(160deg, #d6d3dc, #c4c2cc);
+}
+.album-ult img { display: block; width: 64px; height: 64px; }
+.album-ult.locked img { filter: brightness(0); opacity: 0.4; }
+.album-title { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: stretch; gap: 3px; }
+.album-title .card-brand { align-self: flex-start; }
+.album-name { font-size: 16px; font-weight: 800; line-height: 1.2; }
+.album-progress { display: flex; align-items: center; gap: 10px; }
+.album-progress .stat-bar { flex: 1; margin-top: 0; height: 6px; }
+.album-piece.complete .stat-bar-fill { background: var(--ultime-gradient); }
+.album-count { flex: none; font-size: 13px; font-weight: 800; white-space: nowrap; }
+.album-chevron { flex: none; font-size: 22px; color: var(--muted); transition: transform 0.2s; }
+.album-head[aria-expanded="true"] .album-chevron { transform: rotate(90deg); }
+
+.album-body { display: flex; flex-direction: column; gap: 14px; padding: 0 14px 14px; }
+.album-banner { display: flex; flex-direction: column; gap: 10px; padding: 10px 12px; border-radius: 10px; background: var(--surface-2); }
+.album-banner-text { margin: 0; font-size: 13px; line-height: 1.4; color: var(--muted); }
+.album-colorway { display: flex; flex-direction: column; gap: 6px; }
+.album-colorway-name { font-size: 13px; font-weight: 700; }
+
+/* Les 4 cases (une par rareté). Sprite ×1 sur très petit écran, ×2 dès que les cases sont assez larges
+   (facteur entier, choisi selon la largeur réelle de la rangée). */
+.album-cells { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; container-type: inline-size; }
+.album-cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 2px 5px;
+  border: 2px solid var(--rarity-color);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-family: var(--font);
+  cursor: pointer;
+}
+.album-cell-tile { display: flex; padding: 1px; border-radius: 5px; background: #cccac4; }
+.album-cell-tile img { display: block; width: 32px; height: 32px; }
+@container (min-width: 300px) { .album-cell-tile img { width: 64px; height: 64px; } }
+.album-cell-label { font-size: 9px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--rarity-color); }
+.album-cell.empty { border-style: dashed; opacity: 0.4; filter: grayscale(1); }
+.album-cell.placeable { border-style: dashed; animation: album-ready 2s ease-in-out infinite; }
+@keyframes album-ready { 50% { box-shadow: 0 0 10px -1px var(--rarity-color); } }
+@media (prefers-reduced-motion: reduce) { .album-cell.placeable { animation: none; } }
+.album-mark {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--rarity-color);
+  color: #0f0f11;
+  font-size: 11px;
+  font-weight: 900;
+}
+.album-mark.plus { background: var(--bg); color: var(--rarity-color); border: 1.5px solid var(--rarity-color); }
+.album-warning { padding: 10px 12px; border-radius: 10px; background: var(--surface-2); font-size: 13px; line-height: 1.4; }

@@ -6,13 +6,13 @@
 // que chaque carte est possédée. Ce fichier ne calcule rien : il met en page ce que le serveur
 // renvoie. Un ami ne reçoit pas le solde de pièces (le serveur renvoie null).
 
-import { RARITIES, getRarity, matchesSearch } from "./data.js?v=74";
-import { getPlayerProfile, setShowcase } from "./api.js?v=74";
-import { getOwnedCards } from "./inventory.js?v=74";
-import { showToast, reportError } from "./wallet.js?v=74";
-import { SLOTS } from "./avatar.js?v=74";
-import { createAvatar3D } from "./avatar3d.js?v=74";
-import { createCardFace, createCardShell } from "./cards.js?v=74";
+import { RARITIES, ALL_RARITIES, getRarity, matchesSearch, catalogueOrderMap } from "./data.js?v=75";
+import { getPlayerProfile, setShowcase } from "./api.js?v=75";
+import { getOwnedCards, getOwnedUltimates } from "./inventory.js?v=75";
+import { showToast, reportError } from "./wallet.js?v=75";
+import { SLOTS } from "./avatar.js?v=75";
+import { createAvatar3D } from "./avatar3d.js?v=75";
+import { createCardFace, createCardShell } from "./cards.js?v=75";
 
 function el(tag, className, text) {
   const e = document.createElement(tag);
@@ -158,6 +158,8 @@ export function buildProfileView(data, catalogue, { showName = true, onEditOutfi
   const total = data.cards_total || 300;
   grid.append(
     statTile("Collection", `${data.cards_owned} / ${total}`, { progress: data.cards_owned / total, sub: `${data.copies} exemplaires` }),
+    // Album et Ultimes (migration 0022) : seulement si le serveur les renvoie.
+    ...(typeof data.ultimates === "number" ? [statTile("Ultimes", `${data.ultimates} / ${catalogue.pieces.length}`, { sub: `${data.album_cards} cartes dans l'album` })] : []),
     statTile("Boosters ouverts", String(data.boosters_opened ?? 0)),
     statTile("Série au Videur", `${data.videur_streak ?? 0} j`),
     // Sans la migration 0021, le Flow reste une simple statistique ; sinon il est dans la carte Réputation.
@@ -221,8 +223,8 @@ function openShowcaseEditor({ catalogue, current, max, onSaved }) {
   const sheet = document.getElementById("card-sheet");
   const title = document.getElementById("card-sheet-title");
   const body = document.getElementById("card-sheet-body");
-  const rarityRank = new Map(RARITIES.map((r, i) => [r.id, i]));
-  const catalogueOrder = new Map(catalogue.colorways.map((c, i) => [c.id, i]));
+  const rarityRank = new Map(ALL_RARITIES.map((r, i) => [r.id, i]));
+  const catalogueOrder = catalogueOrderMap(catalogue);
   let picked = [...current]; // sélection en cours, dans l'ordre d'ajout
 
   title.textContent = "Ma vitrine";
@@ -243,7 +245,7 @@ function openShowcaseEditor({ catalogue, current, max, onSaved }) {
   brand.append(new Option("Marque", ""), ...catalogue.brands.map((b) => new Option(b.name, b.id)));
   const rarity = el("select");
   rarity.setAttribute("aria-label", "Filtrer par rareté");
-  rarity.append(new Option("Rareté", ""), ...[...RARITIES].reverse().map((r) => new Option(r.name, r.id)));
+  rarity.append(new Option("Rareté", ""), ...[...ALL_RARITIES].reverse().map((r) => new Option(r.name, r.id)));
   filters.append(search, brand, rarity);
 
   const grid = el("div", "card-grid showcase-grid");
@@ -288,7 +290,7 @@ function openShowcaseEditor({ catalogue, current, max, onSaved }) {
 
   /** Grille des cartes possédées (la plus rare d'abord), filtrée. */
   function renderGrid() {
-    const owned = getOwnedCards().filter((c) => catalogue.colorwayById.has(c.colorwayId));
+    const owned = [...getOwnedCards(), ...getOwnedUltimates()].filter((c) => catalogue.colorwayById.has(c.colorwayId));
     const visible = owned
       .filter((c) => {
         const colorway = catalogue.colorwayById.get(c.colorwayId);
