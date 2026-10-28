@@ -17,7 +17,7 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=40">
+  <link rel="stylesheet" href="style.css?v=41">
 </head>
 <body>
   <header class="topbar">
@@ -308,14 +308,16 @@
         </div>
         <div class="outfit-col" id="outfit-right"></div>
       </div>
-      <!-- Partage : lien public vers la tenue (principal) ou image PNG (secondaire) — share.js -->
-      <button class="btn btn-primary" id="btn-share" disabled>Partager ma tenue</button>
-      <div class="share-link" id="share-link" hidden>
-        <input class="auth-input" id="share-link-input" type="text" readonly aria-label="Lien de ma tenue">
-        <button class="btn" id="btn-copy-link" type="button">Copier</button>
+      <!-- Partage (share.js) : un seul bouton. Mobile : menu de partage du téléphone (image + lien).
+           Ordinateur : petit menu « Copier le lien » / « Enregistrer en image ». -->
+      <div class="share">
+        <button class="btn btn-primary" id="btn-share" disabled aria-haspopup="menu" aria-expanded="false">Partager ma tenue</button>
+        <div class="share-menu" id="share-menu" role="menu" hidden>
+          <button class="share-menu-item" id="share-copy" role="menuitem" type="button">Copier le lien</button>
+          <button class="share-menu-item" id="share-save" role="menuitem" type="button">Enregistrer en image</button>
+        </div>
       </div>
       <p class="muted share-status" id="share-status" aria-live="polite"></p>
-      <button class="btn share-image" id="btn-share-image" disabled>Enregistrer en image</button>
       <button class="signout" id="btn-signout">Se déconnecter</button>
     </section>
   </main>
@@ -361,6 +363,6 @@
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=40"></script>
+  <script type="module" src="js/main.js?v=41"></script>
 </body>
 </html>
