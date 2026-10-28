@@ -38,7 +38,7 @@ Contraintes de la bêta :
 
 ### Hors périmètre de la bêta (ne pas coder pour l'instant)
 
-Échanges directs entre joueurs, achats en argent réel, abonnement, comptes via réseaux sociaux, votes, défis de style, contenu créé librement par les joueurs (textes, images), notifications, 3D.
+Échanges directs entre joueurs, achats en argent réel, abonnement, comptes via réseaux sociaux, votes, défis de style, contenu créé librement par les joueurs (textes, images), notifications. (La 3D de l'avatar a été lancée à la demande du développeur : section 7 bis.)
 
 Ces fonctionnalités viendront plus tard **seulement si le test est positif**. Le code peut rester simple et ne pas les anticiper.
 
@@ -74,7 +74,9 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 │   ├── atelier.js     # vue « Atelier » : progression par modèle + rareté
 │   ├── market.js      # Market entre joueurs (offres et actions via le serveur)
 │   ├── friends.js     # écran Amis : pseudo, demandes, liste, tenue d'un ami (via le serveur)
-│   ├── avatar.js      # rendu de l'avatar en canvas
+│   ├── avatar.js      # écran Tenue : cases, tenue « à plat » (canvas), bascule 3D / À plat
+│   ├── avatar3d.js    # avatar 3D en voxels : construction, rendu (un rayon par pixel), glisser pour tourner
+│   ├── wear-models.js # modèles 3D « portés » : corps de base + un modèle par pièce
 │   ├── videur.js      # écran Videur : portes, dress code du jour, jauges, verdict (via le serveur)
 │   ├── analytics.js   # mesure d'usage anonyme (rétention) : événements groupés → track_events
 │   ├── share.js       # partage de la tenue : lien public (principal) + export PNG (option)
@@ -291,7 +293,7 @@ Onglet **Market** : Acheter / Vendre / Mes ventes / Historique.
 
 ✅ **Bêta : la « fiche de tenue » avec tenue « à plat »** (choisie après un essai de bonhomme habillé jugé raté : les icônes catalogue ne se portent pas). Au centre (canvas 64 × 96, ×2 sur téléphone, ×4 sur tablette / PC), les sprites portés sont posés **tels quels**, comme une photo de fit au sol : pile centrale de haut en bas (tête → haut avec la veste par-dessus → bas → chaussures), 2 px d'espace (resserré seulement si la tenue est trop haute), écharpe puis sac posés à droite. Texte d'invitation tant que rien n'est porté. Autour : 7 cases (gauche : Tête, Cou, Haut, Veste ; droite : Sac, Bas, Chaussures). Toucher une case ouvre un panneau par le bas avec les cartes possédées pour cet emplacement (plus rare d'abord) ; toucher une carte l'équipe, « Retirer la pièce » vide la case. La case prend la couleur de rareté de la carte portée. Enregistrée sur le serveur (`set_equipped`, qui vérifie que la carte est possédée et va dans cet emplacement ; colonne `equipped`). Code : `drawAvatar()` dans `js/avatar.js` (réutilisable pour l'image partagée).
 
-**Après la bêta (si le test est positif) : vrais calques « portés »**. Un corps de base unique (ex. 32 × 64, de face) + un calque « porté » par **forme** de pièce (20 dessins, pas 75), dessiné sur ce corps ; les 75 coloris générés automatiquement par recoloration à partir des couleurs de chaque icône. Les icônes actuelles restent pour les cartes. Claude fournit le gabarit, un calque d'exemple et le script de recoloration ; le développeur dessine les 20 formes.
+~~Ancienne piste~~ (remplacée par la 3D, section 7 bis) : vrais calques « portés ». Un corps de base unique (ex. 32 × 64, de face) + un calque « porté » par **forme** de pièce (20 dessins, pas 75), dessiné sur ce corps ; les 75 coloris générés automatiquement par recoloration à partir des couleurs de chaque icône. Les icônes actuelles restent pour les cartes. Claude fournit le gabarit, un calque d'exemple et le script de recoloration ; le développeur dessine les 20 formes.
 
 Contexte d'origine : le gabarit d'avatar n'était pas fixé. Les sprites des pièces sont des **icônes 32 × 32 « catalogue »**, pas des calques dessinés pour être portés.
 
@@ -303,9 +305,20 @@ Approche par défaut pour la bêta, sauf consigne contraire :
 
 Ne pas passer plus de 30 minutes bloqué sur l'avatar : simplifier plutôt que perfectionner.
 
+## 7 bis. Avatar 3D en voxels (échantillon en cours, décidé par le développeur)
+
+- **Choix du développeur** : un **corps en voxels** (petits cubes) + des **vêtements modélisés autour**, toujours **pixelisés** (DA du jeu), qu'on fait **tourner en glissant** le doigt (face, côté, dos). Le corps ne bouge pas.
+- **Écran Tenue** : sélecteur en pilule **« 3D » (par défaut) / « À plat »**. La vue « à plat » (section 7) reste inchangée et sert toujours pour l'**image partagée**, la **page publique** et le **profil d'un ami**.
+- **Rendu maison, sans bibliothèque** (`js/avatar3d.js`) : une grille de voxels (48 × 84 × 48) ; un rayon par pixel d'un canvas **48 × 96** (1 voxel ≈ 1 pixel), éclairage selon l'orientation des faces, contour noir d'1 pixel comme les sprites. Canvas agrandi **×3 sur téléphone, ×4 sur tablette / PC** (facteur entier). ~2 ms par image sur ordinateur. Glisser vers la droite tourne la face vers la droite, avec un peu d'élan au lâcher ; `touch-action: pan-y` garde le défilement vertical.
+- **Corps de base** (`BODY` dans `js/wear-models.js`) : mannequin neutre, non genré, sans visage (~72 voxels de haut).
+- **Un modèle par PIÈCE, pas par coloris** (`WEAR_MODELS`) : des blocs (`box` = pavé, `lathe` = volume tourné pour les bonnets, `profile` = silhouette de profil extrudée pour les chaussures) + la zone du sprite à copier en façade. Les **couleurs sont lues dans le sprite du coloris porté** : les 75 coloris suivent automatiquement. Dos et côtés = couleur principale de la pièce (les bandes comme ourlets et poignets sont gardées, pas les logos). `keep` garde les bords du sprite à l'échelle 1 (ourlet, poignet), seul le milieu est étiré. `hiddenBy` cache un bloc sous une autre pièce (capuche du hoodie sous une veste).
+- **Ordre de dessin** : chaussures → bas (le pantalon tombe sur la chaussure) → haut → veste → cou → tête → sac.
+- **Échantillon fait (5 pièces / 24 coloris)** : Shell « Relais », Hoodie « Dalle », Cargo « Béton », Montantes « Trame », Bonnet « Nuit ». Les autres pièces portées n'apparaissent pas sur l'avatar 3D ; la mention « Pas encore en 3D : … » les liste sous l'avatar.
+- **Reste à faire** (après validation de l'échantillon) : les 15 autres pièces (dont sacs et écharpe, à placer sur le corps), puis éventuellement l'avatar 3D sur la page publique, le profil d'un ami et le Videur.
+
 ## 8. Direction artistique de l'interface
 
-- Pixel art 32 × 32 pour tous les vêtements **et l'avatar uniquement**. L'interface, elle, n'est **pas rétro** : moderne et nette, pour créer un **contraste** avec les sprites pixelisés.
+- Pixel art 32 × 32 pour tous les vêtements **et l'avatar uniquement** (l'avatar 3D en voxels reste pixelisé). L'interface, elle, n'est **pas rétro** : moderne et nette, pour créer un **contraste** avec les sprites pixelisés.
 - Ambiance **streetwear / drop / resell** : sobre, un peu « hype », pas mignon. Penser vitrine de sneakers plutôt que jeu d'habillage.
 - Fond **sombre** presque noir, texte blanc cassé, beaucoup d'air, coins arrondis, boutons en pilule.
 - Typographie : **Archivo** (Google Fonts), grotesque grasse et étirée pour les titres, normale pour le texte. **Pas de police pixel** dans l'interface.

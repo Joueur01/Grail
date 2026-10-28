@@ -591,6 +591,44 @@ main {
   height: calc(96px * var(--avatar-scale));
 }
 
+/* Sélecteur 3D / À plat, au-dessus de la fiche */
+.outfit-switch { margin-bottom: 12px; }
+
+/* Les deux vues de l'avatar : une seule visible à la fois */
+.outfit-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.outfit-view[hidden] { display: none; }
+
+/* Avatar 3D 48×96 : facteur entier ×3 (144×288) sur téléphone, ×4 sur tablette / PC.
+   Glisser horizontalement le fait tourner ; le défilement vertical de la page
+   reste possible (pan-y). */
+.outfit-body { --avatar3d-scale: 3; }
+@media (min-width: 700px) { .outfit-body { --avatar3d-scale: 4; } }
+.avatar-3d {
+  width: calc(48px * var(--avatar3d-scale));
+  height: calc(96px * var(--avatar3d-scale));
+  touch-action: pan-y;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.avatar-3d:active { cursor: grabbing; }
+.outfit-3d-hint,
+.outfit-3d-note {
+  margin: 0;
+  max-width: calc(48px * var(--avatar3d-scale));
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #6e6c67;
+}
+.outfit-3d-note { color: #4a4844; }
+
 /* Invitation posée sur la vitrine tant qu'aucune pièce n'est portée */
 .outfit-hint {
   position: absolute;

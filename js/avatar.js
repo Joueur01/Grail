@@ -6,10 +6,12 @@
 // bas, chaussures) avec un petit espace, et l'écharpe et le sac sont posés à côté.
 // Les sprites sont utilisés TELS QUELS, à leur taille réelle (×1 dans le canvas).
 
-import { RARITIES } from "./data.js?v=47";
-import { getOwnedCards, getEquipped, equip } from "./inventory.js?v=47";
-import { reportError } from "./wallet.js?v=47";
-import { createCardFace, createCardShell } from "./cards.js?v=47";
+import { RARITIES } from "./data.js?v=48";
+import { getOwnedCards, getEquipped, equip } from "./inventory.js?v=48";
+import { reportError } from "./wallet.js?v=48";
+import { createCardFace, createCardShell } from "./cards.js?v=48";
+import { createAvatar3D } from "./avatar3d.js?v=48";
+import { hasWearModel } from "./wear-models.js?v=48";
 
 // Les 7 emplacements, avec leur colonne sur la fiche.
 // Les identifiants correspondent au champ "slot" de pieces.json.
@@ -162,6 +164,10 @@ export function setupOutfit({ catalogue, onChange }) {
 
   const canvas = document.getElementById("avatar-canvas");
   const hint = document.getElementById("outfit-hint");
+  // Avatar 3D : seules les pièces qui ont déjà un modèle 3D sont portées dessus,
+  // les autres sont listées sous l'avatar (« Pas encore en 3D : … »).
+  const avatar3d = createAvatar3D(document.getElementById("avatar-3d"));
+  const note3d = document.getElementById("outfit-3d-note");
 
   /** Redessine les 7 cases de la fiche et la tenue à plat. */
   function render() {
@@ -182,6 +188,10 @@ export function setupOutfit({ catalogue, onChange }) {
     summary.textContent = `${count} / ${SLOTS.length} pièces portées`;
     hint.hidden = count > 0; // invitation affichée tant que rien n'est porté
     drawAvatar(canvas, worn).catch((err) => console.error("Tenue :", err));
+    avatar3d.setOutfit(worn).catch((err) => console.error("Avatar 3D :", err));
+    const flatOnly = Object.values(worn).filter((c) => !hasWearModel(c.piece.id));
+    note3d.hidden = flatOnly.length === 0;
+    note3d.textContent = `Pas encore en 3D : ${flatOnly.map((c) => c.piece.name).join(", ")}`;
     onChange?.(outfit);
   }
 
