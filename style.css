@@ -1101,6 +1101,35 @@ main {
 .friend-link:active { opacity: 0.8; }
 .friend-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 16px; font-weight: 800; }
 .friend-chevron { color: var(--muted); font-size: 22px; line-height: 1; }
+
+/* Ligne d'ami avec aperçu (migration 0017) : mini avatar 3D | pseudo + mini cartes de la vitrine | › */
+.friend-row-rich { padding: 10px 14px 10px 10px; gap: 12px; }
+.friend-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.friend-info .friend-name { flex: none; }
+/* Mini avatar : canvas 46×88 en ×1 (facteur entier), sur le même fond gris sombre que l'écran Tenue */
+.friend-mini {
+  flex: none;
+  display: grid;
+  place-items: center;
+  padding: 4px 6px;
+  border-radius: 12px;
+  background: radial-gradient(ellipse at 50% 40%, #34353c 0%, #2a2b31 60%, #232429 100%);
+}
+.friend-mini-canvas { display: block; width: 46px; height: 88px; }
+/* Mini cartes de la vitrine : sprite ×1 sur case claire, contour de rareté dessiné à l'intérieur */
+.friend-showcase { display: flex; gap: 6px; align-items: center; min-height: 40px; }
+.friend-card {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 9px;
+  background: #cccac4;
+  box-shadow: inset 0 0 0 2px var(--rarity-color, transparent);
+}
+.friend-card img { width: 32px; height: 32px; }
+.friend-showcase-empty { color: var(--muted); font-size: 13px; font-weight: 600; }
 .friend-state { color: var(--muted); font-size: 13px; }
 .friend-actions { display: flex; gap: 6px; }
 .friend-actions .btn { width: auto; min-height: 40px; padding: 0 14px; font-size: 13px; }
