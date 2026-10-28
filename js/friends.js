@@ -5,10 +5,11 @@
 // serveur renvoie et envoie les actions. Il n'existe aucune liste publique de joueurs :
 // on ne retrouve quelqu'un qu'avec son pseudo EXACT.
 
-import { getRarity } from "./data.js?v=36";
-import { setPseudo, listFriends, friendRequest, friendRespond, friendRemove, getFriendProfile } from "./api.js?v=36";
-import { SLOTS, initAvatar, drawAvatar } from "./avatar.js?v=36";
-import { showToast, reportError } from "./wallet.js?v=36";
+import { getRarity } from "./data.js?v=37";
+import { setPseudo, listFriends, friendRequest, friendRespond, friendRemove, getFriendProfile } from "./api.js?v=37";
+import { SLOTS, initAvatar, drawAvatar } from "./avatar.js?v=37";
+import { showToast, reportError } from "./wallet.js?v=37";
+import { FRIENDS } from "./economy-config.js?v=37";
 
 /**
  * Branche l'écran Amis.
@@ -62,13 +63,22 @@ export function setupFriends({ catalogue }) {
   // --- Affichage -------------------------------------------------------------------
 
   function render() {
+    // Le serveur renvoie la date du prochain changement possible (null : on peut changer maintenant).
+    const nextChange = data.pseudo_next_change ? new Date(data.pseudo_next_change) : null;
+    const locked = nextChange !== null && nextChange > new Date();
+    if (locked) editing = false;
     const needPseudo = !data.pseudo || editing;
+    $("pseudo-edit").hidden = locked;
+    $("pseudo-lock").hidden = !locked;
+    if (locked) {
+      $("pseudo-lock").textContent = `Tu pourras changer de pseudo à partir du ${nextChange.toLocaleDateString("fr-FR", { day: "numeric", month: "long" })} (un changement tous les ${FRIENDS.pseudoChangeDays} jours).`;
+    }
     pseudoForm.hidden = !needPseudo;
     main.hidden = !data.pseudo;
     $("pseudo-title").textContent = data.pseudo ? "Changer de pseudo" : "Choisis ton pseudo";
     $("pseudo-hint").textContent = data.pseudo
-      ? "Tu peux changer de pseudo une fois par semaine. 3 à 16 caractères : lettres, chiffres ou _."
-      : "Tes amis te retrouvent avec ce pseudo. 3 à 16 caractères : lettres, chiffres ou _. Il n'apparaît dans aucune liste publique.";
+      ? `Tu ne peux changer de pseudo qu'une fois tous les ${FRIENDS.pseudoChangeDays} jours : choisis bien ! 3 à 16 caractères : lettres, chiffres ou _.`
+      : `Tes amis te retrouvent avec ce pseudo. 3 à 16 caractères : lettres, chiffres ou _. Il n'apparaît dans aucune liste publique. Tu pourras ensuite le changer une fois tous les ${FRIENDS.pseudoChangeDays} jours.`;
     if (needPseudo && document.activeElement !== pseudoInput) pseudoInput.value = data.pseudo || "";
     $("friends-me").textContent = data.pseudo || "";
 
