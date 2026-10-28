@@ -2382,3 +2382,5 @@ ul.rules-list { margin: 0; padding-left: 18px; display: flex; flex-direction: co
   text-decoration: none;
 }
 @media (prefers-reduced-motion: reduce) { .rules-chevron { transition: none; } }
+
+.rules-more { margin: -2px 0 0; font-size: 14px; font-weight: 700; font-style: italic; color: var(--muted); }
