@@ -6,7 +6,7 @@
 // amélioration. Ne remettre AUCUNE logique de jeu ici ni ailleurs côté client.
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase-config.js?v=58";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase-config.js?v=60";
 
 // Le lien « mot de passe oublié » reçu par e-mail ramène sur le site avec « type=recovery » dans
 // l'adresse. On le note AVANT que supabase-js ne traite (et n'efface) l'adresse.
@@ -187,6 +187,8 @@ export const getFriendProfile = (friendId) => rpc("get_friend_profile", { p_frie
 export const getPlayerProfile = (playerId = null) => rpc("get_player_profile", { p_player: playerId });
 /** Choix de l'avatar 3D : "homme" ou "femme" (enregistré sur le serveur, visible par les amis). */
 export const setAvatarBody = (body) => rpc("set_avatar_body", { p_body: body });
+/** Vitrine choisie (migration 0015) : liste ordonnée de "coloris|rareté" ; [] la vide. Le serveur vérifie tout. */
+export const setShowcase = (cards) => rpc("set_showcase", { p_cards: cards });
 
 // --- Videur (migration 0012) -----------------------------------------------------------
 

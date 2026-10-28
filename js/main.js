@@ -7,22 +7,22 @@
 // ?v=… sur les imports : même numéro que dans index.html, et le même partout
 // (un module importé sous deux adresses différentes serait chargé deux fois).
 
-import { loadCatalogue } from "./data.js?v=58";
-import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=58";
-import { initAvatar, setupOutfit } from "./avatar.js?v=58";
-import { setupBooster } from "./booster.js?v=58";
-import { setupShare } from "./share.js?v=58";
-import { setupUpgrade } from "./upgrade.js?v=58";
-import { setupAtelier, setupViewSwitch } from "./atelier.js?v=58";
-import { setupWallet, reportError, showToast } from "./wallet.js?v=58";
-import { setupDiscard, createSelection } from "./discard.js?v=58";
-import { setupMarket } from "./market.js?v=58";
-import { setupFriends } from "./friends.js?v=58";
-import { setupVideur } from "./videur.js?v=58";
-import { setupProfile } from "./profile.js?v=58";
-import { startAnalytics, track } from "./analytics.js?v=58";
-import { showSharedOutfit } from "./shared-outfit.js?v=58";
-import { getSession, signIn, signUp, signOut, supabase, requestPasswordReset, updatePassword, isRecoveryLink, endRecovery, sharedOutfitToken } from "./api.js?v=58";
+import { loadCatalogue } from "./data.js?v=60";
+import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=60";
+import { initAvatar, setupOutfit } from "./avatar.js?v=60";
+import { setupBooster } from "./booster.js?v=60";
+import { setupShare } from "./share.js?v=60";
+import { setupUpgrade } from "./upgrade.js?v=60";
+import { setupAtelier, setupViewSwitch } from "./atelier.js?v=60";
+import { setupWallet, reportError, showToast } from "./wallet.js?v=60";
+import { setupDiscard, createSelection } from "./discard.js?v=60";
+import { setupMarket } from "./market.js?v=60";
+import { setupFriends } from "./friends.js?v=60";
+import { setupVideur } from "./videur.js?v=60";
+import { setupProfile } from "./profile.js?v=60";
+import { startAnalytics, track } from "./analytics.js?v=60";
+import { showSharedOutfit } from "./shared-outfit.js?v=60";
+import { getSession, signIn, signUp, signOut, supabase, requestPasswordReset, updatePassword, isRecoveryLink, endRecovery, sharedOutfitToken } from "./api.js?v=60";
 
 // « profile » n'a pas d'onglet : on y va par le bouton rond en haut (#profile).
 const SCREENS = ["booster", "collection", "market", "videur", "friends", "avatar", "profile"];

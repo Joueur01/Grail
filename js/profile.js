@@ -1,15 +1,18 @@
 // profile.js — page de profil : la sienne (bouton rond en haut) ET celle d'un ami (écran Amis).
 //
-// ⚠️ Tout vient du SERVEUR (migration 0014, get_player_profile) : identité, tenue portée,
-// statistiques et vitrine (les 3 cartes les plus rares, choisies par le serveur). Ce fichier
-// ne calcule rien : il met en page ce que le serveur renvoie. Un ami ne reçoit pas le solde
-// de pièces (le serveur renvoie null).
+// ⚠️ Tout vient du SERVEUR (migrations 0014 et 0015, get_player_profile) : identité, tenue
+// portée, statistiques et vitrine. La VITRINE est choisie par le joueur (vide au départ,
+// jusqu'à showcase_max cartes, dans l'ordre voulu) et enregistrée par set_showcase, qui vérifie
+// que chaque carte est possédée. Ce fichier ne calcule rien : il met en page ce que le serveur
+// renvoie. Un ami ne reçoit pas le solde de pièces (le serveur renvoie null).
 
-import { RARITIES, getRarity } from "./data.js?v=58";
-import { getPlayerProfile } from "./api.js?v=58";
-import { SLOTS } from "./avatar.js?v=58";
-import { createAvatar3D } from "./avatar3d.js?v=58";
-import { createCardFace, createCardShell } from "./cards.js?v=58";
+import { RARITIES, getRarity, matchesSearch } from "./data.js?v=60";
+import { getPlayerProfile, setShowcase } from "./api.js?v=60";
+import { getOwnedCards } from "./inventory.js?v=60";
+import { showToast, reportError } from "./wallet.js?v=60";
+import { SLOTS } from "./avatar.js?v=60";
+import { createAvatar3D } from "./avatar3d.js?v=60";
+import { createCardFace, createCardShell } from "./cards.js?v=60";
 
 function el(tag, className, text) {
   const e = document.createElement(tag);
@@ -45,8 +48,9 @@ function statTile(label, value, { progress = null, sub = "" } = {}) {
  * - catalogue : résultat de loadCatalogue()
  * - showName : false dans le panneau d'un ami (son pseudo est déjà le titre)
  * - onEditOutfit : bouton « Modifier ma tenue » (profil personnel seulement)
+ * - onEditShowcase : bouton « Ajouter des cartes / Modifier la vitrine » (profil personnel seulement)
  */
-export function buildProfileView(data, catalogue, { showName = true, onEditOutfit = null } = {}) {
+export function buildProfileView(data, catalogue, { showName = true, onEditOutfit = null, onEditShowcase = null } = {}) {
   const root = el("div", "profile");
 
   // --- Identité ---
@@ -93,10 +97,14 @@ export function buildProfileView(data, catalogue, { showName = true, onEditOutfi
   }
   root.append(under);
 
-  // --- Vitrine : les 3 cartes les plus rares (choisies par le serveur) ---
+  // --- Vitrine : les cartes CHOISIES par le joueur (vide au départ) ---
   const showcase = el("section", "profile-section");
-  showcase.append(el("span", "eyebrow", "Vitrine"));
   const cards = (data.showcase || []).filter((c) => catalogue.colorwayById.has(c.colorway_id));
+  // showcase_max n'existe qu'avec la migration 0015 : sans elle, pas de choix possible.
+  const canEdit = onEditShowcase && data.showcase_max !== undefined;
+  const headRow = el("div", "profile-section-head");
+  headRow.append(el("span", "eyebrow", canEdit ? `Vitrine · ${cards.length} / ${data.showcase_max}` : "Vitrine"));
+  showcase.append(headRow);
   if (cards.length) {
     const grid = el("div", "profile-showcase");
     for (const c of cards) {
@@ -108,7 +116,16 @@ export function buildProfileView(data, catalogue, { showName = true, onEditOutfi
     }
     showcase.append(grid);
   } else {
-    showcase.append(el("p", "muted", "Pas encore de carte."));
+    showcase.append(el("p", "muted showcase-empty", data.is_self
+      ? "Ta vitrine est vide. Choisis les cartes que tu veux montrer à tes amis."
+      : "Vitrine vide pour l'instant."));
+  }
+  if (canEdit) {
+    const edit = el("button", "btn profile-edit", cards.length ? "Modifier la vitrine" : "Ajouter des cartes");
+    edit.addEventListener("click", () => onEditShowcase(cards.map((c) => `${c.colorway_id}|${c.rarity}`), data.showcase_max));
+    const row = el("div", "profile-under");
+    row.append(edit);
+    showcase.append(row);
   }
   root.append(showcase);
 
@@ -155,7 +172,10 @@ export function setupProfile({ catalogue }) {
     if (!container.firstChild) container.replaceChildren(el("p", "muted", "Chargement…"));
     try {
       const data = await getPlayerProfile();
-      container.replaceChildren(buildProfileView(data, catalogue, { onEditOutfit: () => { location.hash = "#avatar"; } }));
+      container.replaceChildren(buildProfileView(data, catalogue, {
+        onEditOutfit: () => { location.hash = "#avatar"; },
+        onEditShowcase: (current, max) => openShowcaseEditor({ catalogue, current, max, onSaved: load }),
+      }));
     } catch (err) {
       container.replaceChildren(el("p", "muted profile-error", err.message));
     } finally {
@@ -165,4 +185,143 @@ export function setupProfile({ catalogue }) {
 
   window.addEventListener("hashchange", () => { if (location.hash === "#profile") load(); });
   if (location.hash === "#profile") load();
+}
+
+/**
+ * Éditeur de la vitrine, dans le panneau du bas (#card-sheet) : en haut les cases de la vitrine
+ * (dans l'ordre, toucher une case retire la carte), en dessous toutes ses cartes avec recherche
+ * et filtres (toucher une carte l'ajoute ou la retire). « Enregistrer » envoie la liste au serveur.
+ * - current : cartes déjà en vitrine ("coloris|rareté", dans l'ordre)
+ * - max : nombre maximum de cartes (réglage du serveur)
+ */
+function openShowcaseEditor({ catalogue, current, max, onSaved }) {
+  const sheet = document.getElementById("card-sheet");
+  const title = document.getElementById("card-sheet-title");
+  const body = document.getElementById("card-sheet-body");
+  const rarityRank = new Map(RARITIES.map((r, i) => [r.id, i]));
+  const catalogueOrder = new Map(catalogue.colorways.map((c, i) => [c.id, i]));
+  let picked = [...current]; // sélection en cours, dans l'ordre d'ajout
+
+  title.textContent = "Ma vitrine";
+  const intro = el("p", "muted showcase-intro", "");
+  const slots = el("div", "showcase-slots");
+
+  // Recherche et filtres (mêmes règles que la Collection)
+  const filters = el("div", "filters picker-filters showcase-filters");
+  const search = el("input", "search");
+  search.type = "search";
+  search.placeholder = "Rechercher…";
+  search.setAttribute("aria-label", "Rechercher une carte");
+  search.autocomplete = "off";
+  const brand = el("select");
+  brand.setAttribute("aria-label", "Filtrer par marque");
+  brand.append(new Option("Marque", ""), ...catalogue.brands.map((b) => new Option(b.name, b.id)));
+  const rarity = el("select");
+  rarity.setAttribute("aria-label", "Filtrer par rareté");
+  rarity.append(new Option("Rareté", ""), ...[...RARITIES].reverse().map((r) => new Option(r.name, r.id)));
+  filters.append(search, brand, rarity);
+
+  const grid = el("div", "card-grid showcase-grid");
+  const empty = el("p", "muted picker-empty", "");
+  const save = el("button", "btn btn-primary", "Enregistrer");
+  const clear = el("button", "btn", "Tout retirer");
+  const actions = el("div", "showcase-actions");
+  actions.append(save, clear);
+
+  const keyOf = (c) => `${c.colorwayId}|${c.rarity}`;
+
+  /** Cases du haut : la vitrine dans l'ordre, puis des cases vides jusqu'au maximum. */
+  function renderSlots() {
+    intro.textContent = `${picked.length} / ${max} cartes · touche une carte pour l'ajouter ou la retirer`;
+    slots.replaceChildren(...Array.from({ length: max }, (_, i) => {
+      const key = picked[i];
+      const cell = el("button", "showcase-slot");
+      cell.type = "button";
+      if (!key) {
+        cell.disabled = true;
+        cell.setAttribute("aria-label", "Case vide");
+        return cell;
+      }
+      const [colorwayId, r] = key.split("|");
+      const colorway = catalogue.colorwayById.get(colorwayId);
+      cell.dataset.rarity = r;
+      cell.setAttribute("aria-label", `Retirer ${colorway?.piece.name || ""} de la vitrine`);
+      if (colorway) {
+        const img = el("img", "pixel");
+        img.src = colorway.sprite;
+        img.width = 32;
+        img.height = 32;
+        img.alt = "";
+        cell.append(img);
+      }
+      cell.append(el("span", "showcase-slot-num", String(i + 1)));
+      cell.addEventListener("click", () => { picked = picked.filter((k) => k !== key); render(); });
+      return cell;
+    }));
+    clear.disabled = picked.length === 0;
+  }
+
+  /** Grille des cartes possédées (la plus rare d'abord), filtrée. */
+  function renderGrid() {
+    const owned = getOwnedCards().filter((c) => catalogue.colorwayById.has(c.colorwayId));
+    const visible = owned
+      .filter((c) => {
+        const colorway = catalogue.colorwayById.get(c.colorwayId);
+        return matchesSearch(search.value, [colorway.piece.name, colorway.name, colorway.brand.name, getRarity(c.rarity).name])
+          && (!brand.value || colorway.brand.id === brand.value)
+          && (!rarity.value || c.rarity === rarity.value);
+      })
+      .sort((a, b) => (rarityRank.get(b.rarity) - rarityRank.get(a.rarity))
+        || (catalogueOrder.get(a.colorwayId) - catalogueOrder.get(b.colorwayId)));
+    grid.replaceChildren(...visible.map((c) => {
+      const colorway = catalogue.colorwayById.get(c.colorwayId);
+      const key = keyOf(c);
+      const pos = picked.indexOf(key);
+      const btn = el("button", "picker-choice");
+      btn.type = "button";
+      btn.setAttribute("aria-pressed", String(pos >= 0));
+      const card = createCardShell(colorway, c.rarity);
+      card.classList.add("owned");
+      card.append(createCardFace(colorway, c.rarity));
+      if (pos >= 0) {
+        card.classList.add("in-showcase");
+        card.append(el("span", "showcase-order", String(pos + 1)));
+      }
+      btn.append(card);
+      btn.addEventListener("click", () => {
+        if (pos >= 0) picked = picked.filter((k) => k !== key);
+        else if (picked.length >= max) { showToast(`${max} cartes maximum dans la vitrine.`); return; }
+        else picked = [...picked, key];
+        render();
+      });
+      return btn;
+    }));
+    empty.hidden = visible.length > 0;
+    empty.textContent = owned.length ? "Aucune carte ne correspond à ta recherche." : "Tu n'as pas encore de carte. Ouvre des boosters !";
+  }
+
+  function render() {
+    renderSlots();
+    renderGrid();
+  }
+
+  for (const input of [search, brand, rarity]) input.addEventListener("input", renderGrid);
+  clear.addEventListener("click", () => { picked = []; render(); });
+  save.addEventListener("click", async () => {
+    save.disabled = true;
+    try {
+      await setShowcase(picked);
+      sheet.hidden = true;
+      showToast(picked.length ? "Vitrine enregistrée." : "Vitrine vidée.");
+      onSaved();
+    } catch (err) {
+      reportError(err);
+    } finally {
+      save.disabled = false;
+    }
+  });
+
+  body.replaceChildren(intro, slots, actions, filters, empty, grid);
+  render();
+  sheet.hidden = false;
 }
