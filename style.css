@@ -1917,3 +1917,5 @@ body[data-auth="public"] .public {
 .verdict-gain { color: var(--rarity-legendaire); font-size: 20px; }
 @keyframes verdict-flash { 0% { filter: brightness(2.2); transform: scale(0.96); } 100% { filter: none; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .verdict { animation: none; } .gauge-fill { transition: none; } }
+.rule-list + .videur-change { margin-top: 12px; }
+.verdict-count { margin: 0 0 6px; }

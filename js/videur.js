@@ -5,13 +5,20 @@
 //  - videur_preview : aperçu GRATUIT de la tenue portée (ne consomme rien) ;
 //  - videur_enter   : se présenter (consomme un essai).
 // Aucune règle du Videur n'est codée ici.
+//
+// Trois niveaux de difficulté (le serveur envoie `mode` pour chaque porte) :
+//  - « visible » (Bar)  : règles, aperçu gratuit et jauges, comme un tutoriel ;
+//  - « count »  (Club)  : règles CACHÉES ; après chaque essai : « X sur N » + un indice vague ;
+//  - « hint »   (VIP)   : règles CACHÉES ; après chaque essai : l'indice vague seulement.
+// Pour le Club et le VIP, le serveur n'envoie jamais les règles, les seuils ni le score : il n'y a donc
+// ici aucun aperçu, aucune jauge, aucune coche. La règle du jour n'arrive qu'à la fin (`reveal`).
 
-import { getRarity } from "./data.js?v=45";
-import { getVideurNight, videurPreview, videurEnter } from "./api.js?v=45";
-import { SLOTS, initAvatar, drawAvatar } from "./avatar.js?v=45";
-import { refreshState } from "./inventory.js?v=45";
-import { showToast, reportError } from "./wallet.js?v=45";
-import { playSound, vibrate } from "./effects.js?v=45";
+import { getRarity } from "./data.js?v=47";
+import { getVideurNight, videurPreview, videurEnter } from "./api.js?v=47";
+import { SLOTS, initAvatar, drawAvatar } from "./avatar.js?v=47";
+import { refreshState, getEquipped } from "./inventory.js?v=47";
+import { showToast, reportError } from "./wallet.js?v=47";
+import { playSound, vibrate } from "./effects.js?v=47";
 
 /** Couleur d'enseigne de chaque porte (comme les raretés : bleu, violet, or). */
 const DOOR_COLOR = { bar: "var(--rarity-rare)", club: "var(--rarity-epique)", vip: "var(--rarity-legendaire)" };
@@ -55,6 +62,8 @@ export function setupVideur({ catalogue }) {
   async function load({ silent = false } = {}) {
     try {
       night = await getVideurNight();
+      // Avant la migration 0013, le serveur n'envoie pas de `mode` : toutes les portes sont alors visibles.
+      for (const d of night.doors) d.mode = d.mode || "visible";
       errorBox.hidden = true;
       // Porte affichée : celle choisie, sinon la première pas encore passée et ouverte, sinon la dernière.
       if (!selected || !doorOf(selected)) {
@@ -71,6 +80,8 @@ export function setupVideur({ catalogue }) {
   async function loadPreview() {
     const v = ++version;
     const id = selected;
+    // Pas d'aperçu au Club ni au VIP : il révélerait les règles (le serveur le refuse d'ailleurs).
+    if (doorOf(id).mode !== "visible") { preview = null; renderDoor(); return; }
     try {
       const p = await videurPreview(id);
       if (v !== version) return;
@@ -96,7 +107,7 @@ export function setupVideur({ catalogue }) {
       b.setAttribute("aria-selected", String(d.id === selected));
       b.style.setProperty("--door-color", DOOR_COLOR[d.id]);
       b.append(el("span", "door-tab-name", d.name));
-      b.append(el("span", "door-tab-state", d.passed ? "✔ Passée" : d.locked ? "🔒 Fermée" : `${d.tries_left} essai${d.tries_left > 1 ? "s" : ""}`));
+      b.append(el("span", "door-tab-state", d.passed ? "✔ Passée" : d.locked ? "🔒 Fermée" : d.tries_left <= 0 ? "Terminée" : `${d.tries_left} essai${d.tries_left > 1 ? "s" : ""}`));
       b.addEventListener("click", () => { selected = d.id; preview = null; renderTabs(); renderDoor(); loadPreview(); });
       return b;
     }));
@@ -142,9 +153,105 @@ export function setupVideur({ catalogue }) {
     return list;
   }
 
+  /** Tenue portée « à plat », lue dans le cache du jeu (pour le Club et le VIP, sans passer par un aperçu). */
+  function worn() {
+    const pieces = [];
+    for (const slot of SLOTS) {
+      const card = getEquipped(slot.id);
+      if (card) pieces.push({ slot: slot.id, colorway_id: card.colorwayId, rarity: card.rarity });
+    }
+    return pieces;
+  }
+
+  /** Une ligne de carrés par essai, SANS rien révéler des règles : 🟩 entré · 🟨 presque (Club) · ⬛ loin. */
+  function squares(door) {
+    return door.attempts.map((a) => {
+      if (a.passed) return "🟩";
+      if (door.mode === "count" && a.matched >= Math.ceil(a.total / 2)) return "🟨";
+      return "⬛";
+    }).join("");
+  }
+
+  /** Texte à partager : le nom de la porte, le nombre d'essais et les carrés (jamais les critères). */
+  async function shareResult(door) {
+    const won = door.attempts.some((a) => a.passed);
+    const date = new Date(night.day).toLocaleDateString("fr-FR", { day: "numeric", month: "numeric" });
+    const text = `Grail · Videur · ${door.name} ${date}\n${won ? door.attempts.length : "X"}/${door.tries}\n${squares(door)}\n${location.origin}${location.pathname}`;
+    try {
+      if (navigator.share && window.matchMedia("(pointer: coarse)").matches) { await navigator.share({ text }); return; }
+      await navigator.clipboard.writeText(text);
+      showToast("Résultat copié.");
+    } catch (err) {
+      if (err && err.name === "AbortError") return;
+      showToast("Impossible de copier le résultat.", { error: true });
+    }
+  }
+
+  /** Porte à règles cachées : essais, indices reçus, règle du jour une fois la porte terminée. */
+  function renderHiddenDoor(door) {
+    const nodes = [];
+    const sign = el("div", "door-sign");
+    sign.style.setProperty("--door-color", DOOR_COLOR[door.id]);
+    sign.append(el("span", "door-sign-door", door.name), el("span", "door-sign-venue", door.venue));
+    nodes.push(sign, el("p", "muted door-intro", door.intro));
+
+    nodes.push(el("h3", "videur-h", "Ta tenue"));
+    const pieces = worn();
+    if (pieces.length) nodes.push(outfitCanvas(pieces));
+    else nodes.push(el("p", "muted videur-empty", "Tu ne portes rien. Compose une tenue, puis présente-toi."));
+    const change = el("a", "btn videur-change", "Changer ma tenue");
+    change.href = "#avatar";
+    nodes.push(change);
+
+    // Ce que le videur t'a dit aujourd'hui (aucun détail au-delà de ce que le serveur donne).
+    if (door.attempts.length) {
+      nodes.push(el("h3", "videur-h", "Ce que le videur t'a dit"));
+      const list = el("ul", "rule-list");
+      door.attempts.forEach((a, i) => {
+        const li = el("li", a.passed ? "rule ok" : "rule");
+        const left = door.mode === "count" && !a.passed ? `${a.matched} sur ${a.total}` : a.passed ? "Entré" : "Refusé";
+        li.append(el("span", "rule-mark", `#${i + 1}`), el("span", "rule-label", a.passed ? "Entrée accordée." : `« ${a.hint} »`), el("span", "rule-weight", left));
+        list.append(li);
+      });
+      nodes.push(list);
+    }
+
+    const finished = door.passed || door.tries_left <= 0;
+    if (finished && door.reveal) {
+      nodes.push(el("h3", "videur-h", "La règle du jour"));
+      const list = el("ul", "rule-list");
+      for (const label of door.reveal) {
+        const li = el("li", "rule");
+        li.append(el("span", "rule-mark", "•"), el("span", "rule-label", label));
+        list.append(li);
+      }
+      nodes.push(list);
+    }
+    if (door.attempts.length && finished) {
+      const share = el("button", "btn videur-change", "Partager mon résultat");
+      share.type = "button";
+      share.addEventListener("click", () => shareResult(door));
+      nodes.push(share);
+    }
+
+    const enter = el("button", "btn btn-primary videur-enter");
+    enter.type = "button";
+    if (door.passed) enter.textContent = "Tu es déjà entré ici aujourd'hui";
+    else if (door.locked) enter.textContent = "Porte fermée : passe d'abord la précédente";
+    else if (door.tries_left <= 0) enter.textContent = "Plus d'essai aujourd'hui";
+    else if (!pieces.length) enter.textContent = "Porte au moins une pièce";
+    else enter.textContent = `Se présenter · ${door.tries_left} essai${door.tries_left > 1 ? "s" : ""} · +${door.flow} Flow`;
+    enter.disabled = door.passed || door.locked || door.tries_left <= 0 || !pieces.length || busy;
+    enter.addEventListener("click", () => enterDoor(door));
+    nodes.push(enter);
+    if (!finished) nodes.push(el("p", "muted videur-note", "Pas d'aperçu ici : c'est à toi de deviner. La règle du jour se révèle à la fin."));
+    doorBox.replaceChildren(...nodes);
+  }
+
   function renderDoor() {
     const door = doorOf(selected);
     if (!door) return;
+    if (door.mode !== "visible") { renderHiddenDoor(door); return; }
     const nodes = [];
 
     // Enseigne : nom de la porte et du lieu du jour, avec la couleur de la porte.
@@ -211,6 +318,7 @@ export function setupVideur({ catalogue }) {
   /** Fiche du verdict : « ENTRÉE » ou « REFUSÉ », réplique du videur, détail du score. */
   function showVerdict(door, r) {
     sheetTitle.textContent = door.name;
+    if (door.mode !== "visible") { showHiddenVerdict(door, r); return; }
     const verdict = el("div", r.passed ? "verdict pass" : "verdict fail");
     verdict.append(el("p", "verdict-word", r.passed ? "ENTRÉE" : "REFUSÉ"));
     if (r.line) verdict.append(el("p", "verdict-line", `« ${r.line} »`));
@@ -233,6 +341,37 @@ export function setupVideur({ catalogue }) {
       nodes.push(el("p", "muted sheet-text", r.tries_left > 0
         ? `Il te reste ${r.tries_left} essai${r.tries_left > 1 ? "s" : ""} pour cette porte aujourd'hui.`
         : "Plus d'essai pour cette porte aujourd'hui. Reviens demain."));
+    }
+    const close = el("button", "btn btn-primary", "OK");
+    close.addEventListener("click", () => { sheet.hidden = true; });
+    nodes.push(close);
+    sheetBody.replaceChildren(...nodes);
+    sheet.hidden = false;
+  }
+
+  /** Verdict d'une porte cachée : entrée / refusé, indice, « X sur N » (Club), règle du jour à la fin. */
+  function showHiddenVerdict(door, r) {
+    const verdict = el("div", r.passed ? "verdict pass" : "verdict fail");
+    verdict.append(el("p", "verdict-word", r.passed ? "ENTRÉE" : "REFUSÉ"));
+    if (r.line) verdict.append(el("p", "verdict-line", `« ${r.line} »`));
+    const nodes = [verdict];
+    if (r.mode === "count" && !r.passed) nodes.push(el("p", "sheet-subtitle verdict-count", `${r.matched} critère${r.matched > 1 ? "s" : ""} sur ${r.total}`));
+    if (r.passed) {
+      nodes.push(el("p", "sheet-subtitle verdict-gain", `+${r.flow_gained} Flow`));
+    } else {
+      nodes.push(el("p", "muted sheet-text", r.tries_left > 0
+        ? `Il te reste ${r.tries_left} essai${r.tries_left > 1 ? "s" : ""}. Change ta tenue d'après l'indice.`
+        : "Plus d'essai pour cette porte aujourd'hui. Reviens demain."));
+    }
+    if (r.reveal) {
+      nodes.push(el("h3", "videur-h", "La règle du jour"));
+      const list = el("ul", "rule-list");
+      for (const label of r.reveal) {
+        const li = el("li", "rule");
+        li.append(el("span", "rule-mark", "•"), el("span", "rule-label", label));
+        list.append(li);
+      }
+      nodes.push(list);
     }
     const close = el("button", "btn btn-primary", "OK");
     close.addEventListener("click", () => { sheet.hidden = true; });
