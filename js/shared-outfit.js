@@ -4,9 +4,9 @@
 // on la dessine « à plat », comme sur l'écran Tenue, avec la liste des pièces et leur rareté.
 // Aucun pseudo ni autre information du joueur n'est montré.
 
-import { loadCatalogue, getRarity } from "./data.js?v=63";
-import { getSharedOutfit } from "./api.js?v=63";
-import { SLOTS, initAvatar, drawAvatar } from "./avatar.js?v=63";
+import { loadCatalogue, getRarity } from "./data.js?v=64";
+import { getSharedOutfit } from "./api.js?v=64";
+import { SLOTS, initAvatar, drawAvatar } from "./avatar.js?v=64";
 
 function el(tag, className, text) {
   const e = document.createElement(tag);

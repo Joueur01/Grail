@@ -6,7 +6,7 @@
 // amélioration. Ne remettre AUCUNE logique de jeu ici ni ailleurs côté client.
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase-config.js?v=63";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase-config.js?v=64";
 
 // Le lien « mot de passe oublié » reçu par e-mail ramène sur le site avec « type=recovery » dans
 // l'adresse. On le note AVANT que supabase-js ne traite (et n'efface) l'adresse.
@@ -181,6 +181,8 @@ export const friendRespond = (id, accept) => rpc("friend_respond", { p_id: id, p
 export const friendRemove = (id) => rpc("friend_remove", { p_id: id });
 /** → { pseudo, equipped: { emplacement: "coloris|rareté" }, cards_owned, cards_total } (amis seulement) */
 export const getFriendProfile = (friendId) => rpc("get_friend_profile", { p_friend: friendId });
+/** Aperçu de chaque ami (migration 0017) : avatar, tenue du moment et vitrine, en un seul appel. */
+export const listFriendsPreview = () => rpc("list_friends_preview");
 
 // --- Profil (migration 0014) ---
 /** Profil d'un joueur : soi-même (sans argument) ou un ami accepté. Le serveur refuse les autres. */

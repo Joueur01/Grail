@@ -5,12 +5,13 @@
 // serveur renvoie et envoie les actions. Il n'existe aucune liste publique de joueurs :
 // on ne retrouve quelqu'un qu'avec son pseudo EXACT.
 
-import { getRarity } from "./data.js?v=63";
-import { setPseudo, listFriends, friendRequest, friendRespond, friendRemove, getFriendProfile, getPlayerProfile } from "./api.js?v=63";
-import { buildProfileView } from "./profile.js?v=63";
-import { SLOTS, initAvatar, drawAvatar } from "./avatar.js?v=63";
-import { showToast, reportError } from "./wallet.js?v=63";
-import { FRIENDS } from "./economy-config.js?v=63";
+import { getRarity } from "./data.js?v=64";
+import { setPseudo, listFriends, friendRequest, friendRespond, friendRemove, getFriendProfile, getPlayerProfile, listFriendsPreview } from "./api.js?v=64";
+import { buildProfileView } from "./profile.js?v=64";
+import { SLOTS, initAvatar, drawAvatar } from "./avatar.js?v=64";
+import { buildModel, renderModel, DEFAULT_YAW } from "./avatar3d.js?v=64";
+import { showToast, reportError } from "./wallet.js?v=64";
+import { FRIENDS } from "./economy-config.js?v=64";
 
 /**
  * Branche l'écran Amis.
@@ -30,6 +31,8 @@ export function setupFriends({ catalogue }) {
   const badge = $("friends-badge");
 
   let data = null;        // dernière réponse de list_friends
+  let previews = new Map(); // friend_id → aperçu (avatar, tenue, vitrine) de list_friends_preview
+  const miniCache = new Map(); // friend_id → { key, canvas } : l'avatar déjà dessiné n'est pas refait à chaque relecture
   let editing = false;    // formulaire de pseudo ouvert alors qu'un pseudo existe déjà
 
   function el(tag, className, text) {
@@ -51,6 +54,12 @@ export function setupFriends({ catalogue }) {
   async function load({ silent = false } = {}) {
     try {
       data = await listFriends();
+      // Aperçu des amis (migration 0017). Si elle n'est pas exécutée, la liste reste simple.
+      try {
+        previews = new Map((await listFriendsPreview()).map((p) => [p.friend_id, p]));
+      } catch {
+        previews = new Map();
+      }
       errorBox.hidden = true;
       render();
     } catch (err) {
@@ -105,8 +114,14 @@ export function setupFriends({ catalogue }) {
     $("friends-list").replaceChildren(...data.friends.map((f) => {
       const row = el("button", "friend-row friend-link");
       row.type = "button";
-      row.setAttribute("aria-label", `Voir la tenue de ${f.pseudo}`);
-      row.append(el("span", "friend-name", f.pseudo), el("span", "friend-chevron", "›"));
+      row.setAttribute("aria-label", `Voir le profil de ${f.pseudo}`);
+      const preview = previews.get(f.friend_id);
+      if (preview) row.classList.add("friend-row-rich");
+      if (preview) row.append(miniAvatar(f.friend_id, preview));
+      const info = el("span", "friend-info");
+      info.append(el("span", "friend-name", f.pseudo));
+      if (preview) info.append(miniShowcase(preview.showcase));
+      row.append(info, el("span", "friend-chevron", "›"));
       row.addEventListener("click", () => openFriend(f));
       return row;
     }));
@@ -125,6 +140,57 @@ export function setupFriends({ catalogue }) {
     // Pastille sur l'onglet : demandes à traiter
     badge.hidden = data.incoming.length === 0;
     badge.textContent = String(data.incoming.length);
+  }
+
+  // --- Aperçus en mini dans la liste -------------------------------------------------------
+
+  /** Avatar 3D en mini (de trois quarts, immobile). Redessiné seulement si sa tenue ou son avatar changent. */
+  function miniAvatar(friendId, preview) {
+    const key = `${preview.avatar_body}|${JSON.stringify(preview.equipped)}`;
+    const cached = miniCache.get(friendId);
+    if (cached && cached.key === key) return cached.tile;
+    const tile = el("span", "friend-mini");
+    const canvas = el("canvas", "pixel friend-mini-canvas");
+    canvas.width = 46;
+    canvas.height = 88;
+    tile.append(canvas);
+    miniCache.set(friendId, { key, tile });
+    const worn = {};
+    for (const slot of SLOTS) {
+      const value = preview.equipped?.[slot.id];
+      const colorway = value && catalogue.colorwayById.get(value.split("|")[0]);
+      if (colorway) worn[slot.id] = colorway;
+    }
+    // La grille de voxels est lourde : on dessine puis on la libère (pas de createAvatar3D ici).
+    buildModel(worn, { type: preview.avatar_body === "femme" ? "femme" : "homme" })
+      .then((grid) => renderModel(canvas, grid, DEFAULT_YAW))
+      .catch((err) => console.error("Aperçu ami :", err));
+    return tile;
+  }
+
+  /** Les cartes de la vitrine en mini (sprite sur case claire, contour de la couleur de rareté). */
+  function miniShowcase(cards) {
+    const wrap = el("span", "friend-showcase");
+    const shown = (cards || []).filter((c) => catalogue.colorwayById.has(c.colorway_id));
+    if (!shown.length) {
+      wrap.append(el("span", "friend-showcase-empty", "Vitrine vide"));
+      return wrap;
+    }
+    for (const c of shown) {
+      const colorway = catalogue.colorwayById.get(c.colorway_id);
+      const tile = el("span", "friend-card");
+      tile.dataset.rarity = c.rarity;
+      tile.title = `${colorway.piece.name} · ${getRarity(c.rarity).name}`;
+      const img = el("img", "pixel");
+      img.src = colorway.sprite;
+      img.width = 32;
+      img.height = 32;
+      img.alt = "";
+      img.loading = "lazy";
+      tile.append(img);
+      wrap.append(tile);
+    }
+    return wrap;
   }
 
   // --- Actions (le serveur vérifie tout) -----------------------------------------------
