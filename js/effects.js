@@ -66,6 +66,11 @@ export function playSound(kind) {
       [523, 659, 784, 1047, 1319, 1568].forEach((f, i) => note(a, f, t + i * 0.1, 0.7, { volume: 0.09 }));
       [1047, 1319, 1568].forEach((f) => note(a, f, t + 0.7, 1.4, { type: "sine", volume: 0.05 }));
       break;
+    // Ultime obtenu (album) : arpège irisé qui monte, puis un accord long
+    case "ultime":
+      [523, 659, 784, 1047, 1319, 1568, 2093].forEach((f, i) => note(a, f, t + i * 0.09, 0.8, { volume: 0.08 }));
+      [1047, 1319, 1568, 2093].forEach((f) => note(a, f, t + 0.8, 1.8, { type: "sine", volume: 0.05 }));
+      break;
     // Pièces qui tombent dans le solde (défausse, bonus)
     case "coin": [1319, 1760].forEach((f, i) => note(a, f, t + i * 0.07, 0.18, { type: "square", volume: 0.03 })); break;
     // Roue d'amélioration : petit « clic » à chaque secteur, échec = note qui descend.

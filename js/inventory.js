@@ -6,15 +6,16 @@
 //   - relayer les actions simples (verrou, tenue) vers le serveur, puis relire l'état.
 // Il ne calcule rien d'important : pas de tirage, de gain ni de règle de jeu.
 
-import { RARITIES, matchesSearch, getRarity } from "./data.js?v=74";
-import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=74";
-import * as api from "./api.js?v=74";
+import { RARITIES, matchesSearch, getRarity } from "./data.js?v=75";
+import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=75";
+import * as api from "./api.js?v=75";
 
 // --- État en mémoire (rempli par refreshState) ---
 
 const state = {
   profile: null,                 // ligne « profiles » du joueur
   cards: new Map(),              // "coloris|rareté" → { colorwayId, rarity, count, locked }
+  album: null,                   // { cards: Set("coloris|rareté"), ultimates: Set(modèle) } ; null = migration 0022 absente
   listings: [],                  // mes ventes en cours
   booster: null,                 // dernier get_booster_state() + échéance du minuteur
 };
@@ -44,8 +45,10 @@ let queue = Promise.resolve();
  */
 export function refreshState({ booster = true } = {}) {
   const run = async () => {
-    const [profile, inventory, listings, boosterState] = await Promise.all([
+    const [profile, inventory, listings, boosterState, album] = await Promise.all([
       api.getProfile(), api.getInventory(), api.getMyListings(), booster ? api.getBoosterState() : null,
+      // Album : sans la migration 0022, la fonction n'existe pas encore (le reste du jeu marche quand même).
+      api.getAlbum().catch(() => null),
     ]);
     if (!profile) throw new api.ApiError("Profil introuvable. Reconnecte-toi.");
     const before = state.profile ? state.profile.coins : null;
@@ -54,6 +57,7 @@ export function refreshState({ booster = true } = {}) {
     state.cards = new Map(inventory.map((r) => [cardKey(r.colorway_id, r.rarity),
       { colorwayId: r.colorway_id, rarity: r.rarity, count: r.count, locked: r.locked }]));
     state.listings = listings;
+    state.album = album ? { cards: new Set(album.cards), ultimates: new Set(album.ultimates) } : null;
     if (boosterState) {
       // Le minuteur est calculé à partir d'une échéance : il continue de défiler sans rappeler le serveur.
       const next = boosterState.next_in_seconds;
@@ -75,6 +79,32 @@ export function refreshState({ booster = true } = {}) {
 /** Liste des cartes possédées : [{ colorwayId, rarity, count, locked }, ...]. */
 export function getOwnedCards() {
   return [...state.cards.values()].map((c) => ({ ...c }));
+}
+
+/**
+ * Album (migration 0022) : { available, cards: Set("coloris|rareté"), ultimates: Set(modèle) }.
+ * available = false tant que la migration n'est pas exécutée.
+ */
+export function getAlbumState() {
+  return state.album
+    ? { available: true, cards: state.album.cards, ultimates: state.album.ultimates }
+    : { available: false, cards: new Set(), ultimates: new Set() };
+}
+
+/** Clé d'un Ultime dans la tenue et la vitrine : "<modèle>_ultime|ultime". */
+export function ultimateCardKey(pieceId) {
+  return cardKey(`${pieceId}_ultime`, "ultime");
+}
+
+/**
+ * Ultimes obtenus, au même format que les cartes de la collection :
+ * [{ colorwayId: "<modèle>_ultime", rarity: "ultime", count: 1, locked: true, ultimate: true }].
+ * Un Ultime n'est jamais dans l'inventaire : il ne se vend, ne se mise ni ne se défausse
+ * (c'est le serveur qui l'impose) ; il se porte et se met en vitrine.
+ */
+export function getOwnedUltimates() {
+  return [...(state.album?.ultimates || [])].map((pieceId) =>
+    ({ colorwayId: `${pieceId}_ultime`, rarity: "ultime", count: 1, locked: true, ultimate: true }));
 }
 
 /** Nombre d'exemplaires possédés d'une carte (0 si aucun). */
@@ -158,9 +188,16 @@ export async function saveAvatarBody(body) {
 /** Carte équipée sur un emplacement ("tete", "haut"…) : { colorwayId, rarity } ou null. */
 export function getEquipped(slot) {
   const key = state.profile?.equipped?.[slot];
-  if (!key || !state.cards.has(key)) return null; // on ne garde que les cartes réellement possédées
+  const isUltimate = key?.endsWith("|ultime") && state.album?.ultimates.has(key.slice(0, -"_ultime|ultime".length));
+  if (!key || !(state.cards.has(key) || isUltimate)) return null; // on ne garde que les cartes réellement possédées
   const [colorwayId, rarity] = key.split("|");
   return { colorwayId, rarity };
+}
+
+/** Cette carte est-elle portée (sur n'importe quel emplacement) ? */
+export function isCardEquipped(colorwayId, rarity) {
+  const key = cardKey(colorwayId, rarity);
+  return Object.values(state.profile?.equipped || {}).includes(key);
 }
 
 /** Pseudo du joueur (« » tant qu'il n'en a pas choisi), tel que connu du site : sert à l'image de partage. */
@@ -188,8 +225,19 @@ export async function setLocked(colorwayId, rarity, locked) {
 
 /** Équipe une carte sur un emplacement, ou vide l'emplacement si card = null. */
 export async function equip(slot, card) {
-  await api.setEquipped(slot, card ? card.colorwayId : null, card ? card.rarity : null);
+  if (card?.rarity === "ultime") await api.setEquippedUltimate(slot, card.colorwayId.replace(/_ultime$/, ""));
+  else await api.setEquipped(slot, card ? card.colorwayId : null, card ? card.rarity : null);
   await refreshState({ booster: false });
+}
+
+/**
+ * Place une carte dans l'album (DÉFINITIF : elle quitte la collection, le serveur ne la rend jamais).
+ * → { colorway_id, rarity, piece_id, have, total, ultimate_unlocked }
+ */
+export async function addToAlbum(colorwayId, rarity) {
+  const result = await api.albumAdd(colorwayId, rarity);
+  await refreshState({ booster: false });
+  return result;
 }
 
 /** Le tuto du 1er booster est terminé. */
@@ -237,7 +285,10 @@ export function setupCollection({ catalogue, onCardTap, selection }) {
     // On ignore une carte dont le coloris n'existe plus dans le catalogue.
     const owned = getOwnedCards().filter((c) => catalogue.colorwayById.has(c.colorwayId));
     const copies = owned.reduce((sum, c) => sum + c.count, 0);
-    summary.textContent = `${owned.length} / ${totalPossible} cartes · ${copies} au total`;
+    // Une carte placée dans l'album reste « collectée » : elle compte dans la progression.
+    const album = getAlbumState();
+    const inAlbumOnly = [...album.cards].filter((k) => !state.cards.has(k)).length;
+    summary.textContent = `${owned.length + inAlbumOnly} / ${totalPossible} cartes · ${copies + album.cards.size} au total`;
 
     const visible = owned
       .filter((c) => {

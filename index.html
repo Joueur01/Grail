@@ -17,7 +17,7 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=74">
+  <link rel="stylesheet" href="style.css?v=75">
 </head>
 <body>
   <header class="topbar">
@@ -156,6 +156,7 @@
       <div class="view-switch" role="tablist" aria-label="Vue">
         <button class="view-tab" role="tab" data-view="collection" aria-selected="true">Collection</button>
         <button class="view-tab" role="tab" data-view="atelier" aria-selected="false">Atelier</button>
+        <button class="view-tab" role="tab" data-view="album" aria-selected="false">Album</button>
       </div>
 
       <!-- Vue Collection (inchangée) -->
@@ -208,6 +209,23 @@
           <p class="muted">Les cartes verrouillées sont protégées. Pour défausser plusieurs cartes à la fois : sélectionne-les dans la Collection.</p>
           <button class="btn" id="btn-discard-all">Sélectionner des cartes</button>
         </div>
+      </div>
+
+      <!-- Vue Album : une case par coloris et par rareté, définitif ; un modèle complet donne son Ultime (album.js) -->
+      <div class="collection-view" id="album-view" hidden>
+        <div class="filters">
+          <input class="search" id="search-album" type="search" placeholder="Rechercher un modèle" aria-label="Rechercher un modèle par nom" autocomplete="off" enterkeyhint="search">
+          <select id="album-brand" aria-label="Filtrer par marque"><option value="">Marque</option></select>
+          <select id="album-sort" aria-label="Trier les modèles : progression, nom ou marque">
+            <option value="progress">Progrès</option>
+            <option value="name">Nom A→Z</option>
+            <option value="catalogue">Marque</option>
+          </select>
+        </div>
+        <p class="muted atelier-intro" id="album-intro"></p>
+        <a class="rules-link" href="#rules/album">Comment marche l'album ? ›</a>
+        <p class="muted collection-empty" id="album-unavailable" hidden>Cette fonction n'est pas encore activée sur le serveur.</p>
+        <div class="album-list" id="album-list"></div>
       </div>
     </section>
 
@@ -443,6 +461,6 @@
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=74"></script>
+  <script type="module" src="js/main.js?v=75"></script>
 </body>
 </html>

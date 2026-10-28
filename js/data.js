@@ -10,6 +10,13 @@ export const RARITIES = [
   { id: "legendaire", name: "Légendaire" },
 ];
 
+// Rareté « Ultime » (au-dessus de Légendaire) : réservée aux Ultimes de l'album (un par modèle).
+// Elle n'est PAS dans RARITIES (ni tirage, ni roue, ni défausse, ni Market : un Ultime n'est jamais
+// dans l'inventaire) ; elle sert seulement à afficher ces cartes (tenue, vitrine, album).
+export const ULTIME = { id: "ultime", name: "Ultime" };
+// Toutes les raretés affichables, de la plus commune à la plus rare (filtres de la tenue et de la vitrine).
+export const ALL_RARITIES = [...RARITIES, ULTIME];
+
 // Catalogue chargé une seule fois, puis gardé en mémoire.
 let catalogue = null;
 
@@ -36,7 +43,8 @@ export async function loadCatalogue() {
 
   // Version « Ultime » de chaque modèle (une seule par pièce, pas par coloris),
   // gagnée avec l'album. Sprite créé par tools/creer_ultimes.py.
-  // Elle n'est PAS dans `colorways` : elle ne compte pas dans les 300 cartes.
+  // Elle n'est PAS dans `colorways` (elle ne compte pas dans les 300 cartes) mais elle est retrouvable
+  // par `colorwayById` : une carte « <modèle>_ultime|ultime » se lit comme les autres.
   const ultimates = raw.pieces.map((piece) => ({
     id: `${piece.id}_ultime`,
     name: "Édition unique",
@@ -50,7 +58,7 @@ export async function loadCatalogue() {
     brands: raw.brands,
     pieces: raw.pieces,
     colorways,
-    colorwayById: new Map(colorways.map((c) => [c.id, c])),
+    colorwayById: new Map([...colorways, ...ultimates].map((c) => [c.id, c])),
     ultimates,
     ultimateById: new Map(ultimates.map((u) => [u.id, u])),
   };
@@ -59,7 +67,20 @@ export async function loadCatalogue() {
 
 /** Retrouve une rareté par son identifiant (ex. "epique"). */
 export function getRarity(id) {
-  return RARITIES.find((r) => r.id === id);
+  return ALL_RARITIES.find((r) => r.id === id);
+}
+
+/**
+ * Position de chaque coloris (et de chaque Ultime, juste après le dernier coloris
+ * de son modèle) dans le catalogue, pour des tris stables.
+ */
+export function catalogueOrderMap(catalogue) {
+  const order = new Map(catalogue.colorways.map((c, i) => [c.id, i]));
+  for (const u of catalogue.ultimates) {
+    const last = Math.max(...u.piece.colorways.map((c) => order.get(c.id)));
+    order.set(u.id, last + 0.5);
+  }
+  return order;
 }
 
 /** Minuscules sans accents, pour comparer des textes (« Écharpe » = « echarpe »). */

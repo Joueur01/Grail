@@ -17,13 +17,13 @@
 // préparée À L'AVANCE, à chaque changement de tenue, pour être prête au moment
 // où l'on touche le bouton (sinon le partage serait refusé).
 
-import { RARITIES } from "./data.js?v=74";
-import { SLOTS, readBodyChoice } from "./avatar.js?v=74";
-import { getPseudo } from "./inventory.js?v=74";
-import { buildModel, renderModel, DEFAULT_YAW } from "./avatar3d.js?v=74";
-import { createOutfitShare } from "./api.js?v=74";
-import { showToast } from "./wallet.js?v=74";
-import { track } from "./analytics.js?v=74";
+import { ALL_RARITIES, getRarity } from "./data.js?v=75";
+import { SLOTS, readBodyChoice } from "./avatar.js?v=75";
+import { getPseudo } from "./inventory.js?v=75";
+import { buildModel, renderModel, DEFAULT_YAW } from "./avatar3d.js?v=75";
+import { createOutfitShare } from "./api.js?v=75";
+import { showToast } from "./wallet.js?v=75";
+import { track } from "./analytics.js?v=75";
 
 const IMG_W = 1080;
 const IMG_H = 1350;
@@ -118,7 +118,7 @@ export async function buildShareImage(outfit) {
   ctx.textAlign = "left";
   ctx.fillStyle = text;
   const count = Object.keys(outfit).length;
-  const best = [...RARITIES].reverse()
+  const best = [...ALL_RARITIES].reverse()
     .map((r) => ({ r, n: Object.values(outfit).filter((o) => o.rarity === r.id).length }))
     .find((x) => x.n > 0 && x.r.id !== "commun");
   ctx.fillStyle = muted;
@@ -160,7 +160,7 @@ export async function buildShareImage(outfit) {
     const piece = outfit[slot.id];
     if (!piece) continue;
     const { colorway, rarity } = piece;
-    const rarityInfo = RARITIES.find((r) => r.id === rarity);
+    const rarityInfo = getRarity(rarity);
 
     ctx.fillStyle = muted;
     ctx.font = `700 20px ${FONT}`;
@@ -183,7 +183,14 @@ export async function buildShareImage(outfit) {
     ctx.font = `800 18px ${FONT}`;
     const label = rarityInfo.name.toUpperCase();
     const pillW = ctx.measureText(label).width + 28;
-    ctx.fillStyle = cssColor(`--rarity-${rarity}`, muted);
+    if (rarity === "ultime") {
+      // Ultime : pastille irisée (même dégradé que la carte)
+      const g = ctx.createLinearGradient(listX, 0, listX + pillW, 0);
+      ["#5ae6e6", "#78a0ff", "#be78ff", "#ff78d2", "#ffc88c"].forEach((c, i, a) => g.addColorStop(i / (a.length - 1), c));
+      ctx.fillStyle = g;
+    } else {
+      ctx.fillStyle = cssColor(`--rarity-${rarity}`, muted);
+    }
     roundRect(ctx, listX, y + 98, pillW, 32, 16);
     ctx.fillStyle = "#0f0f11";
     ctx.fillText(label, listX + 14, y + 121);

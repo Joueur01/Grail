@@ -6,12 +6,12 @@
 // bas, chaussures) avec un petit espace, et l'écharpe et le sac sont posés à côté.
 // Les sprites sont utilisés TELS QUELS, à leur taille réelle (×1 dans le canvas).
 
-import { RARITIES, matchesSearch, getRarity } from "./data.js?v=74";
-import { getOwnedCards, getEquipped, equip, getAvatarBody, saveAvatarBody } from "./inventory.js?v=74";
-import { reportError } from "./wallet.js?v=74";
-import { createCardFace, createCardShell } from "./cards.js?v=74";
-import { createAvatar3D } from "./avatar3d.js?v=74";
-import { hasWearModel } from "./wear-models.js?v=74";
+import { ALL_RARITIES, matchesSearch, getRarity, catalogueOrderMap } from "./data.js?v=75";
+import { getOwnedCards, getOwnedUltimates, getEquipped, equip, getAvatarBody, saveAvatarBody } from "./inventory.js?v=75";
+import { reportError } from "./wallet.js?v=75";
+import { createCardFace, createCardShell } from "./cards.js?v=75";
+import { createAvatar3D } from "./avatar3d.js?v=75";
+import { hasWearModel } from "./wear-models.js?v=75";
 
 // Les 7 emplacements.
 // Les identifiants correspondent au champ "slot" de pieces.json. L'ordre de cette liste
@@ -191,12 +191,12 @@ export function setupOutfit({ catalogue, onChange }) {
   const sortSelect = document.getElementById("picker-sort");
   let currentSlot = null;
 
-  const rarityRank = new Map(RARITIES.map((r, i) => [r.id, i]));
-  const catalogueOrder = new Map(catalogue.colorways.map((c, i) => [c.id, i]));
+  const rarityRank = new Map(ALL_RARITIES.map((r, i) => [r.id, i]));
+  const catalogueOrder = catalogueOrderMap(catalogue);
 
   // Menus de filtres du panneau (la 1re option « Marque », « Rareté » = tout afficher).
   fillSelect(brandSelect, catalogue.brands);
-  fillSelect(raritySelect, [...RARITIES].reverse()); // Légendaire en premier
+  fillSelect(raritySelect, [...ALL_RARITIES].reverse()); // Ultime en premier
 
   const canvas = document.getElementById("avatar-canvas");
   const hint = document.getElementById("outfit-hint");
@@ -311,7 +311,8 @@ export function setupOutfit({ catalogue, onChange }) {
     const equipped = getEquipped(slot.id);
     const isWorn = (c) => equipped && equipped.colorwayId === c.colorwayId && equipped.rarity === c.rarity;
 
-    const all = getOwnedCards()
+    // Les Ultimes de l'album se portent comme n'importe quelle carte (les autres cartes de l'album, non).
+    const all = [...getOwnedCards(), ...getOwnedUltimates()]
       .filter((c) => catalogue.colorwayById.get(c.colorwayId)?.piece.slot === slot.id);
     const byRarity = (a, b) => (rarityRank.get(b.rarity) - rarityRank.get(a.rarity))
       || (catalogueOrder.get(a.colorwayId) - catalogueOrder.get(b.colorwayId));
