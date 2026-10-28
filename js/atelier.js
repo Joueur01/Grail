@@ -6,10 +6,10 @@
 // rareté visée. Toucher une ligne ouvre la roue avec ces cartes déjà misées.
 // Les Légendaires (non améliorables) n'apparaissent pas.
 
-import { RARITIES, getRarity, matchesSearch } from "./data.js?v=42";
-import { UPGRADE, DISCARD_VALUES } from "./economy-config.js?v=42";
-import { getOwnedCards } from "./inventory.js?v=42";
-import { nextRarity, upgradeChance } from "./upgrade.js?v=42";
+import { RARITIES, getRarity, matchesSearch } from "./data.js?v=43";
+import { UPGRADE, DISCARD_VALUES } from "./economy-config.js?v=43";
+import { getOwnedCards } from "./inventory.js?v=43";
+import { nextRarity, upgradeChance } from "./upgrade.js?v=43";
 
 /**
  * Regroupe les cartes possédées par modèle + rareté.

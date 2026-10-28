@@ -75,6 +75,7 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 │   ├── market.js      # Market entre joueurs (offres et actions via le serveur)
 │   ├── friends.js     # écran Amis : pseudo, demandes, liste, tenue d'un ami (via le serveur)
 │   ├── avatar.js      # rendu de l'avatar en canvas
+│   ├── analytics.js   # mesure d'usage anonyme (rétention) : événements groupés → track_events
 │   ├── share.js       # partage de la tenue : lien public (principal) + export PNG (option)
 │   └── shared-outfit.js  # page publique d'une tenue partagée (?tenue=CODE), sans compte
 ├── data/
@@ -92,7 +93,8 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 │       ├── 0006_pseudo_30_jours.sql  # un changement de pseudo tous les 30 jours
 │       ├── 0007_pseudos_interdits.sql  # mots interdits dans les pseudos
 │       ├── 0008_tenue_partagee.sql  # lien public vers une tenue
-│       └── 0009_historique_market.sql  # historique achats / ventes du Market
+│       ├── 0009_historique_market.sql  # historique achats / ventes du Market
+│       └── 0010_retention_stats.sql  # mesure de rétention + vues de statistiques
 ├── tools/
 │   └── extraire_sprites.py   # découpe les planches → PNG + SVG (Python + Pillow)
 └── CLAUDE.md
@@ -342,11 +344,11 @@ Le développeur n'est pas juriste ; ces règles sont prudentes en attendant un a
 
 ## 13. Back end Supabase (comptes + serveur de jeu) — le serveur est la source de vérité
 
-- Projet Supabase : `https://qsueqvsbhytqrotlxmak.supabase.co`. Les migrations SQL (**0001 à 0009**, exécutées par le développeur dans le SQL Editor, **ne jamais les modifier depuis le front** ; les 0005 à 0009 sont dans `supabase/migrations/`) créent : catalogue (`brands`, `pieces`, `colorways`), `economy_config`, `profiles`, `inventory`, `transactions`, `market_listings`, la vue `market_best_offers` et toutes les fonctions du jeu.
+- Projet Supabase : `https://qsueqvsbhytqrotlxmak.supabase.co`. Les migrations SQL (**0001 à 0010**, exécutées par le développeur dans le SQL Editor, **ne jamais les modifier depuis le front** ; les 0005 à 0010 sont dans `supabase/migrations/`) créent : catalogue (`brands`, `pieces`, `colorways`), `economy_config`, `profiles`, `inventory`, `transactions`, `market_listings`, la vue `market_best_offers` et toutes les fonctions du jeu.
 - **Règle d'or : ne jamais remettre de logique de jeu côté client.** Le front ne tire pas de carte, ne calcule ni gain ni chance réelle, ne vérifie pas de règle (limite de ventes, verrou, solde…). Il appelle une fonction, affiche le résultat, et relit l'état. Toute nouvelle règle ou nouvelle valeur d'économie se code **dans une migration SQL** (puis, si besoin d'affichage, dans `js/economy-config.js`).
 - **Le jeu n'est accessible que connecté** : e-mail + mot de passe (écran de connexion / création de compte dans `index.html`, géré par `main.js`). À l'inscription, le message « Confirme ton e-mail » s'affiche : le compte ne peut se connecter qu'après avoir cliqué le lien reçu. Un profil (3 boosters, 0 pièce) est créé automatiquement par le serveur. Bouton « Se déconnecter » en bas de l'écran Tenue.
 - **Mot de passe oublié** : lien « Mot de passe oublié ? » sous le formulaire de connexion (pas à la création de compte) → e-mail de réinitialisation (`resetPasswordForEmail`, réponse toujours neutre pour ne pas révéler quelles adresses ont un compte). Le lien reçu ramène sur le site avec `type=recovery` : `api.js` le détecte (`isRecoveryLink`) et `main.js` affiche « Nouveau mot de passe » (6 caractères minimum, saisie en double, `updatePassword`) **avant** de lancer le jeu ; lien expiré → message + renvoi vers « Mot de passe oublié ? ». **À régler dans Supabase** (Authentication → URL Configuration) : Site URL `https://joueur01.github.io/Grail/` et Redirect URLs `https://joueur01.github.io/Grail/**`, sinon les liens (confirmation et réinitialisation) pointent vers localhost.
-- **Écritures interdites en direct** : le front ne fait que des **lectures** (`profiles`, `inventory`, `market_listings` = ses propres ventes, `market_best_offers`) et des **appels de fonctions** (`rpc`). Les fonctions : `get_booster_state`, `open_booster`, `upgrade_cards`, `discard_cards`, `claim_daily_bonus`, `set_locked`, `set_equipped`, `set_tutorial_done`, `market_list`, `market_cancel`, `market_buy`, `market_ack_sales`, `market_history` (wrappers dans `js/api.js`).
+- **Écritures interdites en direct** : le front ne fait que des **lectures** (`profiles`, `inventory`, `market_listings` = ses propres ventes, `market_best_offers`) et des **appels de fonctions** (`rpc`). Les fonctions : `get_booster_state`, `open_booster`, `upgrade_cards`, `discard_cards`, `claim_daily_bonus`, `set_locked`, `set_equipped`, `set_tutorial_done`, `market_list`, `market_cancel`, `market_buy`, `market_ack_sales`, `market_history`, `track_events` (wrappers dans `js/api.js`).
 - **Cache local** (`js/inventory.js`) : après chaque action, `refreshState()` relit profil, inventaire, ventes et état des boosters ; l'affichage lit cette copie (instantané). Ce n'est qu'un cache d'affichage, jamais une source de vérité.
 - Le catalogue affiché vient toujours de `data/pieces.json` (mêmes identifiants que la table `colorways`, vérifiés identiques : 75 coloris).
 - **Tests** : sans compte de test, on teste les écrans contre un faux serveur (format de réponses des fonctions SQL) ; un test réel demande un compte de test confirmé (jamais de mot de passe réel dans le dépôt).
@@ -369,3 +371,12 @@ Le développeur n'est pas juriste ; ces règles sont prudentes en attendant un a
 - **Règles côté serveur** (`friend_request`, `friend_respond`, `friend_remove`, `list_friends`, `get_friend_profile`, `set_pseudo`) : limite de 50 amis et 20 demandes en attente (`economy_config.FRIENDS`), pas de demande à soi-même ni en double, si l'autre joueur avait déjà invité on devient amis tout de suite, seuls les amis acceptés lisent un profil. La table `friendships` est illisible directement.
 - Si la migration 0005 n'est pas exécutée, l'écran affiche « Cette fonction n'est pas encore activée sur le serveur. ».
 - Hors périmètre pour l'instant : cadeaux, échanges de cartes, classement entre amis.
+
+## 15. Rétention et statistiques joueurs (migration 0010, `js/analytics.js`)
+
+- **Objectif** : mesurer si les joueurs reviennent (J+1, J+7…) et pouvoir étudier leurs comportements. Tout reste **chez nous** (Supabase), sans service externe.
+- **Ce que le serveur sait déjà** : `transactions` (inscription, bonus quotidien, boosters, roue, défausse, Market), `profiles`, `inventory`, `friendships`, `outfit_shares`. Un jour est « actif » s'il y a eu une ouverture du jeu **ou** une action enregistrée : l'historique d'avant la migration compte donc déjà.
+- **Ce que le site envoie** (`track_events(session, [{name, props}])`, liste blanche côté serveur, 25 événements par envoi, 3000 par joueur et par jour, jamais bloquant) : `session_start` (plateforme ios/android/desktop, appli installée ou non, taille d'écran arrondie, langue, fuseau, site d'origine, écran d'arrivée), `ping` toutes les 30 s tant que le jeu est affiché (→ temps actif), `screen_view`, `outfit_change`, `share_native` / `share_copy` / `share_image`, `client_error`. Nouvelle session après 30 min d'absence. Envois groupés toutes les 15 s et au départ de la page. **Rien n'est envoyé si « Do Not Track » est activé.** Pour mesurer autre chose : ajouter le nom dans la liste blanche de `track_events` (nouvelle migration) puis `track("nom", {…})` côté site.
+- **Tables** : `analytics_events` (événements), `player_days` (par joueur et par jour de Paris : sessions, secondes actives, événements). Visites des tenues partagées : colonnes `views` / `last_viewed_at` de `outfit_shares` (incrémentées par `get_shared_outfit`).
+- **Vues à lire dans le SQL Editor / Table Editor de Supabase** (illisibles par le site et les joueurs) : `analytics_retention_curve` (% actifs à J+0, 1, 2, 3, 7, 14, 30…), `analytics_retention_cohorts` (par jour d'inscription), `analytics_activity_daily` (nouveaux joueurs, DAU / WAU / MAU, « stickiness », minutes actives), `analytics_player_summary` (un joueur par ligne : ancienneté, statut actif / à risque / perdu, jours actifs, séries, sessions, temps, boosters, roue, défausse, Market, pièces, cartes, amis, partages, minutes avant le 1er booster…), `analytics_funnel` (entonnoir d'activation), `analytics_events_daily`, `analytics_screens`, `analytics_devices`, `analytics_hours`. Exemple : `select * from analytics_retention_curve;`
+- **Vie privée (RGPD)** : données pseudonymes (identifiant de joueur ; les vues n'affichent ni e-mail ni pseudo), aucune adresse IP, tout est supprimé avec le compte. Avant d'ouvrir le jeu à un large public, **ajouter une mention d'information dans le jeu** (page « Confidentialité ») : le développeur doit la valider (avis juridique, section 9).
