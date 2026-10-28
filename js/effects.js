@@ -71,6 +71,9 @@ export function playSound(kind) {
     // Roue d'amélioration : petit « clic » à chaque secteur, échec = note qui descend.
     case "tick": note(a, 900, t, 0.03, { type: "square", volume: 0.02 }); break;
     case "fail": [330, 262, 196].forEach((f, i) => note(a, f, t + i * 0.12, 0.35, { type: "sine", volume: 0.07 })); break;
+    // Videur : porte qui s'ouvre (entrée) ou qui reste fermée (refus).
+    case "door_ok": [392, 523, 659, 784].forEach((f, i) => note(a, f, t + i * 0.08, 0.4, { type: "sine", volume: 0.07 })); break;
+    case "door_no": [196, 147].forEach((f, i) => note(a, f, t + i * 0.16, 0.45, { type: "square", volume: 0.04 })); break;
     // Paliers d'aura (rester appuyé sur une carte) : une note de plus en plus aiguë.
     case "aura0": note(a, 262, t, 0.35, { type: "sine", volume: 0.05 }); break;
     case "aura1": note(a, 392, t, 0.4, { type: "sine", volume: 0.06 }); break;

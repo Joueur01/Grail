@@ -75,6 +75,7 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 │   ├── market.js      # Market entre joueurs (offres et actions via le serveur)
 │   ├── friends.js     # écran Amis : pseudo, demandes, liste, tenue d'un ami (via le serveur)
 │   ├── avatar.js      # rendu de l'avatar en canvas
+│   ├── videur.js      # écran Videur : portes, dress code du jour, jauges, verdict (via le serveur)
 │   ├── analytics.js   # mesure d'usage anonyme (rétention) : événements groupés → track_events
 │   ├── share.js       # partage de la tenue : lien public (principal) + export PNG (option)
 │   └── shared-outfit.js  # page publique d'une tenue partagée (?tenue=CODE), sans compte
@@ -95,7 +96,8 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 │       ├── 0008_tenue_partagee.sql  # lien public vers une tenue
 │       ├── 0009_historique_market.sql  # historique achats / ventes du Market
 │       ├── 0010_retention_stats.sql  # mesure de rétention + vues de statistiques
-│       └── 0011_taxe_vente.sql  # taxe de 5 % sur les ventes du Market
+│       ├── 0011_taxe_vente.sql  # taxe de 5 % sur les ventes du Market
+│       └── 0012_videur.sql  # Videur V1 : portes, dress codes, Flow
 ├── tools/
 │   └── extraire_sprites.py   # découpe les planches → PNG + SVG (Python + Pillow)
 └── CLAUDE.md
@@ -347,11 +349,11 @@ Le développeur n'est pas juriste ; ces règles sont prudentes en attendant un a
 
 ## 13. Back end Supabase (comptes + serveur de jeu) — le serveur est la source de vérité
 
-- Projet Supabase : `https://qsueqvsbhytqrotlxmak.supabase.co`. Les migrations SQL (**0001 à 0011**, exécutées par le développeur dans le SQL Editor, **ne jamais les modifier depuis le front** ; les 0005 à 0011 sont dans `supabase/migrations/`) créent : catalogue (`brands`, `pieces`, `colorways`), `economy_config`, `profiles`, `inventory`, `transactions`, `market_listings`, la vue `market_best_offers` et toutes les fonctions du jeu.
+- Projet Supabase : `https://qsueqvsbhytqrotlxmak.supabase.co`. Les migrations SQL (**0001 à 0012**, exécutées par le développeur dans le SQL Editor, **ne jamais les modifier depuis le front** ; les 0005 à 0012 sont dans `supabase/migrations/`) créent : catalogue (`brands`, `pieces`, `colorways`), `economy_config`, `profiles`, `inventory`, `transactions`, `market_listings`, la vue `market_best_offers` et toutes les fonctions du jeu.
 - **Règle d'or : ne jamais remettre de logique de jeu côté client.** Le front ne tire pas de carte, ne calcule ni gain ni chance réelle, ne vérifie pas de règle (limite de ventes, verrou, solde…). Il appelle une fonction, affiche le résultat, et relit l'état. Toute nouvelle règle ou nouvelle valeur d'économie se code **dans une migration SQL** (puis, si besoin d'affichage, dans `js/economy-config.js`).
 - **Le jeu n'est accessible que connecté** : e-mail + mot de passe (écran de connexion / création de compte dans `index.html`, géré par `main.js`). À l'inscription, le message « Confirme ton e-mail » s'affiche : le compte ne peut se connecter qu'après avoir cliqué le lien reçu. Un profil (3 boosters, 0 pièce) est créé automatiquement par le serveur. Bouton « Se déconnecter » en bas de l'écran Tenue.
 - **Mot de passe oublié** : lien « Mot de passe oublié ? » sous le formulaire de connexion (pas à la création de compte) → e-mail de réinitialisation (`resetPasswordForEmail`, réponse toujours neutre pour ne pas révéler quelles adresses ont un compte). Le lien reçu ramène sur le site avec `type=recovery` : `api.js` le détecte (`isRecoveryLink`) et `main.js` affiche « Nouveau mot de passe » (6 caractères minimum, saisie en double, `updatePassword`) **avant** de lancer le jeu ; lien expiré → message + renvoi vers « Mot de passe oublié ? ». **À régler dans Supabase** (Authentication → URL Configuration) : Site URL `https://joueur01.github.io/Grail/` et Redirect URLs `https://joueur01.github.io/Grail/**`, sinon les liens (confirmation et réinitialisation) pointent vers localhost.
-- **Écritures interdites en direct** : le front ne fait que des **lectures** (`profiles`, `inventory`, `market_listings` = ses propres ventes, `market_best_offers`) et des **appels de fonctions** (`rpc`). Les fonctions : `get_booster_state`, `open_booster`, `upgrade_cards`, `discard_cards`, `claim_daily_bonus`, `set_locked`, `set_equipped`, `set_tutorial_done`, `market_list`, `market_cancel`, `market_buy`, `market_ack_sales`, `market_history`, `track_events` (wrappers dans `js/api.js`).
+- **Écritures interdites en direct** : le front ne fait que des **lectures** (`profiles`, `inventory`, `market_listings` = ses propres ventes, `market_best_offers`) et des **appels de fonctions** (`rpc`). Les fonctions : `get_booster_state`, `open_booster`, `upgrade_cards`, `discard_cards`, `claim_daily_bonus`, `set_locked`, `set_equipped`, `set_tutorial_done`, `market_list`, `market_cancel`, `market_buy`, `market_ack_sales`, `market_history`, `track_events`, `get_videur_night`, `videur_preview`, `videur_enter` (wrappers dans `js/api.js`).
 - **Cache local** (`js/inventory.js`) : après chaque action, `refreshState()` relit profil, inventaire, ventes et état des boosters ; l'affichage lit cette copie (instantané). Ce n'est qu'un cache d'affichage, jamais une source de vérité.
 - Le catalogue affiché vient toujours de `data/pieces.json` (mêmes identifiants que la table `colorways`, vérifiés identiques : 75 coloris).
 - **Tests** : sans compte de test, on teste les écrans contre un faux serveur (format de réponses des fonctions SQL) ; un test réel demande un compte de test confirmé (jamais de mot de passe réel dans le dépôt).
@@ -386,7 +388,7 @@ Le développeur n'est pas juriste ; ces règles sont prudentes en attendant un a
 
 ## 16. Le Videur — spécification de la V1 (à construire ; fonctionnalité décidée par le développeur, après la bêta du 1er novembre)
 
-**Statut : spécification validée, rien n'est codé.** Les valeurs marquées « (défaut) » sont des propositions de Claude que le développeur n'a pas encore confirmées : elles vivent dans `economy_config` et se changent sans toucher au site.
+**Statut : V1 codée (migration 0012, `js/videur.js`, onglet « Videur »).** Les valeurs marquées « (défaut) » sont des propositions de Claude que le développeur n'a pas encore confirmées : elles vivent dans `economy_config` et se changent sans toucher au site.
 
 ### Idée
 
@@ -416,7 +418,7 @@ Chaque porte exige un minimum sur **les deux** ; le refus dit laquelle manque (�
 - **Règles du Flow (non négociables)** : jamais convertible en pièces, jamais échangeable entre joueurs, jamais acheté avec des pièces ni de l'argent réel ; il ne servira qu'à des **cosmétiques purement visuels** (aucun avantage de jeu).
 - **Pas de coffre, pas d'objet collector, pas de saison dans la V1.**
 
-### Fonctions serveur (migration à écrire)
+### Fonctions serveur (migration 0012, faites)
 
 - `get_videur_night()` → les 3 portes du jour (nom du lieu, intro, règles lisibles, seuils), l'état de chacune (verrouillée / ouverte / passée, essais restants), le Flow, la série.
 - `videur_preview(p_door)` → détail du score de la tenue actuelle : chaque règle ✔/✖ avec ses points, style obtenu / seuil, rareté obtenue / seuil. **Ne consomme rien.**
@@ -429,7 +431,9 @@ Chaque porte exige un minimum sur **les deux** ; le refus dit laquelle manque (�
 - Contenu : la soirée du jour (nom, dress code en 2-3 lignes) ; la tenue actuelle « à plat » avec accès rapide pour la changer ; les deux jauges avec leurs seuils (aperçu) ; bouton « Se présenter » ; verdict avec la réplique du videur et la liste de ce qui a joué ; Flow gagné et série.
 - Ambiance **sans illustration** : porte et enseigne en CSS (nom du lieu en Archivo, couleur par porte : bleu Bar, violet Club, or VIP comme les raretés), halo derrière la tenue, flash vert / rouge au verdict, sons synthétisés (coup à la porte, basse étouffée, son d'entrée / de refus). Le pixel art reste réservé aux vêtements et à l'avatar (section 8).
 - Ton du videur : **sobre et sec** (défaut, à confirmer).
-- Mesure : ajouter des événements `videur_*` dans la liste blanche de `track_events` (migration), et lire l'effet sur la rétention (section 15).
+- Mesure : chaque essai est enregistré dans `videur_attempts` ; la vue `analytics_videur_daily` (essais, réussites, joueurs, Flow distribué par jour et par porte) se lit dans le SQL Editor, avec les vues de la section 15. L'écran compte aussi dans `screen_view`.
+- **Code** : `js/videur.js` (écran : onglets des portes, enseigne CSS, règles ✔/✖ de l'aperçu, tenue à plat, jauges Style / Rareté avec trait du seuil, bouton « Se présenter », fiche de verdict avec réplique) ; barre du bas : Booster, Collection, Market, **Videur**, Amis, Tenue (6 onglets, testés jusqu'à 320 px). Contenu de départ : 12 dress codes (4 par porte), 36 répliques, étiquettes de couleur des 75 coloris. Seul le **titre sur la tenue partagée** et la **boutique de Flow** restent à faire.
+- **Tenue évaluée** : seulement les pièces portées ET encore possédées ; une carte vendue ou misée ne compte plus.
 
 ### Points de vigilance
 
