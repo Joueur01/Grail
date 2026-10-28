@@ -7,14 +7,14 @@
 // On peut l'ouvrir depuis la fiche d'une carte, une ligne de l'Atelier ou le
 // bouton « Sélectionner » de la Collection (createSelection, plus bas).
 
-import { RARITIES, getRarity } from "./data.js?v=65";
-import { DISCARD_VALUES, DISCARD_CONFIRM_FROM, DISCARD_KEEP } from "./economy-config.js?v=65";
-import { getOwnedCards, getEquipped, refreshState, cardKey } from "./inventory.js?v=65";
-import { discardCards as sendDiscardToServer } from "./api.js?v=65";
-import { SLOTS } from "./avatar.js?v=65";
-import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=65";
-import { playSound, vibrate } from "./effects.js?v=65";
-import { flyCoins, showToast, reportError } from "./wallet.js?v=65";
+import { RARITIES, getRarity } from "./data.js?v=66";
+import { DISCARD_VALUES, DISCARD_CONFIRM_FROM, DISCARD_KEEP } from "./economy-config.js?v=66";
+import { getOwnedCards, getEquipped, getShowcaseKeys, refreshState, cardKey } from "./inventory.js?v=66";
+import { discardCards as sendDiscardToServer } from "./api.js?v=66";
+import { SLOTS } from "./avatar.js?v=66";
+import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=66";
+import { playSound, vibrate } from "./effects.js?v=66";
+import { flyCoins, showToast, reportError } from "./wallet.js?v=66";
 
 /**
  * Envoie la défausse au SERVEUR (tout ou rien) et relit l'état. Renvoie les pièces gagnées, calculées
@@ -154,13 +154,16 @@ export function setupDiscard({ catalogue, onChange }) {
       }));
       tray.hidden = list.length === 0;
 
-      // Avertissements : carte portée qui quitte la tenue
+      // Avertissements : carte portée ou en vitrine dont le dernier exemplaire part (le serveur la retire alors de la tenue / de la vitrine)
       const worn = new Set(SLOTS.map((s) => getEquipped(s.id)).filter(Boolean).map((c) => cardKey(c.colorwayId, c.rarity)));
-      const leavingOutfit = cards.some((c) => {
-        const key = cardKey(c.colorwayId, c.rarity);
-        return worn.has(key) && selected.get(key) === c.count;
-      });
-      warning.textContent = leavingOutfit ? "Une carte portée quitte ta tenue." : "Les cartes défaussées ne reviennent pas.";
+      const shown = new Set(getShowcaseKeys());
+      const lastCopyLeaves = (c) => selected.get(cardKey(c.colorwayId, c.rarity)) === c.count;
+      const leavingOutfit = cards.some((c) => worn.has(cardKey(c.colorwayId, c.rarity)) && lastCopyLeaves(c));
+      const leavingShowcase = cards.some((c) => shown.has(cardKey(c.colorwayId, c.rarity)) && lastCopyLeaves(c));
+      warning.textContent = leavingOutfit && leavingShowcase ? "Une carte quitte ta tenue et ta vitrine."
+        : leavingOutfit ? "Une carte portée quitte ta tenue."
+          : leavingShowcase ? "Une carte quitte ta vitrine."
+            : "Les cartes défaussées ne reviennent pas.";
 
       confirmBtn.disabled = list.length === 0;
       confirmBtn.textContent = !list.length ? "Défausser"
