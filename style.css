@@ -1201,11 +1201,10 @@ main {
   gap: 12px;
   width: 100%;
   max-width: var(--col);
-  max-height: 85dvh;
+  height: min(85dvh, 680px);   /* hauteur fixe : le panneau ne saute pas quand on filtre */
   margin: 0 auto;
-  padding: 16px 20px calc(20px + env(safe-area-inset-bottom));
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  padding: 16px 20px calc(16px + env(safe-area-inset-bottom));
+  overflow: hidden;            /* seule la liste défile (.picker-scroll) */
   background: var(--bg);
   border: 1px solid var(--border);
   border-bottom: 0;
@@ -1246,6 +1245,23 @@ main {
 
 .picker-empty { text-align: center; padding: 24px 0; }
 
+/* Barre de recherche / filtres du panneau : fixe en haut (ce n'est pas la barre collée des écrans) */
+.picker-filters {
+  position: static;
+  flex: none;
+  padding: 0;
+  box-shadow: none;
+}
+.picker-filters select { padding: 0 20px 0 12px; background-position: right 8px center; font-size: 13px; }
+.picker-count { flex: none; margin: 0; font-size: 12px; font-weight: 600; }
+.picker-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 10px 6px 4px;       /* place pour les contours et lueurs des cartes */
+}
+
 /* Chaque carte du panneau est un bouton. En grille + hauteur 100 % : la carte
    remplit le bouton (un bouton centre sinon son contenu, et les cartes d'une
    même ligne ne seraient plus alignées). */
@@ -1266,10 +1282,26 @@ main {
   height: 100%;
 }
 
-/* Carte déjà portée : contour blanc */
-.card.equipped .card-face {
+/* Carte portée : contour blanc épais + halo + pastille « ✓ Portée » (elle est aussi toujours la 1re de la liste) */
+.card.equipped .card-face,
+.card.owned.equipped[data-rarity] .card-face {
   outline: 3px solid var(--text);
   outline-offset: 2px;
+  box-shadow: 0 0 0 7px rgba(244, 242, 236, 0.16), 0 0 22px 4px rgba(244, 242, 236, 0.3);
+}
+.worn-tag {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  z-index: 2;
+  transform: translateX(-50%);
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+  color: var(--bg);
+  background: var(--text);
 }
 
 /* --- Écran Booster : les deux vues (paquet fermé / cartes) --- */
