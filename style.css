@@ -2026,6 +2026,7 @@ body[data-auth="public"] .public {
 }
 @media (min-width: 700px) { .public-stage { --avatar3d-scale: 4; } }
 .public-meta { display: flex; flex-direction: column; align-items: center; gap: 4px; margin: 10px 0 16px; }
+.public-pseudo { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.01em; text-align: center; overflow-wrap: anywhere; }
 .public-hint { font-size: 12px; font-weight: 600; text-align: center; }
 .public-date { margin: 0; font-size: 14px; font-weight: 700; color: var(--text); text-align: center; }
 .public-cta { text-decoration: none; text-align: center; display: grid; place-items: center; }

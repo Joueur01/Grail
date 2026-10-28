@@ -6,9 +6,9 @@
 //   - relayer les actions simples (verrou, tenue) vers le serveur, puis relire l'état.
 // Il ne calcule rien d'important : pas de tirage, de gain ni de règle de jeu.
 
-import { RARITIES, matchesSearch, getRarity } from "./data.js?v=67";
-import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=67";
-import * as api from "./api.js?v=67";
+import { RARITIES, matchesSearch, getRarity } from "./data.js?v=68";
+import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=68";
+import * as api from "./api.js?v=68";
 
 // --- État en mémoire (rempli par refreshState) ---
 
@@ -139,6 +139,16 @@ export function getEquipped(slot) {
   if (!key || !state.cards.has(key)) return null; // on ne garde que les cartes réellement possédées
   const [colorwayId, rarity] = key.split("|");
   return { colorwayId, rarity };
+}
+
+/** Pseudo du joueur (« » tant qu'il n'en a pas choisi), tel que connu du site : sert à l'image de partage. */
+export function getPseudo() {
+  return state.profile?.pseudo || "";
+}
+
+/** Garde le pseudo à jour dans le cache juste après un changement (sans attendre la prochaine relecture). */
+export function setCachedPseudo(pseudo) {
+  if (state.profile) state.profile.pseudo = pseudo || null;
 }
 
 /** Cartes de la vitrine ("coloris|rareté"), telles qu'enregistrées sur le serveur (migration 0015), ou []. */

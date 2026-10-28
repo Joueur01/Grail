@@ -3,12 +3,13 @@
 // Le serveur renvoie une copie de la tenue (get_shared_outfit, appelable sans être connecté) :
 // l'avatar 3D (Garçon / Fille du joueur au moment du partage, migration 0019) porte la tenue et se
 // fait tourner en glissant, comme partout dans le jeu. Dessous : la date du partage et la liste des
-// pièces avec leur rareté. Aucun pseudo ni autre information du joueur n'est montré.
+// pièces avec leur rareté. Le pseudo de la personne qui partage est affiché (décision du développeur,
+// migration 0020) ; aucune autre information du joueur n'est montrée.
 
-import { loadCatalogue, getRarity } from "./data.js?v=67";
-import { getSharedOutfit } from "./api.js?v=67";
-import { SLOTS } from "./avatar.js?v=67";
-import { createAvatar3D } from "./avatar3d.js?v=67";
+import { loadCatalogue, getRarity } from "./data.js?v=68";
+import { getSharedOutfit } from "./api.js?v=68";
+import { SLOTS } from "./avatar.js?v=68";
+import { createAvatar3D } from "./avatar3d.js?v=68";
 
 function el(tag, className, text) {
   const e = document.createElement(tag);
@@ -58,6 +59,8 @@ export async function showSharedOutfit(token, { signedIn = false } = {}) {
     createAvatar3D(canvas).setOutfit(worn, { type: shared.avatar_body === "femme" ? "femme" : "homme" })
       .catch((err) => console.error("Avatar 3D :", err));
     const meta = el("div", "public-meta");
+    // Le pseudo de la personne qui a partagé (migration 0020) ; rien tant que le serveur ne le renvoie pas.
+    if (shared.pseudo) meta.append(el("p", "public-pseudo", shared.pseudo));
     meta.append(el("p", "muted public-hint", "Glisse pour tourner"));
     const date = formatDate(shared.created_at);
     if (date) meta.append(el("p", "public-date", `Partagée le ${date}`));

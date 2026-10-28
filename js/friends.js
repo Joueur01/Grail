@@ -5,13 +5,14 @@
 // serveur renvoie et envoie les actions. Il n'existe aucune liste publique de joueurs :
 // on ne retrouve quelqu'un qu'avec son pseudo EXACT.
 
-import { getRarity } from "./data.js?v=67";
-import { setPseudo, listFriends, friendRequest, friendRespond, friendRemove, getFriendProfile, getPlayerProfile, listFriendsPreview } from "./api.js?v=67";
-import { buildProfileView } from "./profile.js?v=67";
-import { SLOTS, initAvatar, drawAvatar } from "./avatar.js?v=67";
-import { buildModel, renderModel, DEFAULT_YAW } from "./avatar3d.js?v=67";
-import { showToast, reportError } from "./wallet.js?v=67";
-import { FRIENDS } from "./economy-config.js?v=67";
+import { getRarity } from "./data.js?v=68";
+import { setPseudo, listFriends, friendRequest, friendRespond, friendRemove, getFriendProfile, getPlayerProfile, listFriendsPreview } from "./api.js?v=68";
+import { buildProfileView } from "./profile.js?v=68";
+import { setCachedPseudo } from "./inventory.js?v=68";
+import { SLOTS, initAvatar, drawAvatar } from "./avatar.js?v=68";
+import { buildModel, renderModel, DEFAULT_YAW } from "./avatar3d.js?v=68";
+import { showToast, reportError } from "./wallet.js?v=68";
+import { FRIENDS } from "./economy-config.js?v=68";
 
 /**
  * Branche l'écran Amis.
@@ -54,6 +55,7 @@ export function setupFriends({ catalogue }) {
   async function load({ silent = false } = {}) {
     try {
       data = await listFriends();
+      setCachedPseudo(data.pseudo); // l'image de partage affiche ce pseudo
       // Aperçu des amis (migration 0017). Si elle n'est pas exécutée, la liste reste simple.
       try {
         previews = new Map((await listFriendsPreview()).map((p) => [p.friend_id, p]));

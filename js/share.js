@@ -17,12 +17,13 @@
 // préparée À L'AVANCE, à chaque changement de tenue, pour être prête au moment
 // où l'on touche le bouton (sinon le partage serait refusé).
 
-import { RARITIES } from "./data.js?v=67";
-import { SLOTS, readBodyChoice } from "./avatar.js?v=67";
-import { buildModel, renderModel, DEFAULT_YAW } from "./avatar3d.js?v=67";
-import { createOutfitShare } from "./api.js?v=67";
-import { showToast } from "./wallet.js?v=67";
-import { track } from "./analytics.js?v=67";
+import { RARITIES } from "./data.js?v=68";
+import { SLOTS, readBodyChoice } from "./avatar.js?v=68";
+import { getPseudo } from "./inventory.js?v=68";
+import { buildModel, renderModel, DEFAULT_YAW } from "./avatar3d.js?v=68";
+import { createOutfitShare } from "./api.js?v=68";
+import { showToast } from "./wallet.js?v=68";
+import { track } from "./analytics.js?v=68";
 
 const IMG_W = 1080;
 const IMG_H = 1350;
@@ -122,9 +123,21 @@ export async function buildShareImage(outfit) {
     .find((x) => x.n > 0 && x.r.id !== "commun");
   ctx.fillStyle = muted;
   ctx.font = `400 30px ${FONT}`;
-  const summary = `Ma tenue · ${count} pièce${count > 1 ? "s" : ""}`
+  const summary = `${count} pièce${count > 1 ? "s" : ""}`
     + (best ? ` · ${best.n} ${best.r.name.toLowerCase()}${best.n > 1 ? "s" : ""}` : "");
-  ctx.fillText(summary, PAD, PAD + 112);
+  // Le pseudo du joueur en évidence (s'il en a un), puis le résumé ; sinon « Ma tenue ».
+  const pseudo = getPseudo();
+  if (pseudo) {
+    ctx.fillStyle = text;
+    ctx.font = `800 36px ${FONT}`;
+    ctx.fillText(pseudo, PAD, PAD + 114);
+    const w = ctx.measureText(pseudo).width;
+    ctx.fillStyle = muted;
+    ctx.font = `400 30px ${FONT}`;
+    ctx.fillText(` · ${summary}`, PAD + w, PAD + 114);
+  } else {
+    ctx.fillText(`Ma tenue · ${summary}`, PAD, PAD + 112);
+  }
 
   // Cadre gris sombre (comme l'écran Tenue) + avatar 3D agrandi ×6, centré
   const avW = avatar.width * SCALE, avH = avatar.height * SCALE;
@@ -225,7 +238,8 @@ export function setupShare() {
   const menu = document.getElementById("share-menu");
   const status = document.getElementById("share-status");
   let pending = null; // Promise du Blob de la tenue actuelle
-  let builtOn = "";   // jour (todayLabel) où l'image a été préparée : si on passe minuit, elle est refaite
+  let builtOn = "";   // jour + pseudo pour lesquels l'image a été préparée : si l'un change (minuit, nouveau pseudo), elle est refaite
+  const stamp = () => `${todayLabel()}|${getPseudo()}`;
   let version = 0;
   let current = null; // tenue actuelle
   let link = null;    // { key, url } : lien déjà créé pour la tenue actuelle (le partage suivant est instantané)
@@ -238,15 +252,15 @@ export function setupShare() {
     if (link && (!current || link.key !== outfitKey(current))) link = null;
     if (count === 0) { pending = null; closeMenu(); return; }
     const v = ++version;
-    builtOn = todayLabel();
+    builtOn = stamp();
     pending = buildShareImage(outfit);
     pending.catch((err) => { if (v === version) console.error("Image de partage :", err); });
   }
 
-  /** L'image prête, refaite si la date a changé depuis sa préparation (page restée ouverte la nuit). */
+  /** L'image prête, refaite si la date ou le pseudo ont changé depuis sa préparation. */
   function readyImage() {
-    if (current && builtOn !== todayLabel()) {
-      builtOn = todayLabel();
+    if (current && builtOn !== stamp()) {
+      builtOn = stamp();
       pending = buildShareImage(current);
     }
     return pending;
