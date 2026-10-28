@@ -10,14 +10,14 @@
 //      sprites. Le canvas est agrandi d'un facteur entier en CSS : rendu pixel art.
 //   Aucune bibliothèque : tout est calculé ici, en JavaScript.
 
-import { getBody, BODY_COLOR, DRAW_ORDER, WEAR_MODELS } from "./wear-models.js?v=62";
+import { getBody, BODY_COLOR, DRAW_ORDER, WEAR_MODELS } from "./wear-models.js?v=63";
 
 // --- La grille ---
 const GX = 48, GY = 84, GZ = 48;      // taille en voxels
 const OX = 24, OZ = 24;               // décalage : x = -24 → colonne 0
 const OUTLINE = [20, 20, 26];         // couleur du contour (celle des sprites)
 const PITCH = 0.2;                    // la caméra regarde un peu vers le bas (radians)
-const DEFAULT_YAW = 0.5;               // vue de trois quarts au départ
+export const DEFAULT_YAW = 0.5;               // vue de trois quarts au départ
 const CENTER_Y = 38;                  // hauteur autour de laquelle on cadre
 
 function idx(x, y, z) { return (y * GZ + (z + OZ)) * GX + (x + OX); }
