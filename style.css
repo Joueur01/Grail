@@ -562,17 +562,17 @@ main {
 .outfit {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  gap: 8px;
+  gap: 6px;
   align-items: start;
 }
 
 .outfit-col {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
-/* Tenue à plat 64×96 : facteur entier ×2 (128×192) sur téléphone, ×4 sur tablette / PC */
+/* Tenue à plat 64×96 : facteur entier ×2 (128×192) sur téléphone, ×3 sur tablette / PC */
 .outfit-body {
   --avatar-scale: 2;
   position: relative;
@@ -580,11 +580,19 @@ main {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 8px;
+  padding: 4px 0;
   background: #cccac4; /* fond clair : les contours noirs restent visibles */
   border-radius: var(--radius);
 }
-@media (min-width: 700px) { .outfit-body { --avatar-scale: 4; } }
+@media (min-width: 700px) {
+  /* Tablette / PC : fiche centrée et limitée en largeur ; avatar 3D ×5, cases ×3, tenue à plat ×3 */
+  .outfit { width: 100%; max-width: 440px; margin-inline: auto; }
+  .outfit-body { --avatar-scale: 3; }
+}
+/* Vue 3D : cadre gris sombre, un peu plus clair que le fond du jeu (le dessin 3D a son propre contour) */
+.outfit-body.is-3d {
+  background: radial-gradient(ellipse at 50% 40%, #34353c 0%, #2a2b31 60%, #232429 100%);
+}
 
 .avatar-canvas {
   width: calc(64px * var(--avatar-scale));
@@ -603,57 +611,64 @@ main {
 }
 .outfit-view[hidden] { display: none; }
 
-/* Avatar 3D 48×96 : facteur entier ×3 (144×288) sur téléphone (×2 sous 360 px), ×4 sur tablette / PC.
+/* Avatar 3D 46×88 (recadré sur l'avatar) : facteur entier ×4 (184×352), ×3 sous 360 px, ×5 sur tablette / PC.
    Glisser horizontalement le fait tourner ; le défilement vertical de la page
    reste possible (pan-y). */
-.outfit-body { --avatar3d-scale: 3; }
-@media (max-width: 359px) { .outfit-body { --avatar3d-scale: 2; } } /* petit téléphone : laisse la place aux cases */
-@media (min-width: 700px) { .outfit-body { --avatar3d-scale: 4; } }
+.outfit-body { --avatar3d-scale: 4; min-width: calc(46px * var(--avatar3d-scale)); } /* même largeur en 3D et à plat : les cases gardent leur taille */
+@media (min-width: 700px) { .outfit-body { --avatar3d-scale: 5; } }
+@media (max-width: 359px) { .outfit-body { --avatar3d-scale: 3; } } /* petit téléphone : laisse la place aux cases */
 .avatar-3d {
-  width: calc(48px * var(--avatar3d-scale));
-  height: calc(96px * var(--avatar3d-scale));
+  width: calc(46px * var(--avatar3d-scale));
+  height: calc(88px * var(--avatar3d-scale));
   touch-action: pan-y;
   cursor: grab;
   user-select: none;
   -webkit-user-select: none;
 }
 .avatar-3d:active { cursor: grabbing; }
+
+/* Sous le cadre (vue 3D) : indication, choix Garçon / Fille, pièces pas encore en 3D */
+.outfit-tools {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.outfit-tools[hidden] { display: none; }
 .outfit-3d-hint,
 .outfit-3d-note {
   margin: 0;
-  max-width: calc(48px * var(--avatar3d-scale));
   text-align: center;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   line-height: 1.3;
-  color: #6e6c67;
+  color: var(--muted);
 }
-.outfit-3d-note { color: #4a4844; }
 
-/* Choix Garçon / Fille : petite pilule sous l'avatar 3D */
+/* Choix Garçon / Fille : petite pilule centrée */
 .body-switch {
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
-  gap: 2px;
-  margin-top: 6px;
   padding: 3px;
+  border: 1px solid var(--border);
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.12);
+  background: var(--surface);
 }
 .body-tab {
-  min-height: 32px;
-  padding: 0 12px;
+  min-height: 36px;
+  min-width: 96px;
+  padding: 0 16px;
   border: 0;
   border-radius: 999px;
   background: none;
-  color: #4a4844;
+  color: var(--muted);
   font-family: var(--font);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
 }
-.body-tab[aria-pressed="true"] { background: var(--bg); color: var(--text); }
+.body-tab[aria-pressed="true"] { background: var(--text); color: var(--bg); }
 
 /* Invitation posée sur la vitrine tant qu'aucune pièce n'est portée */
 .outfit-hint {
@@ -671,13 +686,13 @@ main {
 }
 
 /* Une case de la fiche. Taille de l'icône selon la largeur RÉELLE de la case :
-   largeur nécessaire = 32 × facteur + 8 px (bordure 4 + marge 4). ×1 à ×4. */
+   largeur nécessaire = 32 × facteur (la bordure est dessinée à l'intérieur). ×1 à ×4. */
 .slot {
   container-type: inline-size;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   width: 100%;
   padding: 0;
   border: 0;
@@ -688,19 +703,21 @@ main {
 }
 
 .slot-tile { --slot-scale: 1; }
-@container (min-width: 72px) { .slot-tile { --slot-scale: 2; } }
-@container (min-width: 104px) { .slot-tile { --slot-scale: 3; } }
-@container (min-width: 136px) { .slot-tile { --slot-scale: 4; } }
+@container (min-width: 64px) { .slot-tile { --slot-scale: 2; } }
+@container (min-width: 96px) { .slot-tile { --slot-scale: 3; } }
+@container (min-width: 128px) { .slot-tile { --slot-scale: 4; } }
 
 .slot-tile {
+  box-sizing: border-box;
   display: grid;
   place-items: center;
-  width: calc(32px * var(--slot-scale) + 8px);
-  height: calc(32px * var(--slot-scale) + 8px);
-  padding: 2px;
-  border: 2px solid var(--rarity-color, transparent);
+  width: calc(32px * var(--slot-scale));
+  height: calc(32px * var(--slot-scale));
+  padding: 0;
   border-radius: 10px;
   background: #cccac4; /* case claire : les contours noirs restent visibles */
+  /* Bordure de rareté dessinée à l'intérieur (sous le sprite) : la case garde la taille exacte du sprite */
+  box-shadow: inset 0 0 0 2px var(--rarity-color, transparent);
 }
 
 .slot-tile img {
@@ -711,6 +728,7 @@ main {
 
 /* Case vide : pointillés et « + » */
 .slot:not([data-rarity]) .slot-tile {
+  box-shadow: none;
   border: 2px dashed var(--border);
   background: var(--surface);
   color: var(--muted);
@@ -721,7 +739,7 @@ main {
 .slot:active .slot-tile { opacity: 0.8; }
 
 .slot-label {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--muted);
 }

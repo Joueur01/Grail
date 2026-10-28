@@ -17,7 +17,7 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=50">
+  <link rel="stylesheet" href="style.css?v=51">
 </head>
 <body>
   <header class="topbar">
@@ -326,15 +326,9 @@
       <div class="outfit">
         <div class="outfit-col" id="outfit-left"></div>
         <div class="outfit-body">
-          <!-- Avatar 3D (avatar3d.js) : canvas 48×96 « logique » (1 voxel = 1 pixel), agrandi d'un facteur entier en CSS -->
+          <!-- Avatar 3D (avatar3d.js) : canvas 46×88 « logique » (1 voxel = 1 pixel), recadré au plus juste, agrandi d'un facteur entier en CSS -->
           <div class="outfit-view" id="avatar3d-view">
-            <canvas id="avatar-3d" class="pixel avatar-3d" width="48" height="96" aria-label="Ton avatar en 3D : glisse pour le faire tourner"></canvas>
-            <p class="outfit-3d-hint">Glisse pour tourner</p>
-            <div class="body-switch" role="group" aria-label="Avatar">
-              <button class="body-tab" data-body="homme" aria-pressed="true">Garçon</button>
-              <button class="body-tab" data-body="femme" aria-pressed="false">Fille</button>
-            </div>
-            <p class="outfit-3d-note" id="outfit-3d-note" hidden></p>
+            <canvas id="avatar-3d" class="pixel avatar-3d" width="46" height="88" aria-label="Ton avatar en 3D : glisse pour le faire tourner"></canvas>
           </div>
           <!-- Tenue à plat : canvas 64×96 « logique », agrandi d'un facteur entier en CSS -->
           <div class="outfit-view" id="avatarflat-view" hidden>
@@ -343,6 +337,15 @@
           </div>
         </div>
         <div class="outfit-col" id="outfit-right"></div>
+      </div>
+      <!-- Sous le cadre (vue 3D seulement) : indication, choix Garçon / Fille, pièces pas encore en 3D -->
+      <div class="outfit-tools" id="outfit-3d-tools">
+        <p class="outfit-3d-hint">Glisse l'avatar pour le faire tourner</p>
+        <div class="body-switch" role="group" aria-label="Avatar">
+          <button class="body-tab" data-body="homme" aria-pressed="true">Garçon</button>
+          <button class="body-tab" data-body="femme" aria-pressed="false">Fille</button>
+        </div>
+        <p class="outfit-3d-note" id="outfit-3d-note" hidden></p>
       </div>
       <!-- Partage (share.js) : un seul bouton. Mobile : menu de partage du téléphone (image + lien).
            Ordinateur : petit menu « Copier le lien » / « Enregistrer en image ». -->
@@ -400,6 +403,6 @@
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=50"></script>
+  <script type="module" src="js/main.js?v=51"></script>
 </body>
 </html>
