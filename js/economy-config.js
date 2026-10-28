@@ -44,3 +44,8 @@ export const MARKET = {
   maxPrice: 99999,
   referencePrice: { commun: 8, rare: 40, epique: 160, legendaire: 600 },
 };
+
+// Amis : délai entre deux changements de pseudo (affichage ; le serveur applique la vraie règle).
+export const FRIENDS = {
+  pseudoChangeDays: 30,
+};

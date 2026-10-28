@@ -17,7 +17,7 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=36">
+  <link rel="stylesheet" href="style.css?v=37">
 </head>
 <body>
   <header class="topbar">
@@ -236,6 +236,7 @@
 
       <div id="friends-main" hidden>
         <p class="friends-me">Ton pseudo : <strong id="friends-me"></strong> <button class="friends-link" id="pseudo-edit" type="button">Modifier</button></p>
+        <p class="muted friends-hint" id="pseudo-lock" hidden></p>
 
         <form class="friends-box" id="add-form" novalidate>
           <span class="eyebrow">Ajouter un ami</span>
@@ -322,6 +323,6 @@
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=36"></script>
+  <script type="module" src="js/main.js?v=37"></script>
 </body>
 </html>

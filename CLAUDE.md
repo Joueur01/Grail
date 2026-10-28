@@ -87,7 +87,8 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 │   └── *_coloris_apercu.svg  # planches reconstruites en SVG
 ├── supabase/
 │   └── migrations/
-│       └── 0005_amis.sql  # amis (à exécuter dans le SQL Editor de Supabase)
+│       ├── 0005_amis.sql  # amis (à exécuter dans le SQL Editor de Supabase)
+│       └── 0006_pseudo_30_jours.sql  # un changement de pseudo tous les 30 jours
 ├── tools/
 │   └── extraire_sprites.py   # découpe les planches → PNG + SVG (Python + Pillow)
 └── CLAUDE.md
@@ -305,7 +306,7 @@ Le développeur n'est pas juriste ; ces règles sont prudentes en attendant un a
 - **Aucune marque réelle** : pas de nom, logo, modèle ni allusion (« style Dunk », etc.) dans le code, les noms de fichiers, les textes, les commentaires ou les métadonnées.
 - Ne jamais copier la forme d'un modèle existant : on prend la **catégorie** (basket basse en cuir), pas le **modèle**.
 - **Pas d'argent réel**, pas de loot box payante, pas de monnaie convertible en euros, pas de revente en argent réel. Le jeu est gratuit.
-- **Pas de contenu libre créé par les joueurs** (texte, image) dans la bêta, pour éviter la modération. **Seule exception, décidée par le développeur : le pseudo libre**, validé par le serveur (3 à 16 caractères `A-Za-z0-9_`, unique sans tenir compte des majuscules, mots interdits dans la table `blocked_words`, un changement par semaine) et **jamais affiché dans une liste publique** : on ne retrouve un joueur qu'avec son pseudo exact, et seuls ses amis voient son profil. La liste des mots interdits est à compléter par le développeur.
+- **Pas de contenu libre créé par les joueurs** (texte, image) dans la bêta, pour éviter la modération. **Seule exception, décidée par le développeur : le pseudo libre**, validé par le serveur (3 à 16 caractères `A-Za-z0-9_`, unique sans tenir compte des majuscules, mots interdits dans la table `blocked_words`, un changement tous les 30 jours, le tout premier choix étant libre) et **jamais affiché dans une liste publique** : on ne retrouve un joueur qu'avec son pseudo exact, et seuls ses amis voient son profil. La liste des mots interdits est à compléter par le développeur.
 - Si des images générées par IA sont ajoutées un jour, le signaler dans le README.
 
 ## 10. Comment travailler avec le développeur
@@ -336,7 +337,7 @@ Le développeur n'est pas juriste ; ces règles sont prudentes en attendant un a
 
 ## 13. Back end Supabase (comptes + serveur de jeu) — le serveur est la source de vérité
 
-- Projet Supabase : `https://qsueqvsbhytqrotlxmak.supabase.co`. Les migrations SQL (**0001 à 0005**, exécutées par le développeur dans le SQL Editor, **ne jamais les modifier depuis le front** ; la 0005 est dans `supabase/migrations/`) créent : catalogue (`brands`, `pieces`, `colorways`), `economy_config`, `profiles`, `inventory`, `transactions`, `market_listings`, la vue `market_best_offers` et toutes les fonctions du jeu.
+- Projet Supabase : `https://qsueqvsbhytqrotlxmak.supabase.co`. Les migrations SQL (**0001 à 0006**, exécutées par le développeur dans le SQL Editor, **ne jamais les modifier depuis le front** ; les 0005 et 0006 sont dans `supabase/migrations/`) créent : catalogue (`brands`, `pieces`, `colorways`), `economy_config`, `profiles`, `inventory`, `transactions`, `market_listings`, la vue `market_best_offers` et toutes les fonctions du jeu.
 - **Règle d'or : ne jamais remettre de logique de jeu côté client.** Le front ne tire pas de carte, ne calcule ni gain ni chance réelle, ne vérifie pas de règle (limite de ventes, verrou, solde…). Il appelle une fonction, affiche le résultat, et relit l'état. Toute nouvelle règle ou nouvelle valeur d'économie se code **dans une migration SQL** (puis, si besoin d'affichage, dans `js/economy-config.js`).
 - **Le jeu n'est accessible que connecté** : e-mail + mot de passe (écran de connexion / création de compte dans `index.html`, géré par `main.js`). À l'inscription, le message « Confirme ton e-mail » s'affiche : le compte ne peut se connecter qu'après avoir cliqué le lien reçu. Un profil (3 boosters, 0 pièce) est créé automatiquement par le serveur. Bouton « Se déconnecter » en bas de l'écran Tenue.
 - **Écritures interdites en direct** : le front ne fait que des **lectures** (`profiles`, `inventory`, `market_listings` = ses propres ventes, `market_best_offers`) et des **appels de fonctions** (`rpc`). Les fonctions : `get_booster_state`, `open_booster`, `upgrade_cards`, `discard_cards`, `claim_daily_bonus`, `set_locked`, `set_equipped`, `set_tutorial_done`, `market_list`, `market_cancel`, `market_buy`, `market_ack_sales` (wrappers dans `js/api.js`).
@@ -346,7 +347,7 @@ Le développeur n'est pas juriste ; ces règles sont prudentes en attendant un a
 
 ## 14. Amis (migration 0005, `js/friends.js`)
 
-- **Pseudo libre** choisi par le joueur (`set_pseudo`), validé par le serveur (voir section 9). Un seul changement par semaine. Aucune liste publique de joueurs.
+- **Pseudo libre** choisi par le joueur (`set_pseudo`), validé par le serveur (voir section 9). **Un changement tous les 30 jours** (`FRIENDS.pseudoChangeDays` dans `economy_config`, migration 0006) : le tout premier choix est libre et ne démarre pas le délai ; ensuite, après chaque changement, le serveur refuse (« Tu pourras changer de pseudo dans N jours ») et `list_friends` renvoie `pseudo_next_change`, affiché dans l'écran Amis (« Tu pourras changer de pseudo à partir du 27 novembre »). Aucune liste publique de joueurs.
 - **Écran « Amis »** (5e onglet, pastille rouge = demandes reçues) : formulaire de pseudo tant qu'il n'est pas choisi ; « Ajouter un ami » (recherche par pseudo exact, casse ignorée) ; « Demandes reçues » (Accepter / Refuser) ; « Mes amis » ; « Demandes envoyées » (Annuler).
 - **Profil d'un ami** (toucher un ami) : sa **tenue du moment** dessinée « à plat » (même rendu que l'écran Tenue), la liste de ses pièces avec leur rareté, et sa progression « X / 300 cartes ». Rien d'autre n'est visible (ni pièces, ni inventaire détaillé, ni ventes). « Retirer cet ami » demande 2 touchers.
 - **Règles côté serveur** (`friend_request`, `friend_respond`, `friend_remove`, `list_friends`, `get_friend_profile`, `set_pseudo`) : limite de 50 amis et 20 demandes en attente (`economy_config.FRIENDS`), pas de demande à soi-même ni en double, si l'autre joueur avait déjà invité on devient amis tout de suite, seuls les amis acceptés lisent un profil. La table `friendships` est illisible directement.

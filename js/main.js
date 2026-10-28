@@ -7,18 +7,18 @@
 // ?v=… sur les imports : même numéro que dans index.html, et le même partout
 // (un module importé sous deux adresses différentes serait chargé deux fois).
 
-import { loadCatalogue } from "./data.js?v=36";
-import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=36";
-import { initAvatar, setupOutfit } from "./avatar.js?v=36";
-import { setupBooster } from "./booster.js?v=36";
-import { setupShare } from "./share.js?v=36";
-import { setupUpgrade } from "./upgrade.js?v=36";
-import { setupAtelier, setupViewSwitch } from "./atelier.js?v=36";
-import { setupWallet, reportError } from "./wallet.js?v=36";
-import { setupDiscard, createSelection } from "./discard.js?v=36";
-import { setupMarket } from "./market.js?v=36";
-import { setupFriends } from "./friends.js?v=36";
-import { getSession, signIn, signUp, signOut, supabase } from "./api.js?v=36";
+import { loadCatalogue } from "./data.js?v=37";
+import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=37";
+import { initAvatar, setupOutfit } from "./avatar.js?v=37";
+import { setupBooster } from "./booster.js?v=37";
+import { setupShare } from "./share.js?v=37";
+import { setupUpgrade } from "./upgrade.js?v=37";
+import { setupAtelier, setupViewSwitch } from "./atelier.js?v=37";
+import { setupWallet, reportError } from "./wallet.js?v=37";
+import { setupDiscard, createSelection } from "./discard.js?v=37";
+import { setupMarket } from "./market.js?v=37";
+import { setupFriends } from "./friends.js?v=37";
+import { getSession, signIn, signUp, signOut, supabase } from "./api.js?v=37";
 
 const SCREENS = ["booster", "collection", "market", "friends", "avatar"];
 
