@@ -31,7 +31,7 @@ Contraintes de la bêta :
 ### Fonctionnalités de la bêta, dans l'ordre
 
 1. **Booster** : un bouton « Ouvrir un booster » qui ouvre un booster de 3 cartes **tiré par le serveur** selon les taux de rareté (section 6), avec une petite animation de révélation carte par carte. ✅ Fait.
-2. **Inventaire** : la collection du joueur, sauvegardée **sur le serveur**, avec filtres simples (marque, catégorie, rareté) et le nombre d'exemplaires de chaque carte. ✅ Fait : progression « X / 300 », filtres Marque / Type / Rareté (menus natifs, collés en haut), grille triée de la plus rare à la plus commune, badge « ×N » pour les doublons.
+2. **Inventaire** : la collection du joueur, sauvegardée **sur le serveur**, avec filtres simples (marque, catégorie, rareté) et le nombre d'exemplaires de chaque carte. ✅ Fait : progression « X / N » (N = nombre de cartes du catalogue : 700 avec les 7 marques), filtres Marque / Type / Rareté (menus natifs, collés en haut), grille triée de la plus rare à la plus commune, badge « ×N » pour les doublons.
 3. **Avatar** : un personnage en pixel art sur lequel on équipe une pièce par emplacement (section 7). ✅ Fait pour la bêta (fiche de tenue, tenue « à plat »).
 4. **Partager ma tenue** : **un seul bouton**, qui partage le **lien public** de la tenue avec l'image PNG (section 13 bis). Image : exporter l'avatar habillé en **image PNG** (canvas → PNG), avec le nom des pièces et leur rareté, puis partage natif (`navigator.share` avec fichier si disponible, sinon téléchargement). ✅ Fait : PNG 1080 × 1350 (**avatar 3D** Garçon / Fille de trois quarts ×6 sur cadre gris sombre + liste tête → pieds : nom, marque, coloris, rareté + adresse du jeu), **préparé à l'avance** à chaque changement de tenue (Safari n'ouvre le partage que juste après un toucher), repli téléchargement ; bouton désactivé tant que rien n'est porté.
 5. **Mise en ligne** sur GitHub Pages et test sur iPhone/Android.
@@ -113,10 +113,13 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 │       ├── 0019_partage_3d.sql  # tenue partagée : avatar Garçon / Fille enregistré avec le lien + date du dernier partage
 │       ├── 0020_pseudo_sur_le_lien.sql  # le pseudo de la personne qui partage s'affiche sur la page du lien
 │       ├── 0021_reputation.sql  # le Flow devient une réputation (niveaux)
-│       └── 0022_album.sql  # album (cartes placées pour de bon) et items Ultimes
+│       ├── 0022_album.sql  # album (cartes placées pour de bon) et items Ultimes
+│       └── 0023_nouvelles_marques.sql  # 4 nouvelles marques : 28 pièces, 100 coloris (catalogue du serveur)
 ├── tools/
 │   ├── extraire_sprites.py   # découpe les planches → PNG + SVG (Python + Pillow)
-│   └── creer_ultimes.py      # crée les 20 sprites « Ultime » (album) depuis les coloris
+│   ├── creer_ultimes.py      # crée les sprites « Ultime » (album) depuis les coloris (48)
+│   ├── ajouter_marques.py    # 2e vague : extrait les sprites des 4 nouvelles marques + catalogue + migration 0023
+│   └── modele_0023.sql       # modèle de la migration 0023
 └── CLAUDE.md
 ```
 
@@ -124,7 +127,7 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 
 ### Règles générales
 
-- **20 pièces** réparties sur **3 marques fictives**, déclinées en **75 coloris** au total (26 + 26 + 23).
+- **48 pièces** réparties sur **7 marques fictives**, déclinées en **175 coloris** au total (1re vague : 26 + 26 + 23 ; 2e vague : 4 marques × 25). Le catalogue compte donc **700 cartes** (175 × 4 raretés). Tous les nombres « 75 » et « 300 » écrits plus bas décrivent la 1re vague ; le site lit toujours le catalogue (`data/pieces.json`).
 - Chaque pièce appartient à une catégorie : **Haut, Bas, Chaussures, Accessoire**.
 - **Un coloris = un sprite unique.** Il n'existe pas de version visuelle selon la rareté : la rareté ne se voit pas sur le vêtement lui-même.
 - Chaque coloris existe dans les **4 raretés**. Une « carte » = un coloris + une rareté.
@@ -206,11 +209,66 @@ Palette : vert bouteille, moutarde, rouge brique, crème, bleu / rose / noir dé
 
 ### Items « Ultime » (album : voir la section 6 bis ; design validé)
 
-- **Un Ultime par modèle** (20 au total, pas un par coloris) : récompense de l'album (avoir le modèle dans tous ses coloris et toutes ses raretés). Rareté au-dessus de Légendaire, ni vendable ni échangeable, mais portable et en vitrine.
+- **Un Ultime par modèle** (48 au total avec les 7 marques ; 20 pour la 1re vague, pas un par coloris) : récompense de l'album (avoir le modèle dans tous ses coloris et toutes ses raretés). Rareté au-dessus de Légendaire, ni vendable ni échangeable, mais portable et en vitrine.
 - **Sprite** : `assets/pieces/<piece_id>_ultime.png`, créé par `python3 tools/creer_ultimes.py` à partir des coloris : même silhouette et même contour que la pièce ; corps **noir obsidienne** avec un **reflet nacré en diagonale** ; les accents (bande orange, liserés dorés…) deviennent **holographiques** (cyan → violet → rose → or pâle) ; seul le **pigeon** garde ses couleurs. Design validé par le développeur.
 - **Catalogue** : `loadCatalogue()` renvoie aussi `ultimates` / `ultimateById` (id `<piece_id>_ultime`, `ultimate: true`). Ils ne sont **pas** dans `colorways` (ne comptent pas dans les 300 cartes).
 - **3D** : un Ultime se porte comme un coloris (`buildModel`). `js/avatar3d.js` recalcule ses couleurs selon la position des voxels (`ultimateFilter`) : reflets nacrés en bandes sur toutes les faces (dos et côtés compris) et accents irisés qui changent quand l'avatar tourne ; les couleurs du 1er coloris (contour, pigeon) sont gardées. Vérifié : les 20 Ultimes se construisent et se dessinent sur les deux corps.
 - **Carte** : bordure et étiquette « ULTIME » irisées, léger halo violet, case du sprite nacrée (`.card[data-rarity="ultime"]` dans `style.css` ; ligne sous le nom : « Édition unique »).
+
+### 2e vague : 4 nouvelles marques (migration 0023, `tools/ajouter_marques.py`)
+
+Chacune a **7 pièces et 25 coloris** (veste 6 · haut 5 · bas 4 · bas 3 · chaussures 3 · tête 2 · sac ou cou 2). Les planches d'origine (×4, cases de 128 px) sont dans `visuels/sources/<marque>_planche.png` ; `python3 tools/ajouter_marques.py` en extrait les 100 sprites (`assets/pieces/`, `visuels/pieces/`), ajoute marques, pièces et coloris à `data/pieces.json` et écrit la migration `0023_nouvelles_marques.sql` (à partir de `tools/modele_0023.sql`). Les 28 modèles 3D sont dans `js/wear-models.js` ; les 28 Ultimes ont été générés par `tools/creer_ultimes.py`. Aucune marque réelle (section 9).
+
+**Ferrant & Fils** (`ferrant_fils`) : workwear. Entreprise familiale de bleus de travail fondée à Roubaix en 1926 pour habiller les ouvriers des filatures ; les petits-enfants ont ressorti les patrons d'archives et font des vêtements qui durent vingt ans, en refusant de les rendre « cool ». Robuste, coupes droites, poches plaquées, toile épaisse. Palette : bleu denim (indigo), écru, gris charbon, touche de rouille. Signature : pointillé de couture blanc d'1 px et petite étiquette carrée « F&F » sur la hanche.
+
+| Pièce | Emplacement | Coloris |
+| --- | --- | --- |
+| Veste « Contremaître » (pièce phare) | Veste | Bleu denim · Noir délavé · Kaki · Rouille · Écru · Vert forêt |
+| Chemise « Fabrique » | Haut | Écru · Bleu ciel délavé · Kaki clair · Rouille · Charbon |
+| Pantalon « Établi » | Bas | Bleu denim · Noir délavé · Kaki · Écru |
+| Pantalon « Peintre » | Bas | Écru taché · Gris clair · Kaki clair |
+| Bottines « Godillot » | Chaussures | Brun rouille · Noir · Sable |
+| Bonnet « Docker » | Tête | Charbon · Marine |
+| Sac « Musette » | Sac | Écru · Kaki clair |
+
+**Brume** (`brume`) : outdoor. Deux randonneurs du Jura qui trouvaient le matériel de montagne laid et hors de prix ; premiers sacs cousus dans un garage, le nom vient du brouillard de leur première sortie. Coupes techniques mais douces, polaires, sangles, volumes arrondis. Palette : sauge, bleu brume, gris pierre, accent corail. Signature : petit triangle « sommet » de 3 px et sangle corail.
+
+| Pièce | Emplacement | Coloris |
+| --- | --- | --- |
+| Polaire « Brouillard » (pièce phare) | Veste | Sauge · Bleu brume · Pierre · Nuit · Crème · Ocre |
+| Pull « Sentier » | Haut | Bleu brume · Sauge · Pierre sombre · Corail clair · Nuit |
+| Pantalon « Moraine » | Bas | Pierre / Corail · Olive / Crème · Nuit / Corail · Sable / Nuit |
+| Short « Source » | Bas | Sauge / Corail · Bleu brume / Corail · Sable / Nuit |
+| Baskets « Cairn » | Chaussures | Pierre / Corail · Sauge · Nuit |
+| Bonnet « Givre » | Tête | Bleu brume / Corail · Corail / Crème |
+| Sac « Lichen » (sac à dos) | Sac | Sauge · Nuit |
+
+**A.S. Faubourg 78** (`faubourg_78`) : sportswear rétro. Club de foot amateur d'un faubourg industriel dont les supporters fabriquaient leurs propres écharpes ; sa boutique de maillots d'archives est devenue une marque qui ressort les anciennes tenues de terrasse. Maillots, survêts, cols et poignets contrastés, flocage numéroté. Palette : rouge cerise, blanc cassé, bleu nuit. Signature : le numéro « 78 » dans un petit cercle, liseré bicolore au col et aux poignets (**pas de bandes sur les côtés**, pour ne pas copier une marque réelle).
+
+| Pièce | Emplacement | Coloris |
+| --- | --- | --- |
+| Veste « Tribune » (pièce phare) | Veste | Bleu nuit / Cerise · Cerise / Blanc · Vert sapin / Jaune · Noir / Cerise · Ciel / Marine · Jaune / Marine |
+| Maillot « Domicile » | Haut | Cerise · Blanc · Bleu nuit · Vert sapin · Jaune |
+| Pantalon « Entraînement » | Bas | Bleu nuit · Noir · Cerise · Vert sapin |
+| Short « Extérieur » | Bas | Blanc · Cerise · Noir |
+| Baskets « Terrain » | Chaussures | Blanc / Cerise · Bleu nuit / Cerise · Vert / Jaune |
+| Bonnet « Virage » | Tête | Cerise · Bleu nuit |
+| Écharpe « Kop » | Cou | Cerise / Blanc · Bleu nuit / Blanc |
+
+**Orbite 2000** (`orbite_2000`) : Y2K / soirées. Collectif de DJ et de graphistes qui imprimait ses flyers pour les soirées de la région ; passé des affiches aux vêtements chromés en gardant l'énergie de l'époque. Brillant, ajusté, volumes futuristes, détails réfléchissants. Palette : argent chromé, violet électrique, bleu glacé, noir. Signature : petite étoile à quatre branches de 3 px.
+
+| Pièce | Emplacement | Coloris |
+| --- | --- | --- |
+| Veste « Satellite » (pièce phare) | Veste | Chrome / Violet · Noir / Violet · Glacier / Violet · Rose / Violet · Chrome / Lime · Chrome / Bleu |
+| T-shirt « Flyer » | Haut | Glacier / Violet · Rose / Violet · Chrome / Violet · Lime / Violet · Noir / Rose |
+| Pantalon « Apesanteur » | Bas | Noir / Violet · Chrome / Violet · Glacier / Bleu · Violet nuit / Rose |
+| Short « Hologramme » | Bas | Chrome-Violet · Chrome-Rose · Chrome-Bleu |
+| Baskets « Lune » | Chaussures | Chrome / Violet · Noir / Rose · Rose / Violet |
+| Bob « Fréquence » | Tête | Chrome / Violet · Rose / Bleu |
+| Sac « Pastille » | Sac | Violet / Chrome · Rose / Chrome |
+
+- **Serveur** : la migration 0023 ajoute les marques, pièces, coloris et étiquettes de couleur (`colorway_tags`) en **copiant** une ligne existante de chaque table (les migrations 0001 à 0004 ne sont pas dans le dépôt : leurs colonnes sont inconnues), puis en remplaçant id, nom, marque, emplacement, etc. Les nouveaux coloris entrent dans les boosters, la roue, le Market et l'album **si** les fonctions du serveur lisent la table `colorways` (non vérifié). Les dress codes et énigmes du Videur ne ciblent que les 3 marques de la 1re vague (les règles `same_brand`, `palette`… marchent avec les nouvelles).
+- **Limites 3D** : les chaussures de cette vague sont dessinées **de face, par paire** : en 3D, chaque pied est un pavé qui reçoit le sprite sur sa face avant (pas de silhouette de profil) ; le sac à dos « Lichen » est posé dans le dos, sangles devant ; les pompons et l'étiquette du bonnet « Docker » sont approximatifs ; le « 78 » et l'étoile des marques ne sont pas mis en avant sur les Ultimes.
 
 Pièces à retoucher plus tard (ne pas bloquer la bêta) : Manteau « Atelier » (plus long), Casquette « Perchoir » (de profil), anses du Tote « Miettes » (arrondies).
 
@@ -227,7 +285,7 @@ Pièces à retoucher plus tard (ne pas bloquer la bêta) : Manteau « Atelier »
 | Épique | 3,5 % | 20 % | violet |
 | Légendaire | 0,5 % | 5 % | or |
 
-- Tirage : pour chaque carte, la rareté selon sa table, puis un coloris au hasard parmi les 75 (uniforme pour la bêta).
+- Tirage : pour chaque carte, la rareté selon sa table, puis un coloris au hasard parmi **tous les coloris du catalogue** (75 à l'origine, 175 avec la 2e vague ; uniforme pour la bêta, décidé par le serveur).
 - **Booster Signature** : **1 booster gratuit sur 4** (`BOOSTER.signatureEvery`). Sa 3e carte suit la table Signature et est **toujours révélée en dernier**. Compteur visible « Signature dans X boosters gratuits » ; Paquet avec lueur dorée fixe et étiquette « Booster Signature ».
 - **Pity Légendaire** (`pity` dans la sauvegarde) : après **40** boosters d'affilée sans Légendaire, le taux Légendaire de chaque carte monte de **+1 point par booster** (41e : +1, 42e : +2…, les autres raretés gardent leurs proportions) ; le **60e** en contient forcément une. Choix de la courbe (+1 point linéaire) fait par Claude, à valider : `PITY.legendary.softStep`.
 - **Pity Épique** (`pityEpic`) : après **16** boosters d'affilée sans Épique ou mieux, le suivant en contient une.
@@ -352,7 +410,7 @@ Ne pas passer plus de 30 minutes bloqué sur l'avatar : simplifier plutôt que p
 - **Choix Garçon / Fille** : pilule sous le cadre de l'avatar 3D, **enregistré sur le serveur** (`profiles.avatar_body`, `set_avatar_body`, migration 0014) pour que les amis voient le bon avatar sur ton profil. Le navigateur en garde une copie (`grail_avatar_body`), utilisée seulement si le serveur ne connaît pas encore ce réglage (migration non exécutée). La page publique reste en vue « à plat ».
 - **Un modèle par PIÈCE, pas par coloris** (`WEAR_MODELS`) : des blocs (`box` = pavé, `lathe` = volume tourné pour les bonnets, `profile` = silhouette de profil extrudée pour les chaussures) + la zone du sprite à copier en façade. Les **couleurs sont lues dans le sprite du coloris porté** : les 75 coloris suivent automatiquement. Dos et côtés = couleur principale de la pièce (les bandes comme ourlets et poignets sont gardées, pas les logos). `keep` garde les bords du sprite à l'échelle 1 (ourlet, poignet), seul le milieu est étiré. `hiddenBy` cache un bloc sous une autre pièce (capuche du hoodie sous une veste).
 - **Ordre de dessin** : chaussures → bas (le pantalon tombe sur la chaussure) → haut → veste → cou → tête → sac.
-- **Les 20 pièces (75 coloris) ont leur modèle 3D.** Sacs : sacoche « Tournée » portée en banane devant (sangle autour de la taille), sac « Losange » et tote « Miettes » tenus à la hanche droite avec leurs anses ; écharpe : tour de cou + deux pans devant ; casquette : calotte + visière ; chaussures : silhouette de profil extrudée. Vérifié : les 75 coloris se construisent et se dessinent sans erreur sur les deux corps. Si une future pièce n'a pas de modèle, la mention « Pas encore en 3D : … » la liste sous l'avatar.
+- **Les 48 pièces (175 coloris) ont leur modèle 3D** (les 28 de la 2e vague sont à la fin de `WEAR_MODELS`). Sacs : sacoche « Tournée » portée en banane devant (sangle autour de la taille), sac « Losange » et tote « Miettes » tenus à la hanche droite avec leurs anses ; écharpe : tour de cou + deux pans devant ; casquette : calotte + visière ; chaussures : silhouette de profil extrudée. Vérifié : les 75 coloris se construisent et se dessinent sans erreur sur les deux corps. Si une future pièce n'a pas de modèle, la mention « Pas encore en 3D : … » la liste sous l'avatar.
 - **Limites connues** : dos et côtés = couleur principale (pas de logo dans le dos) ; sacs tenus à la hanche vus de face un peu « flottants » ; chaussures longues et cachées sous les pantalons larges ; pas de poches ni de plis.
 - **Avatar 3D aussi** sur la page de profil (soi-même et amis), dans l'écran **Videur**, sur l'**image PNG de partage** et sur la **page publique du lien** (`?tenue=CODE`) : la vue « à plat » n'existe plus que dans l'écran Tenue.
 - **Reste à faire (hors périmètre pour l'instant)** : skins (voir la règle de mensuration), avatar 3D éventuel sur la page publique, retouches de détail des modèles.
@@ -404,7 +462,7 @@ Le développeur n'est pas juriste ; ces règles sont prudentes en attendant un a
 
 ## 13. Back end Supabase (comptes + serveur de jeu) — le serveur est la source de vérité
 
-- Projet Supabase : `https://qsueqvsbhytqrotlxmak.supabase.co`. Les migrations SQL (**0001 à 0022**, exécutées par le développeur dans le SQL Editor, **ne jamais les modifier depuis le front** ; les 0005 à 0022 sont dans `supabase/migrations/`) créent : catalogue (`brands`, `pieces`, `colorways`), `economy_config`, `profiles`, `inventory`, `transactions`, `market_listings`, la vue `market_best_offers` et toutes les fonctions du jeu.
+- Projet Supabase : `https://qsueqvsbhytqrotlxmak.supabase.co`. Les migrations SQL (**0001 à 0023**, exécutées par le développeur dans le SQL Editor, **ne jamais les modifier depuis le front** ; les 0005 à 0023 sont dans `supabase/migrations/`) créent : catalogue (`brands`, `pieces`, `colorways`), `economy_config`, `profiles`, `inventory`, `transactions`, `market_listings`, la vue `market_best_offers` et toutes les fonctions du jeu.
 - **Règle d'or : ne jamais remettre de logique de jeu côté client.** Le front ne tire pas de carte, ne calcule ni gain ni chance réelle, ne vérifie pas de règle (limite de ventes, verrou, solde…). Il appelle une fonction, affiche le résultat, et relit l'état. Toute nouvelle règle ou nouvelle valeur d'économie se code **dans une migration SQL** (puis, si besoin d'affichage, dans `js/economy-config.js`).
 - **Le jeu n'est accessible que connecté** : e-mail + mot de passe (écran de connexion / création de compte dans `index.html`, géré par `main.js`). À l'inscription, le message « Confirme ton e-mail » s'affiche : le compte ne peut se connecter qu'après avoir cliqué le lien reçu. Un profil (3 boosters, 0 pièce) est créé automatiquement par le serveur. Bouton « Se déconnecter » **tout en bas de la page de profil** (bouton rond en haut ; il était dans l'écran Tenue), hors de la zone que le profil recharge : il reste visible même si le profil ne charge pas.
 - **Mot de passe oublié** : lien « Mot de passe oublié ? » sous le formulaire de connexion (pas à la création de compte) → e-mail de réinitialisation (`resetPasswordForEmail`, réponse toujours neutre pour ne pas révéler quelles adresses ont un compte). Le lien reçu ramène sur le site avec `type=recovery` : `api.js` le détecte (`isRecoveryLink`) et `main.js` affiche « Nouveau mot de passe » (6 caractères minimum, saisie en double, `updatePassword`) **avant** de lancer le jeu ; lien expiré → message + renvoi vers « Mot de passe oublié ? ». **À régler dans Supabase** (Authentication → URL Configuration) : Site URL `https://joueur01.github.io/Grail/` et Redirect URLs `https://joueur01.github.io/Grail/**`, sinon les liens (confirmation et réinitialisation) pointent vers localhost.

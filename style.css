@@ -29,6 +29,10 @@
   --brand-signal9: #ff6a13;
   --brand-halvane: #d4a72c;
   --brand-pigeon_social_club: #4f9a68;
+  --brand-ferrant_fils: #6f8fcf;
+  --brand-brume: #8fc2a8;
+  --brand-faubourg_78: #e0384f;
+  --brand-orbite_2000: #ff7ad9;
 
   --radius: 16px;
   --tabbar-h: 64px;
@@ -1606,6 +1610,10 @@ main {
 [data-brand="signal9"]            { --brand-color: var(--brand-signal9); }
 [data-brand="halvane"]            { --brand-color: var(--brand-halvane); }
 [data-brand="pigeon_social_club"] { --brand-color: var(--brand-pigeon_social_club); }
+[data-brand="ferrant_fils"]       { --brand-color: var(--brand-ferrant_fils); }
+[data-brand="brume"]              { --brand-color: var(--brand-brume); }
+[data-brand="faubourg_78"]        { --brand-color: var(--brand-faubourg_78); }
+[data-brand="orbite_2000"]        { --brand-color: var(--brand-orbite_2000); }
 
 .card-brand {
   font-size: 10px;
