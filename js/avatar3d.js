@@ -10,7 +10,7 @@
 //      sprites. Le canvas est agrandi d'un facteur entier en CSS : rendu pixel art.
 //   Aucune bibliothèque : tout est calculé ici, en JavaScript.
 
-import { BODY, BODY_COLOR, DRAW_ORDER, WEAR_MODELS } from "./wear-models.js?v=48";
+import { getBody, BODY_COLOR, DRAW_ORDER, WEAR_MODELS } from "./wear-models.js?v=49";
 
 // --- La grille ---
 const GX = 48, GY = 84, GZ = 48;      // taille en voxels
@@ -148,7 +148,8 @@ function paintBox(grid, part, sprite) {
   const [x0, x1, y0, y1, z0, z1] = part.box;
   const w = x1 - x0, h = y1 - y0;
   const [top = 0, bottom = 0, left = 0, right = 0] = part.keep || [];
-  const plain = part.plain ? sprite?.color(...part.plain) : null;
+  // Partie du corps (sans sprite) : sa couleur propre ; pièce : couleur lue dans le sprite.
+  const plain = sprite ? (part.plain ? sprite.color(...part.plain) : null) : (part.color || BODY_COLOR);
 
   /** Couleur de façade au voxel (colonne i, ligne j depuis le haut). */
   function frontColor(i, j) {
@@ -249,9 +250,9 @@ const PAINTERS = { box: paintBox, lathe: paintLathe, profile: paintProfile };
  * - pieces : { emplacement: coloris du catalogue } (pièces portées)
  * Les pièces sans modèle 3D sont ignorées ici (l'écran les signale).
  */
-export async function buildModel(pieces) {
+export async function buildModel(pieces, { type = "homme", skin = "moyenne" } = {}) {
   const grid = newGrid();
-  for (const part of BODY) paintBox(grid, part, null);
+  for (const part of getBody(type, skin)) paintBox(grid, part, null);
   for (const slot of DRAW_ORDER) {
     const colorway = pieces[slot];
     const model = colorway && WEAR_MODELS[colorway.piece.id];
@@ -302,7 +303,7 @@ export function renderModel(canvas, grid, yaw) {
       filled[k] = 1;
       depth[k] = hit.t;
       const n = hit.normal;
-      const light = 0.58 + 0.42 * Math.max(0, n[0] * L[0] + n[1] * L[1] + n[2] * L[2]);
+      const light = 0.64 + 0.36 * Math.max(0, n[0] * L[0] + n[1] * L[1] + n[2] * L[2]);
       const c = hit.color;
       out[k * 4] = ((c >> 16) & 255) * light;
       out[k * 4 + 1] = ((c >> 8) & 255) * light;

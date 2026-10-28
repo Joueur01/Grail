@@ -6,13 +6,13 @@
 // et envoie les actions (market_list / market_cancel / market_buy / market_ack_sales).
 // Aucune règle du Market n'est calculée ici ; les messages d'erreur viennent du serveur.
 
-import { RARITIES, getRarity, matchesSearch } from "./data.js?v=48";
-import { MARKET, saleTax, saleNet } from "./economy-config.js?v=48";
-import { getOwnedCards, getCoins, getMyListings, refreshState } from "./inventory.js?v=48";
-import { getBestOffers, marketList, marketCancel, marketBuy, marketAckSales, marketHistory } from "./api.js?v=48";
-import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=48";
-import { playSound, vibrate } from "./effects.js?v=48";
-import { flyCoins, showToast, reportError } from "./wallet.js?v=48";
+import { RARITIES, getRarity, matchesSearch } from "./data.js?v=49";
+import { MARKET, saleTax, saleNet } from "./economy-config.js?v=49";
+import { getOwnedCards, getCoins, getMyListings, refreshState } from "./inventory.js?v=49";
+import { getBestOffers, marketList, marketCancel, marketBuy, marketAckSales, marketHistory } from "./api.js?v=49";
+import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=49";
+import { playSound, vibrate } from "./effects.js?v=49";
+import { flyCoins, showToast, reportError } from "./wallet.js?v=49";
 
 const CATEGORIES = [
   { id: "haut", name: "Haut" },

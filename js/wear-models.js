@@ -25,25 +25,96 @@
 //
 // Ajouter une pièce = ajouter une entrée ici (identifiant de la pièce dans pieces.json).
 
-// Le corps de base : un mannequin neutre, non genré, sans visage.
+// --- Les corps de base : un avatar homme et un avatar femme ---
+// Les deux ont les MÊMES articulations (hauteur des épaules, des hanches, de la
+// tête…) et restent à l'intérieur des mêmes vêtements : un modèle de pièce sert
+// pour les deux. Ils diffèrent par la carrure, la taille, les cheveux et le visage.
+// Sans vêtement porté, l'avatar a une tenue de base (t-shirt, short, chaussettes).
 export const BODY_COLOR = [178, 172, 162];
-export const BODY = [
-  // Pieds
-  { box: [-6, -1, 0, 4, -3, 5] },
-  { box: [1, 6, 0, 4, -3, 5] },
-  // Jambes
-  { box: [-6, -1, 4, 27, -3, 3] },
-  { box: [1, 6, 4, 27, -3, 3] },
-  // Bassin, buste
-  { box: [-7, 7, 27, 37, -4, 4] },
-  { box: [-8, 8, 37, 57, -5, 5], round: 1 },
-  // Bras (avec la main en bas)
-  { box: [-13, -10, 34, 57, -2, 2] },
-  { box: [10, 13, 34, 57, -2, 2] },
-  // Cou, tête
-  { box: [-2, 2, 57, 60, -2, 2] },
-  { box: [-5, 5, 60, 72, -5, 5], round: 1 },
-];
+export const SKIN_TONES = {
+  claire: [236, 196, 164],
+  moyenne: [204, 146, 106],
+  foncee: [126, 84, 58],
+};
+const TEE = [232, 228, 218];
+const SHORTS = [56, 58, 66];
+const SOCKS = [232, 228, 218];
+const EYES = [30, 26, 26];
+
+/** Pièces communes aux deux corps (jambes, cou, tête et visage). */
+function commonBody(skin, hair) {
+  const mouth = skin.map((c) => Math.round(c * 0.78));
+  return [
+    // Pieds (chaussettes), jambes (peau, puis short), bassin (short)
+    { box: [-6, -1, 0, 4, -3, 5], color: SOCKS },
+    { box: [1, 6, 0, 4, -3, 5], color: SOCKS },
+    { box: [-6, -1, 4, 18, -3, 3], color: skin },
+    { box: [1, 6, 4, 18, -3, 3], color: skin },
+    { box: [-6, -1, 18, 27, -3, 3], color: SHORTS },
+    { box: [1, 6, 18, 27, -3, 3], color: SHORTS },
+    { box: [-7, 7, 27, 37, -4, 4], color: SHORTS },
+    // Cou, tête, oreilles
+    { box: [-2, 2, 57, 60, -2, 2], color: skin },
+    { box: [-5, 5, 60, 72, -5, 5], round: 1, color: skin },
+    { box: [-6, -5, 64, 67, -1, 1], color: skin },
+    { box: [5, 6, 64, 67, -1, 1], color: skin },
+    // Visage : yeux, sourcils, nez (en relief), bouche
+    { box: [-3, -2, 65, 67, 4, 5], color: EYES },
+    { box: [2, 3, 65, 67, 4, 5], color: EYES },
+    { box: [-1, 1, 63, 65, 5, 6], color: skin },
+    { box: [-1, 1, 62, 63, 4, 5], color: mouth },
+    { box: [-4, -1, 68, 69, 4, 5], color: hair },
+    { box: [1, 4, 68, 69, 4, 5], color: hair },
+  ];
+}
+
+/** Avatar homme : épaules larges, cheveux courts. */
+function maleBody(skin = SKIN_TONES.moyenne, hair = [46, 34, 28]) {
+  return [
+    ...commonBody(skin, hair),
+    // Buste en t-shirt : épaules larges, taille à peine plus étroite
+    { box: [-8, 8, 44, 57, -5, 5], round: 1, color: TEE },
+    { box: [-7, 7, 37, 44, -4, 4], round: 1, color: TEE },
+    // Bras : manche courte, puis peau jusqu'à la main
+    { box: [-13, -10, 50, 57, -2, 2], color: TEE },
+    { box: [10, 13, 50, 57, -2, 2], color: TEE },
+    { box: [-13, -10, 34, 50, -2, 2], color: skin },
+    { box: [10, 13, 34, 50, -2, 2], color: skin },
+    // Cheveux courts : dessus, arrière, mèche sur le front
+    { box: [-6, 6, 68, 73, -6, 3], color: hair },
+    { box: [-5, 5, 73, 74, -5, 3], round: 1, color: hair },
+    { box: [-5, 5, 63, 68, -6, -4], color: hair },
+    { box: [-5, 5, 70, 72, 4, 5], color: hair },
+  ];
+}
+
+/** Avatar femme : épaules plus étroites, taille marquée, cheveux mi-longs. */
+function femaleBody(skin = SKIN_TONES.moyenne, hair = [34, 26, 24]) {
+  return [
+    ...commonBody(skin, hair),
+    // Buste en t-shirt : épaules plus étroites, taille marquée
+    { box: [-7, 7, 46, 57, -5, 5], round: 1, color: TEE },
+    { box: [-6, 6, 37, 46, -4, 4], round: 1, color: TEE },
+    // Bras, un peu plus près du corps
+    { box: [-12, -9, 50, 57, -2, 2], color: TEE },
+    { box: [9, 12, 50, 57, -2, 2], color: TEE },
+    { box: [-12, -9, 34, 50, -2, 2], color: skin },
+    { box: [9, 12, 34, 50, -2, 2], color: skin },
+    // Cheveux mi-longs : masse jusqu'aux épaules, mèches qui encadrent le visage
+    { box: [-6, 6, 58, 73, -7, 1], color: hair },
+    { box: [-5, 5, 73, 74, -5, 3], round: 1, color: hair },
+    { box: [-6, 6, 68, 73, 1, 4], color: hair },
+    { box: [-6, -4, 59, 68, 1, 4], color: hair },
+    { box: [4, 6, 59, 68, 1, 4], color: hair },
+    { box: [-5, 2, 70, 72, 4, 5], color: hair },
+  ];
+}
+
+/** Le corps choisi : "homme" ou "femme", avec une teinte de peau (SKIN_TONES). */
+export function getBody(type = "homme", skin = "moyenne") {
+  const tone = SKIN_TONES[skin] || SKIN_TONES.moyenne;
+  return type === "femme" ? femaleBody(tone) : maleBody(tone);
+}
 
 // Ordre de dessin : une pièce dessinée plus tard recouvre les précédentes.
 // Les chaussures passent sous le bas (le pantalon tombe sur la chaussure).
@@ -90,7 +161,7 @@ export const WEAR_MODELS = {
 
   // --- SIGNAL/9 · Bonnet « Nuit » (tête) ---
   signal9_bonnet_nuit: [
-    { type: "lathe", center: [0, 0], y0: 65, rect: [6, 8, 20, 15], scale: 0.7 },
+    { type: "lathe", center: [0, 0], y0: 68, rect: [6, 8, 20, 15], scale: 0.7 },
   ],
 };
 
