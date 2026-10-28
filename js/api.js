@@ -6,7 +6,7 @@
 // amélioration. Ne remettre AUCUNE logique de jeu ici ni ailleurs côté client.
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase-config.js?v=80";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase-config.js?v=81";
 
 // Le lien « mot de passe oublié » reçu par e-mail ramène sur le site avec « type=recovery » dans
 // l'adresse. On le note AVANT que supabase-js ne traite (et n'efface) l'adresse.
@@ -212,6 +212,11 @@ export const getVideurNight = () => rpc("get_videur_night");
 export const videurPreview = (door) => rpc("videur_preview", { p_door: door });
 /** Se présenter (consomme un essai) : aperçu + { passed, line, flow_gained, streak_bonus, streak, tries_left, flow } */
 export const videurEnter = (door) => rpc("videur_enter", { p_door: door });
+
+// --- Compte (migration 0025) ---------------------------------------------------------
+
+/** Supprime DÉFINITIVEMENT le compte connecté et toutes ses données (confirmation = « SUPPRIMER »). */
+export const deleteAccount = (confirm) => rpc("delete_my_account", { p_confirm: confirm });
 
 // --- Statistiques d'usage (migration 0010) -------------------------------------------
 
