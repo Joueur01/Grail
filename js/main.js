@@ -7,22 +7,23 @@
 // ?v=… sur les imports : même numéro que dans index.html, et le même partout
 // (un module importé sous deux adresses différentes serait chargé deux fois).
 
-import { loadCatalogue } from "./data.js?v=68";
-import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=68";
-import { initAvatar, setupOutfit } from "./avatar.js?v=68";
-import { setupBooster } from "./booster.js?v=68";
-import { setupShare } from "./share.js?v=68";
-import { setupUpgrade } from "./upgrade.js?v=68";
-import { setupAtelier, setupViewSwitch } from "./atelier.js?v=68";
-import { setupWallet, reportError, showToast } from "./wallet.js?v=68";
-import { setupDiscard, createSelection } from "./discard.js?v=68";
-import { setupMarket } from "./market.js?v=68";
-import { setupFriends } from "./friends.js?v=68";
-import { setupVideur } from "./videur.js?v=68";
-import { setupProfile } from "./profile.js?v=68";
-import { startAnalytics, track } from "./analytics.js?v=68";
-import { showSharedOutfit } from "./shared-outfit.js?v=68";
-import { getSession, signIn, signUp, signOut, supabase, requestPasswordReset, updatePassword, isRecoveryLink, endRecovery, sharedOutfitToken } from "./api.js?v=68";
+import { loadCatalogue } from "./data.js?v=70";
+import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=70";
+import { initAvatar, setupOutfit } from "./avatar.js?v=70";
+import { setupBooster } from "./booster.js?v=70";
+import { setupShare } from "./share.js?v=70";
+import { setupUpgrade } from "./upgrade.js?v=70";
+import { setupAtelier, setupViewSwitch } from "./atelier.js?v=70";
+import { setupWallet, reportError, showToast } from "./wallet.js?v=70";
+import { setupReputation } from "./reputation.js?v=70";
+import { setupDiscard, createSelection } from "./discard.js?v=70";
+import { setupMarket } from "./market.js?v=70";
+import { setupFriends } from "./friends.js?v=70";
+import { setupVideur } from "./videur.js?v=70";
+import { setupProfile } from "./profile.js?v=70";
+import { startAnalytics, track } from "./analytics.js?v=70";
+import { showSharedOutfit } from "./shared-outfit.js?v=70";
+import { getSession, signIn, signUp, signOut, supabase, requestPasswordReset, updatePassword, isRecoveryLink, endRecovery, sharedOutfitToken } from "./api.js?v=70";
 
 // « profile » n'a pas d'onglet : on y va par le bouton rond en haut (#profile).
 const SCREENS = ["booster", "collection", "market", "videur", "friends", "avatar", "profile"];
@@ -206,6 +207,7 @@ async function boot() {
     statusEl.textContent = "Chargement…";
     const [catalogue] = await Promise.all([loadCatalogue(), refreshState()]);
     setupWallet(); // solde en haut de l'écran + bonus de connexion quotidien (décidé par le serveur)
+    setupReputation(); // anneau de réputation autour du bouton profil (le Flow devient une réputation)
     // La tenue prévient le partage à chaque changement (image préparée à l'avance).
     const updateShare = setupShare();
     let lastOutfit = null; // l'événement « tenue changée » ne part que quand la tenue change vraiment

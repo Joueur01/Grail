@@ -13,13 +13,13 @@
 // Pour le Club et le VIP, le serveur n'envoie jamais les règles, les seuils ni le score : il n'y a donc
 // ici aucun aperçu, aucune jauge, aucune coche. La règle du jour n'arrive qu'à la fin (`reveal`).
 
-import { getRarity } from "./data.js?v=68";
-import { getVideurNight, videurPreview, videurEnter } from "./api.js?v=68";
-import { SLOTS, readBodyChoice } from "./avatar.js?v=68";
-import { createAvatar3D } from "./avatar3d.js?v=68";
-import { refreshState, getEquipped } from "./inventory.js?v=68";
-import { showToast, reportError } from "./wallet.js?v=68";
-import { playSound, vibrate } from "./effects.js?v=68";
+import { getRarity } from "./data.js?v=70";
+import { getVideurNight, videurPreview, videurEnter } from "./api.js?v=70";
+import { SLOTS, readBodyChoice } from "./avatar.js?v=70";
+import { createAvatar3D } from "./avatar3d.js?v=70";
+import { refreshState, getEquipped, getReputation } from "./inventory.js?v=70";
+import { showToast, reportError } from "./wallet.js?v=70";
+import { playSound, vibrate } from "./effects.js?v=70";
 
 /** Couleur d'enseigne de chaque porte (comme les raretés : bleu, violet, or). */
 const DOOR_COLOR = { bar: "var(--rarity-rare)", club: "var(--rarity-epique)", vip: "var(--rarity-legendaire)" };
@@ -97,7 +97,11 @@ export function setupVideur({ catalogue }) {
 
   function renderSummary() {
     const days = night.streak;
-    summary.textContent = `Flow : ${night.flow.toLocaleString("fr-FR")} · Série : ${days} jour${days > 1 ? "s" : ""}`;
+    const rep = getReputation(); // le Flow est devenu une réputation (migration 0021)
+    const streak = `Série : ${days} jour${days > 1 ? "s" : ""}`;
+    summary.textContent = rep
+      ? `Réputation niv. ${rep.level} · ${rep.flow} / ${rep.next} Flow · ${streak}`
+      : `Flow : ${night.flow.toLocaleString("fr-FR")} · ${streak}`;
   }
 
   function renderTabs() {
