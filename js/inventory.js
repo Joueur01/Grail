@@ -6,9 +6,9 @@
 //   - relayer les actions simples (verrou, tenue) vers le serveur, puis relire l'état.
 // Il ne calcule rien d'important : pas de tirage, de gain ni de règle de jeu.
 
-import { RARITIES, matchesSearch, getRarity } from "./data.js?v=57";
-import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=57";
-import * as api from "./api.js?v=57";
+import { RARITIES, matchesSearch, getRarity } from "./data.js?v=58";
+import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=58";
+import * as api from "./api.js?v=58";
 
 // --- État en mémoire (rempli par refreshState) ---
 
@@ -119,6 +119,18 @@ export function isTutorialDone() {
 /** Mes ventes en cours : [{ id, colorway_id, rarity, price, created_at }]. */
 export function getMyListings() {
   return state.listings.map((l) => ({ ...l }));
+}
+
+/** Avatar choisi (« homme » / « femme ») tel qu'enregistré sur le serveur, ou null (migration 0014 absente). */
+export function getAvatarBody() {
+  const body = state.profile?.avatar_body;
+  return body === "femme" || body === "homme" ? body : null;
+}
+
+/** Enregistre le choix de l'avatar sur le serveur (visible par les amis sur la page de profil). */
+export async function saveAvatarBody(body) {
+  await api.setAvatarBody(body);
+  if (state.profile) state.profile.avatar_body = body;
 }
 
 /** Carte équipée sur un emplacement ("tete", "haut"…) : { colorwayId, rarity } ou null. */

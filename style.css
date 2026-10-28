@@ -94,6 +94,19 @@ body {
 
 .topbar-right { display: flex; align-items: center; gap: 10px; }
 
+/* Bouton rond « Mon profil », à gauche du solde (la barre du bas a déjà 6 onglets) */
+.profile-button {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--muted);
+}
+.profile-button[aria-current="page"] { background: var(--text); border-color: var(--text); color: var(--bg); }
+
 /* Solde de pièces, en haut à droite de toutes les pages */
 .coins {
   display: inline-flex;
@@ -1201,10 +1214,11 @@ main {
   gap: 12px;
   width: 100%;
   max-width: var(--col);
-  height: min(85dvh, 680px);   /* hauteur fixe : le panneau ne saute pas quand on filtre */
+  max-height: 85dvh;
   margin: 0 auto;
-  padding: 16px 20px calc(16px + env(safe-area-inset-bottom));
-  overflow: hidden;            /* seule la liste défile (.picker-scroll) */
+  padding: 16px 20px calc(20px + env(safe-area-inset-bottom));
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background: var(--bg);
   border: 1px solid var(--border);
   border-bottom: 0;
@@ -1244,6 +1258,15 @@ main {
 }
 
 .picker-empty { text-align: center; padding: 24px 0; }
+
+/* Panneau de choix d'une pièce SEULEMENT : hauteur fixe (il ne saute pas quand on filtre),
+   seule la liste défile. Les autres panneaux (fiche d'une carte, profil d'un ami) défilent en entier. */
+#picker .picker-sheet {
+  height: min(85dvh, 680px);
+  max-height: none;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  overflow: hidden;
+}
 
 /* Barre de recherche / filtres du panneau : fixe en haut (ce n'est pas la barre collée des écrans) */
 .picker-filters {
@@ -2034,3 +2057,70 @@ body[data-auth="public"] .public {
 @media (prefers-reduced-motion: reduce) { .verdict { animation: none; } .gauge-fill { transition: none; } }
 .rule-list + .videur-change { margin-top: 12px; }
 .verdict-count { margin: 0 0 6px; }
+
+/* --- Page de profil (profile.js) : la sienne et celle d'un ami --- */
+.profile { display: flex; flex-direction: column; gap: 20px; }
+.profile-head { display: flex; flex-direction: column; gap: 6px; }
+.profile-name { margin: 0; overflow-wrap: anywhere; }
+.profile-link-inline { font-weight: 700; color: var(--text); }
+.profile-error { text-align: center; padding: 32px 0; }
+
+/* Avatar 3D sur fond gris sombre, comme l'écran Tenue. Canvas 46×88 : ×3 sur téléphone, ×4 sur tablette / PC */
+.profile-stage {
+  --avatar3d-scale: 3;
+  display: flex;
+  justify-content: center;
+  padding: 10px 0;
+  border-radius: var(--radius);
+  background: radial-gradient(ellipse at 50% 40%, #34353c 0%, #2a2b31 60%, #232429 100%);
+}
+@media (min-width: 700px) { .profile-stage { --avatar3d-scale: 4; } }
+.profile-under { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: -10px; }
+.profile-hint { font-size: 12px; font-weight: 600; text-align: center; }
+.profile-edit { width: auto; min-height: 44px; padding: 8px 22px; font-size: 14px; }
+
+.profile-section { display: flex; flex-direction: column; gap: 10px; }
+
+/* Vitrine : les 3 cartes les plus rares */
+.profile-showcase {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  padding: 6px 4px;   /* place pour la lueur des cartes */
+}
+
+/* Statistiques : cases de 2 colonnes */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.stat-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+}
+.stat-value { font-size: 22px; font-weight: 800; font-stretch: 108%; letter-spacing: -0.01em; }
+.stat-label { font-size: 12px; font-weight: 700; color: var(--muted); }
+.stat-sub { font-size: 12px; color: var(--muted); }
+.stat-bar { display: block; height: 4px; margin-top: 6px; border-radius: 999px; background: var(--border); overflow: hidden; }
+.stat-bar-fill { display: block; height: 100%; border-radius: 999px; background: var(--text); }
+
+/* Cartes possédées par rareté : une pastille colorée par rareté */
+.rarity-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.rarity-chip {
+  padding: 5px 11px;
+  border: 1.5px solid var(--rarity-color);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+.rarity-chip b { color: var(--rarity-color); font-weight: 800; }
+
+/* Profil d'un ami dans le panneau : un peu moins d'espace */
+.sheet-body .profile { gap: 16px; }

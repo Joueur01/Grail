@@ -6,12 +6,12 @@
 // bas, chaussures) avec un petit espace, et l'écharpe et le sac sont posés à côté.
 // Les sprites sont utilisés TELS QUELS, à leur taille réelle (×1 dans le canvas).
 
-import { RARITIES, matchesSearch, getRarity } from "./data.js?v=57";
-import { getOwnedCards, getEquipped, equip } from "./inventory.js?v=57";
-import { reportError } from "./wallet.js?v=57";
-import { createCardFace, createCardShell } from "./cards.js?v=57";
-import { createAvatar3D } from "./avatar3d.js?v=57";
-import { hasWearModel } from "./wear-models.js?v=57";
+import { RARITIES, matchesSearch, getRarity } from "./data.js?v=58";
+import { getOwnedCards, getEquipped, equip, getAvatarBody, saveAvatarBody } from "./inventory.js?v=58";
+import { reportError } from "./wallet.js?v=58";
+import { createCardFace, createCardShell } from "./cards.js?v=58";
+import { createAvatar3D } from "./avatar3d.js?v=58";
+import { hasWearModel } from "./wear-models.js?v=58";
 
 // Les 7 emplacements.
 // Les identifiants correspondent au champ "slot" de pieces.json. L'ordre de cette liste
@@ -40,9 +40,12 @@ const GAP = 2;        // espace entre deux pièces de la pile…
 const MAX_OVERLAP = 4; // …qui devient un chevauchement si la tenue est trop haute
 const SIDE_SHIFT = 8; // avec écharpe ou sac, la pile se décale à gauche pour leur faire de la place
 
-// Réglage « Garçon / Fille » : affichage seulement, gardé dans ce navigateur.
+// Réglage « Garçon / Fille » : enregistré sur le SERVEUR (migration 0014, visible par les amis).
+// Le navigateur en garde une copie, utilisée seulement si le serveur ne connaît pas encore ce réglage.
 const BODY_KEY = "grail_avatar_body";
 function readBodyChoice() {
+  const fromServer = getAvatarBody();
+  if (fromServer) return fromServer;
   try {
     return localStorage.getItem(BODY_KEY) === "femme" ? "femme" : "homme";
   } catch {
@@ -211,7 +214,7 @@ export function setupOutfit({ catalogue, onChange }) {
   // On lit la vue choisie sur l'onglet touché (l'état des onglets est mis à jour par un autre code, après celui-ci).
   for (const tab of viewTabs) tab.addEventListener("click", () => syncView(tab.dataset.view === "avatar3d"));
   syncView(true); // la vue 3D est affichée au départ
-  // Garçon / Fille : un simple réglage d'affichage, gardé dans ce navigateur (les skins viendront plus tard).
+  // Garçon / Fille : enregistré sur le serveur (les amis voient le bon avatar sur ton profil).
   let bodyType = readBodyChoice();
   const bodyButtons = document.querySelectorAll(".body-tab");
   for (const btn of bodyButtons) {
@@ -219,6 +222,8 @@ export function setupOutfit({ catalogue, onChange }) {
       bodyType = btn.dataset.body;
       saveBodyChoice(bodyType);
       render();
+      // Si la migration 0014 n'est pas encore exécutée, le choix reste seulement dans ce navigateur.
+      saveAvatarBody(bodyType).catch((err) => console.warn("Avatar :", err.message));
     });
   }
 

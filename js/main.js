@@ -7,23 +7,25 @@
 // ?v=… sur les imports : même numéro que dans index.html, et le même partout
 // (un module importé sous deux adresses différentes serait chargé deux fois).
 
-import { loadCatalogue } from "./data.js?v=57";
-import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=57";
-import { initAvatar, setupOutfit } from "./avatar.js?v=57";
-import { setupBooster } from "./booster.js?v=57";
-import { setupShare } from "./share.js?v=57";
-import { setupUpgrade } from "./upgrade.js?v=57";
-import { setupAtelier, setupViewSwitch } from "./atelier.js?v=57";
-import { setupWallet, reportError, showToast } from "./wallet.js?v=57";
-import { setupDiscard, createSelection } from "./discard.js?v=57";
-import { setupMarket } from "./market.js?v=57";
-import { setupFriends } from "./friends.js?v=57";
-import { setupVideur } from "./videur.js?v=57";
-import { startAnalytics, track } from "./analytics.js?v=57";
-import { showSharedOutfit } from "./shared-outfit.js?v=57";
-import { getSession, signIn, signUp, signOut, supabase, requestPasswordReset, updatePassword, isRecoveryLink, endRecovery, sharedOutfitToken } from "./api.js?v=57";
+import { loadCatalogue } from "./data.js?v=58";
+import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=58";
+import { initAvatar, setupOutfit } from "./avatar.js?v=58";
+import { setupBooster } from "./booster.js?v=58";
+import { setupShare } from "./share.js?v=58";
+import { setupUpgrade } from "./upgrade.js?v=58";
+import { setupAtelier, setupViewSwitch } from "./atelier.js?v=58";
+import { setupWallet, reportError, showToast } from "./wallet.js?v=58";
+import { setupDiscard, createSelection } from "./discard.js?v=58";
+import { setupMarket } from "./market.js?v=58";
+import { setupFriends } from "./friends.js?v=58";
+import { setupVideur } from "./videur.js?v=58";
+import { setupProfile } from "./profile.js?v=58";
+import { startAnalytics, track } from "./analytics.js?v=58";
+import { showSharedOutfit } from "./shared-outfit.js?v=58";
+import { getSession, signIn, signUp, signOut, supabase, requestPasswordReset, updatePassword, isRecoveryLink, endRecovery, sharedOutfitToken } from "./api.js?v=58";
 
-const SCREENS = ["booster", "collection", "market", "videur", "friends", "avatar"];
+// « profile » n'a pas d'onglet : on y va par le bouton rond en haut (#profile).
+const SCREENS = ["booster", "collection", "market", "videur", "friends", "avatar", "profile"];
 
 /** Affiche l'écran demandé et met à jour l'onglet actif. */
 function showScreen(name) {
@@ -32,7 +34,7 @@ function showScreen(name) {
   for (const section of document.querySelectorAll(".screen")) {
     section.hidden = section.dataset.screen !== name;
   }
-  for (const tab of document.querySelectorAll(".tab")) {
+  for (const tab of document.querySelectorAll(".tab, .profile-button")) {
     if (tab.dataset.tab === name) tab.setAttribute("aria-current", "page");
     else tab.removeAttribute("aria-current");
   }
@@ -241,6 +243,7 @@ async function boot() {
     setupFriends({ catalogue });
     // Videur : 3 portes par jour, dress code du jour, Flow (tout est calculé par le serveur).
     setupVideur({ catalogue });
+    setupProfile({ catalogue }); // page de profil (bouton rond en haut)
   } catch (err) {
     console.error(err);
     statusEl.textContent = err?.message || "Impossible de charger le jeu. Recharge la page.";
