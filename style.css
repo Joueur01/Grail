@@ -1252,7 +1252,8 @@ main {
   padding: 0;
   box-shadow: none;
 }
-.picker-filters select { padding: 0 20px 0 12px; background-position: right 8px center; font-size: 13px; }
+.filters.picker-filters { grid-template-columns: 1.15fr 1fr 1.15fr; }
+.filters.picker-filters select { padding: 0 20px 0 12px; background-position: right 8px center; font-size: 13px; }
 .picker-count { flex: none; margin: 0; font-size: 12px; font-weight: 600; }
 .picker-scroll {
   flex: 1;
