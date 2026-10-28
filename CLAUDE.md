@@ -113,7 +113,8 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 │       ├── 0020_pseudo_sur_le_lien.sql  # le pseudo de la personne qui partage s'affiche sur la page du lien
 │       └── 0021_reputation.sql  # le Flow devient une réputation (niveaux)
 ├── tools/
-│   └── extraire_sprites.py   # découpe les planches → PNG + SVG (Python + Pillow)
+│   ├── extraire_sprites.py   # découpe les planches → PNG + SVG (Python + Pillow)
+│   └── creer_ultimes.py      # crée les 20 sprites « Ultime » (album) depuis les coloris
 └── CLAUDE.md
 ```
 
@@ -200,6 +201,14 @@ Palette : vert bouteille, moutarde, rouge brique, crème, bleu / rose / noir dé
 | Sneakers « Bitume » | Chaussures | Crème / Brique · Crème / Vert bouteille · Crème / Bleu délavé · Crème / Rose délavé · Noir délavé / Crème |
 | Casquette « Perchoir » | Accessoire | Vert bouteille / Moutarde · Moutarde / Vert bouteille · Bleu délavé / Crème · Noir délavé / Brique |
 | Tote « Miettes » | Accessoire | Crème / Vert bouteille · Noir délavé / Moutarde |
+
+### Items « Ultime » (album, design validé ; l'album n'est pas encore codé)
+
+- **Un Ultime par modèle** (20 au total, pas un par coloris) : récompense de l'album (avoir le modèle dans tous ses coloris et toutes ses raretés). Rareté au-dessus de Légendaire, ni vendable ni échangeable, mais portable et en vitrine.
+- **Sprite** : `assets/pieces/<piece_id>_ultime.png`, créé par `python3 tools/creer_ultimes.py` à partir des coloris : même silhouette et même contour que la pièce ; corps **noir obsidienne** avec un **reflet nacré en diagonale** ; les accents (bande orange, liserés dorés…) deviennent **holographiques** (cyan → violet → rose → or pâle) ; seul le **pigeon** garde ses couleurs. Design validé par le développeur.
+- **Catalogue** : `loadCatalogue()` renvoie aussi `ultimates` / `ultimateById` (id `<piece_id>_ultime`, `ultimate: true`). Ils ne sont **pas** dans `colorways` (ne comptent pas dans les 300 cartes).
+- **3D** : un Ultime se porte comme un coloris (`buildModel`). `js/avatar3d.js` recalcule ses couleurs selon la position des voxels (`ultimateFilter`) : reflets nacrés en bandes sur toutes les faces (dos et côtés compris) et accents irisés qui changent quand l'avatar tourne ; les couleurs du 1er coloris (contour, pigeon) sont gardées. Vérifié : les 20 Ultimes se construisent et se dessinent sur les deux corps.
+- **Carte (maquette, pas encore codée)** : bordure et étiquette « ULTIME » irisées, léger halo violet, case du sprite nacrée.
 
 Pièces à retoucher plus tard (ne pas bloquer la bêta) : Manteau « Atelier » (plus long), Casquette « Perchoir » (de profil), anses du Tote « Miettes » (arrondies).
 

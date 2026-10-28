@@ -15,7 +15,7 @@ let catalogue = null;
 
 /**
  * Charge data/pieces.json et prépare des index pratiques.
- * Renvoie { brands, pieces, colorways, colorwayById }.
+ * Renvoie { brands, pieces, colorways, colorwayById, ultimates, ultimateById }.
  * `colorways` est la liste « à plat » des 75 coloris, chacun avec
  * une référence vers sa pièce et sa marque (utile pour le tirage).
  */
@@ -34,11 +34,25 @@ export async function loadCatalogue() {
     }
   }
 
+  // Version « Ultime » de chaque modèle (une seule par pièce, pas par coloris),
+  // gagnée avec l'album. Sprite créé par tools/creer_ultimes.py.
+  // Elle n'est PAS dans `colorways` : elle ne compte pas dans les 300 cartes.
+  const ultimates = raw.pieces.map((piece) => ({
+    id: `${piece.id}_ultime`,
+    name: "Édition unique",
+    sprite: `assets/pieces/${piece.id}_ultime.png`,
+    ultimate: true,
+    piece,
+    brand: brandById.get(piece.brand),
+  }));
+
   catalogue = {
     brands: raw.brands,
     pieces: raw.pieces,
     colorways,
     colorwayById: new Map(colorways.map((c) => [c.id, c])),
+    ultimates,
+    ultimateById: new Map(ultimates.map((u) => [u.id, u])),
   };
   return catalogue;
 }

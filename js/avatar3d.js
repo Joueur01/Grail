@@ -10,7 +10,7 @@
 //      sprites. Le canvas est agrandi d'un facteur entier en CSS : rendu pixel art.
 //   Aucune bibliothèque : tout est calculé ici, en JavaScript.
 
-import { getBody, BODY_COLOR, DRAW_ORDER, WEAR_MODELS } from "./wear-models.js?v=73";
+import { getBody, BODY_COLOR, DRAW_ORDER, WEAR_MODELS } from "./wear-models.js?v=74";
 
 // --- La grille ---
 const GX = 48, GY = 84, GZ = 48;      // taille en voxels
@@ -138,8 +138,13 @@ function newGrid() {
   return new Int32Array(GX * GY * GZ);
 }
 
+// Filtre de couleur appliqué pendant qu'on peint une pièce (null = aucun).
+// Sert aux pièces « Ultime » : reflet irisé calculé en 3D (voir ultimateFilter).
+let paintFilter = null;
+
 function setVoxel(grid, x, y, z, rgb) {
   if (x < -OX || x >= GX - OX || z < -OZ || z >= GZ - OZ || y < 0 || y >= GY) return;
+  if (paintFilter) rgb = paintFilter(x, y, z, rgb);
   grid[idx(x, y, z)] = (1 << 24) | (rgb[0] << 16) | (rgb[1] << 8) | rgb[2];
 }
 
@@ -248,9 +253,78 @@ function paintProfile(grid, part, sprite) {
 
 const PAINTERS = { box: paintBox, lathe: paintLathe, profile: paintProfile };
 
+// --- Pièces « Ultime » (album) ---
+// Mêmes couleurs que tools/creer_ultimes.py : corps obsidienne (du plus sombre
+// au plus clair) et dégradé holographique des accents.
+const ULT_BODY = [[22, 20, 34], [34, 31, 52], [48, 44, 72], [66, 62, 96], [92, 88, 128]];
+const ULT_HOLO = [[90, 230, 230], [120, 160, 255], [190, 120, 255], [255, 120, 210], [255, 200, 140], [150, 255, 190]];
+const ULT_BAND = 22; // espacement des reflets nacrés (comme sur le sprite)
+
+/** Couleur holographique à la position t (le dégradé boucle), assombrie par k. */
+function ultHolo(t, k = 1) {
+  const n = ULT_HOLO.length;
+  const f0 = (((t / 64) * n) % n + n) % n;
+  const i = Math.floor(f0), f = f0 - i;
+  const a = ULT_HOLO[i], b = ULT_HOLO[(i + 1) % n];
+  return a.map((v, c) => Math.round((v + (b[c] - v) * f) * k));
+}
+
+/**
+ * Filtre d'une pièce Ultime. Le sprite donne le dessin ; en 3D, on recalcule
+ * les couleurs selon la position du voxel pour que l'irisé « tourne » avec
+ * l'avatar, y compris dans le dos et sur les côtés :
+ * - couleurs du coloris d'origine (contour, pigeon…) : gardées telles quelles ;
+ * - accents (clairs et saturés) : dégradé holographique selon la position ;
+ * - corps obsidienne : reflet nacré en bandes diagonales, sur toutes les faces.
+ * keep : couleurs à garder (celles du 1er coloris de la pièce).
+ */
+function ultimateFilter(keep) {
+  const bodyKeys = new Set(ULT_BODY.map((c) => c.join()));
+  const lum = ([r, g, b]) => 0.299 * r + 0.587 * g + 0.114 * b;
+  return (x, y, z, rgb) => {
+    if (keep.has(rgb.join())) return rgb;
+    const max = Math.max(...rgb), min = Math.min(...rgb);
+    const v = max / 255, sat = max ? (max - min) / max : 0;
+    if (!bodyKeys.has(rgb.join()) && v > 0.56 && sat > 0.3) {
+      return ultHolo(x + y + z, 0.65 + 0.35 * Math.min(1, (v - 0.56) / 0.4));
+    }
+    // Teinte du corps la plus proche ; un pixel de reflet du sprite (couleur
+    // mélangée) redescend d'un cran : le reflet est refait ici, en 3D.
+    let n = 0;
+    for (let i = 1; i < ULT_BODY.length; i++) {
+      if (Math.abs(lum(ULT_BODY[i]) - lum(rgb)) < Math.abs(lum(ULT_BODY[n]) - lum(rgb))) n = i;
+    }
+    if (!bodyKeys.has(rgb.join())) n = Math.max(0, n - 1);
+    // (y monte vers le haut en 3D : x + y suit la même diagonale que le
+    // reflet du sprite, vu de face)
+    if ((((x + y + z) % ULT_BAND) + ULT_BAND) % ULT_BAND < 3) {
+      // teintes froides seulement (cyan → violet) : mêlées au noir, les chaudes
+      // donnaient un reflet brunâtre
+      const c = ULT_BODY[Math.min(ULT_BODY.length - 1, n + 1)], h = ultHolo((((x - y + z) % 21) + 21) % 21);
+      return c.map((v2, i) => Math.round((v2 * 2 + h[i]) / 3));
+    }
+    return ULT_BODY[n];
+  };
+}
+
+/** Couleurs du 1er coloris d'une pièce (pour savoir quoi garder sur l'Ultime). */
+async function baseColors(piece) {
+  const sprite = await loadSpriteData(piece.colorways[0].sprite);
+  const keys = new Set();
+  for (let y = 0; y < sprite.height; y++) {
+    for (let x = 0; x < sprite.width; x++) {
+      const c = sprite.color(x, y);
+      if (c) keys.add(c.join());
+    }
+  }
+  keys.add(sprite.outlineKey);
+  return keys;
+}
+
 /**
  * Construit la grille pour une tenue.
- * - pieces : { emplacement: coloris du catalogue } (pièces portées)
+ * - pieces : { emplacement: coloris du catalogue } (pièces portées) ;
+ *   une pièce « Ultime » (catalogue.ultimates, ultimate: true) marche pareil.
  * Les pièces sans modèle 3D sont ignorées ici (l'écran les signale).
  */
 export async function buildModel(pieces, { type = "homme", skin = "moyenne" } = {}) {
@@ -261,10 +335,16 @@ export async function buildModel(pieces, { type = "homme", skin = "moyenne" } = 
     const model = colorway && WEAR_MODELS[colorway.piece.id];
     if (!model) continue;
     const sprite = await loadSpriteData(colorway.sprite);
+    const filter = colorway.ultimate ? ultimateFilter(await baseColors(colorway.piece)) : null;
     for (const part of model) {
       const cover = pieces[part.hiddenBy];
       if (cover && WEAR_MODELS[cover.piece.id]) continue;
-      PAINTERS[part.type](grid, part, sprite);
+      paintFilter = filter;
+      try {
+        PAINTERS[part.type](grid, part, sprite);
+      } finally {
+        paintFilter = null;
+      }
     }
   }
   return grid;
