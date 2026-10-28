@@ -94,7 +94,8 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 │       ├── 0007_pseudos_interdits.sql  # mots interdits dans les pseudos
 │       ├── 0008_tenue_partagee.sql  # lien public vers une tenue
 │       ├── 0009_historique_market.sql  # historique achats / ventes du Market
-│       └── 0010_retention_stats.sql  # mesure de rétention + vues de statistiques
+│       ├── 0010_retention_stats.sql  # mesure de rétention + vues de statistiques
+│       └── 0011_taxe_vente.sql  # taxe de 5 % sur les ventes du Market
 ├── tools/
 │   └── extraire_sprites.py   # découpe les planches → PNG + SVG (Python + Pillow)
 └── CLAUDE.md
@@ -268,7 +269,8 @@ Onglet **Market** : Acheter / Vendre / Mes ventes / Historique.
 - **Vendre** : choisir une carte, fixer son prix (− / champ / +, « Prix conseillé » = référence d'affichage, « Moins cher » = meilleure offre − 1). La carte quitte la collection pendant la vente. **Mes ventes** : liste avec « Retirer » (`market_cancel`, la carte revient).
 - **Vendeur payé à l'achat** (même hors ligne) : à l'ouverture du jeu, au retour sur l'écran Market, au retour sur l'onglet et toutes les 30 s, le front appelle `market_ack_sales()` qui renvoie les ventes terminées pas encore vues → notification « Vendu : … · +N pièces ».
 - **Historique** (4e pilule) : mes achats et mes ventes terminés, du plus récent au plus ancien (carte, « Acheté » / « Vendu », rareté, date, prix en rouge `−N` ou vert `+N`), totaux « Dépensé / Gagné » et bouton « Voir plus » (30 lignes à la fois). Lu par `market_history(p_limit, p_before)` (migration 0009) dans la table `transactions` (`market_buy` / `market_sale`, déjà écrites par `market_buy`) ; **l'autre joueur n'est jamais révélé**. Relu à l'ouverture de l'onglet et après chaque action. Les offres retirées ne figurent pas dans l'historique.
-- Pas de taxe ni de frais pour l'instant.
+- **Taxe de 5 % sur chaque vente, payée par le vendeur** (migration 0011) : l'acheteur paie le prix affiché ; le vendeur reçoit `prix − taxe`, taxe = 5 % **arrondie à l'entier supérieur** (minimum 1 pièce : 8 → reçoit 7, 40 → 38, 600 → 570 ; un prix de 1 rapporte 0). Les pièces de la taxe disparaissent de l'économie. Taux dans `economy_config.MARKET.saleTaxPercent` (copie d'affichage : `MARKET.saleTaxPercent`, `saleTax()` / `saleNet()` dans `js/economy-config.js`). Appliquée par `market_buy`, gardée dans `market_listings.tax` ; `market_ack_sales` renvoie `received` (pièces réellement reçues) pour la notification « Vendu : … · +N pièces » ; l'Historique et la transaction `market_sale` montrent le montant net. La fiche « Vendre » annonce « tu recevras N pièces (−T) ». Les ventes d'avant la migration restent sans taxe.
+- Pas d'autre frais.
 
 ### Défausse (`js/discard.js`)
 
@@ -344,7 +346,7 @@ Le développeur n'est pas juriste ; ces règles sont prudentes en attendant un a
 
 ## 13. Back end Supabase (comptes + serveur de jeu) — le serveur est la source de vérité
 
-- Projet Supabase : `https://qsueqvsbhytqrotlxmak.supabase.co`. Les migrations SQL (**0001 à 0010**, exécutées par le développeur dans le SQL Editor, **ne jamais les modifier depuis le front** ; les 0005 à 0010 sont dans `supabase/migrations/`) créent : catalogue (`brands`, `pieces`, `colorways`), `economy_config`, `profiles`, `inventory`, `transactions`, `market_listings`, la vue `market_best_offers` et toutes les fonctions du jeu.
+- Projet Supabase : `https://qsueqvsbhytqrotlxmak.supabase.co`. Les migrations SQL (**0001 à 0011**, exécutées par le développeur dans le SQL Editor, **ne jamais les modifier depuis le front** ; les 0005 à 0011 sont dans `supabase/migrations/`) créent : catalogue (`brands`, `pieces`, `colorways`), `economy_config`, `profiles`, `inventory`, `transactions`, `market_listings`, la vue `market_best_offers` et toutes les fonctions du jeu.
 - **Règle d'or : ne jamais remettre de logique de jeu côté client.** Le front ne tire pas de carte, ne calcule ni gain ni chance réelle, ne vérifie pas de règle (limite de ventes, verrou, solde…). Il appelle une fonction, affiche le résultat, et relit l'état. Toute nouvelle règle ou nouvelle valeur d'économie se code **dans une migration SQL** (puis, si besoin d'affichage, dans `js/economy-config.js`).
 - **Le jeu n'est accessible que connecté** : e-mail + mot de passe (écran de connexion / création de compte dans `index.html`, géré par `main.js`). À l'inscription, le message « Confirme ton e-mail » s'affiche : le compte ne peut se connecter qu'après avoir cliqué le lien reçu. Un profil (3 boosters, 0 pièce) est créé automatiquement par le serveur. Bouton « Se déconnecter » en bas de l'écran Tenue.
 - **Mot de passe oublié** : lien « Mot de passe oublié ? » sous le formulaire de connexion (pas à la création de compte) → e-mail de réinitialisation (`resetPasswordForEmail`, réponse toujours neutre pour ne pas révéler quelles adresses ont un compte). Le lien reçu ramène sur le site avec `type=recovery` : `api.js` le détecte (`isRecoveryLink`) et `main.js` affiche « Nouveau mot de passe » (6 caractères minimum, saisie en double, `updatePassword`) **avant** de lancer le jeu ; lien expiré → message + renvoi vers « Mot de passe oublié ? ». **À régler dans Supabase** (Authentication → URL Configuration) : Site URL `https://joueur01.github.io/Grail/` et Redirect URLs `https://joueur01.github.io/Grail/**`, sinon les liens (confirmation et réinitialisation) pointent vers localhost.
