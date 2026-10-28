@@ -7,19 +7,19 @@
 // ?v=… sur les imports : même numéro que dans index.html, et le même partout
 // (un module importé sous deux adresses différentes serait chargé deux fois).
 
-import { loadCatalogue } from "./data.js?v=41";
-import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=41";
-import { initAvatar, setupOutfit } from "./avatar.js?v=41";
-import { setupBooster } from "./booster.js?v=41";
-import { setupShare } from "./share.js?v=41";
-import { setupUpgrade } from "./upgrade.js?v=41";
-import { setupAtelier, setupViewSwitch } from "./atelier.js?v=41";
-import { setupWallet, reportError, showToast } from "./wallet.js?v=41";
-import { setupDiscard, createSelection } from "./discard.js?v=41";
-import { setupMarket } from "./market.js?v=41";
-import { setupFriends } from "./friends.js?v=41";
-import { showSharedOutfit } from "./shared-outfit.js?v=41";
-import { getSession, signIn, signUp, signOut, supabase, requestPasswordReset, updatePassword, isRecoveryLink, endRecovery, sharedOutfitToken } from "./api.js?v=41";
+import { loadCatalogue } from "./data.js?v=42";
+import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=42";
+import { initAvatar, setupOutfit } from "./avatar.js?v=42";
+import { setupBooster } from "./booster.js?v=42";
+import { setupShare } from "./share.js?v=42";
+import { setupUpgrade } from "./upgrade.js?v=42";
+import { setupAtelier, setupViewSwitch } from "./atelier.js?v=42";
+import { setupWallet, reportError, showToast } from "./wallet.js?v=42";
+import { setupDiscard, createSelection } from "./discard.js?v=42";
+import { setupMarket } from "./market.js?v=42";
+import { setupFriends } from "./friends.js?v=42";
+import { showSharedOutfit } from "./shared-outfit.js?v=42";
+import { getSession, signIn, signUp, signOut, supabase, requestPasswordReset, updatePassword, isRecoveryLink, endRecovery, sharedOutfitToken } from "./api.js?v=42";
 
 const SCREENS = ["booster", "collection", "market", "friends", "avatar"];
 

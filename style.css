@@ -1850,3 +1850,10 @@ body[data-auth="public"] .public {
 .public-card .auth-title { text-align: center; }
 .public-canvas { align-self: center; display: block; margin: 0 auto 14px; background: #cccac4; border-radius: 28px; width: 128px; height: 192px; /* ×2 : facteur entier */ }
 .public-cta { text-decoration: none; text-align: center; display: grid; place-items: center; }
+
+/* Historique du Market : prix en rouge (achat) ou en vert (vente) */
+.history-out { color: #ff8a7a; }
+.history-in { color: #7fd99a; }
+#market-history-more { margin-top: 12px; }
+.history-sub { white-space: normal; }
+@media (max-width: 380px) { #screen-market .view-tab { padding-inline: 4px; font-size: 12px; white-space: nowrap; } }
