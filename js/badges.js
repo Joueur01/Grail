@@ -6,8 +6,8 @@
 //   - Videur  : un point tant que le joueur n'a joué AUCUNE porte aujourd'hui (jour de Paris, décidé par le serveur) ;
 //   - Amis    : le nombre de demandes d'ami reçues, sur la pastille ronde du haut (c'est friends.js qui la remplit).
 
-import { getBoosterState, onStateChange, refreshState } from "./inventory.js?v=80";
-import { getVideurNight } from "./api.js?v=80";
+import { getBoosterState, onStateChange, refreshState } from "./inventory.js?v=81";
+import { getVideurNight } from "./api.js?v=81";
 
 const VIDEUR_RECHECK_MS = 5 * 60 * 1000; // le jour change à minuit (Paris) : on relit de temps en temps
 

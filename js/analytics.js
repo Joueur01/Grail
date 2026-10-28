@@ -7,7 +7,7 @@
 // Règles : jamais de bruit pour le joueur (toute erreur est ignorée), aucun contenu personnel (pas d'e-mail,
 // pas de pseudo), rien n'est envoyé si le navigateur a activé « Do Not Track ».
 
-import { trackEvents } from "./api.js?v=80";
+import { trackEvents } from "./api.js?v=81";
 
 const PING_SECONDS = 30;        // un « ping » toutes les 30 s tant que le jeu est affiché → temps actif
 const IDLE_NEW_SESSION_MS = 30 * 60 * 1000; // plus de 30 min d'absence = nouvelle session
@@ -20,6 +20,7 @@ let sessionId = crypto.randomUUID();
 let queue = [];
 let lastActivity = Date.now();
 let started = false;
+let stopped = false; // compte supprimé : on n'envoie plus rien
 
 /** Famille d'appareil : ios, android ou ordinateur (pas d'identifiant précis). */
 function platform() {
@@ -31,7 +32,7 @@ function platform() {
 
 /** Ajoute un événement à la file (envoyé dans les secondes qui suivent). */
 export function track(name, props = {}) {
-  if (disabled || !started) return;
+  if (disabled || !started || stopped) return;
   lastActivity = Date.now();
   if (queue.length < MAX_QUEUE) queue.push({ name, props });
   if (queue.length >= 10) flush();
@@ -39,7 +40,7 @@ export function track(name, props = {}) {
 
 /** Envoie la file au serveur ; en cas d'échec les événements sont simplement perdus. */
 async function flush() {
-  if (!queue.length) return;
+  if (stopped || !queue.length) return;
   const batch = queue.slice(0, 25);
   queue = queue.slice(25);
   try {
@@ -63,6 +64,12 @@ function sessionStart() {
     ref: ref.slice(0, 60),
     entry: location.hash.replace("#", "") || "booster",
   });
+}
+
+/** Arrête définitivement la mesure (appelé juste avant la suppression du compte). */
+export function stopAnalytics() {
+  stopped = true;
+  queue = [];
 }
 
 /** Démarre la mesure (à appeler une fois le joueur connecté). */

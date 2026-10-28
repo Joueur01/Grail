@@ -7,26 +7,28 @@
 // ?v=… sur les imports : même numéro que dans index.html, et le même partout
 // (un module importé sous deux adresses différentes serait chargé deux fois).
 
-import { loadCatalogue } from "./data.js?v=80";
-import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=80";
-import { initAvatar, setupOutfit } from "./avatar.js?v=80";
-import { setupBooster } from "./booster.js?v=80";
-import { setupShare } from "./share.js?v=80";
-import { setupUpgrade } from "./upgrade.js?v=80";
-import { setupAtelier, setupViewSwitch } from "./atelier.js?v=80";
-import { setupAlbum } from "./album.js?v=80";
-import { setupBadges } from "./badges.js?v=80";
-import { setupWallet, reportError, showToast } from "./wallet.js?v=80";
-import { setupReputation } from "./reputation.js?v=80";
-import { setupDiscard, createSelection } from "./discard.js?v=80";
-import { setupMarket } from "./market.js?v=80";
-import { setupFriends } from "./friends.js?v=80";
-import { setupVideur } from "./videur.js?v=80";
-import { setupProfile } from "./profile.js?v=80";
-import { setupRules } from "./rules.js?v=80";
-import { startAnalytics, track } from "./analytics.js?v=80";
-import { showSharedOutfit } from "./shared-outfit.js?v=80";
-import { getSession, signIn, signUp, signOut, supabase, requestPasswordReset, updatePassword, isRecoveryLink, endRecovery, sharedOutfitToken } from "./api.js?v=80";
+import { loadCatalogue } from "./data.js?v=81";
+import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=81";
+import { initAvatar, setupOutfit } from "./avatar.js?v=81";
+import { setupBooster } from "./booster.js?v=81";
+import { setupShare } from "./share.js?v=81";
+import { setupUpgrade } from "./upgrade.js?v=81";
+import { setupAtelier, setupViewSwitch } from "./atelier.js?v=81";
+import { setupAlbum } from "./album.js?v=81";
+import { setupBadges } from "./badges.js?v=81";
+import { setupPrivacy } from "./privacy.js?v=81";
+import { setupAccountDeletion, DELETED_FLAG } from "./account.js?v=81";
+import { setupWallet, reportError, showToast } from "./wallet.js?v=81";
+import { setupReputation } from "./reputation.js?v=81";
+import { setupDiscard, createSelection } from "./discard.js?v=81";
+import { setupMarket } from "./market.js?v=81";
+import { setupFriends } from "./friends.js?v=81";
+import { setupVideur } from "./videur.js?v=81";
+import { setupProfile } from "./profile.js?v=81";
+import { setupRules } from "./rules.js?v=81";
+import { startAnalytics, track } from "./analytics.js?v=81";
+import { showSharedOutfit } from "./shared-outfit.js?v=81";
+import { getSession, signIn, signUp, signOut, supabase, requestPasswordReset, updatePassword, isRecoveryLink, endRecovery, sharedOutfitToken } from "./api.js?v=81";
 
 // « profile » et « friends » n'ont pas d'onglet : on y va par les boutons ronds en haut (#profile, #friends). « rules » non plus : par le profil ou un lien « ? » (#rules, #rules/market…).
 const SCREENS = ["booster", "collection", "market", "videur", "friends", "avatar", "profile", "rules"];
@@ -200,6 +202,7 @@ async function boot() {
   track("screen_view", { screen: currentScreenFromHash() || SCREENS[0] });
   clearLocalSave(); // l'ancienne sauvegarde du navigateur n'est plus utilisée
   initAvatar(document.getElementById("avatar-canvas"));
+  setupAccountDeletion(); // « Supprimer mon compte » (bas du profil)
   document.getElementById("btn-signout").addEventListener("click", async () => {
     await signOut();
     location.reload();
@@ -260,8 +263,22 @@ async function boot() {
   }
 }
 
+/** Après une suppression de compte, l'écran de connexion confirme que tout a été effacé (une seule fois). */
+function takeDeletedMessage() {
+  try {
+    if (sessionStorage.getItem(DELETED_FLAG)) {
+      sessionStorage.removeItem(DELETED_FLAG);
+      return { message: "Ton compte a été supprimé. Toutes tes données ont été effacées.", kind: "ok" };
+    }
+  } catch {
+    // stockage indisponible : sans importance
+  }
+  return {};
+}
+
 async function start() {
   blockPinchZoom();
+  setupPrivacy(); // politique de confidentialité : liens utilisables partout, même sans compte
   window.addEventListener("hashchange", () => showScreen(currentScreenFromHash()));
   showScreen(currentScreenFromHash());
 
@@ -286,7 +303,7 @@ async function start() {
   if (isRecoveryLink()) showRecovery();                // lien « mot de passe oublié » : nouveau mot de passe d'abord
   else if (session) boot();
   else if (linkExpired) showAuth({ message: "Ce lien a expiré. Utilise « Mot de passe oublié ? » pour en recevoir un nouveau.", kind: "error" });
-  else showAuth();
+  else showAuth(takeDeletedMessage());
 
   // Connexion réussie (ou retour du lien de confirmation e-mail) : le jeu démarre.
   supabase.auth.onAuthStateChange((event, newSession) => {

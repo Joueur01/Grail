@@ -2546,3 +2546,23 @@ ul.rules-list { margin: 0; padding-left: 18px; display: flex; flex-direction: co
 }
 .album-mark.plus { background: var(--bg); color: var(--rarity-color); border: 1.5px solid var(--rarity-color); }
 .album-warning { padding: 10px 12px; border-radius: 10px; background: var(--surface-2); font-size: 13px; line-height: 1.4; }
+
+/* =========================================================
+   Confidentialité (privacy.js) et suppression du compte (account.js)
+   ========================================================= */
+.auth-legal { margin: 0; font-size: 13px; line-height: 1.5; text-align: center; }
+.auth-link-inline { display: inline; min-height: 0; padding: 0; font-size: inherit; }
+.signout-danger { margin-top: 0; color: #ff7a6b; }
+
+/* Le panneau de confidentialité passe au-dessus de l'écran de connexion et de la page publique */
+.picker.privacy { z-index: 100; }
+.privacy-body { gap: 4px; padding-bottom: 8px; }
+.privacy-date { margin: 0 0 6px; font-size: 13px; }
+.privacy-section { display: flex; flex-direction: column; gap: 6px; padding: 12px 0; border-top: 1px solid var(--border); }
+.privacy-title { margin: 0; font-size: 15px; font-weight: 800; }
+.privacy-text { margin: 0; font-size: 14px; line-height: 1.5; color: var(--muted); }
+.privacy-list { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; line-height: 1.5; color: var(--muted); }
+.privacy-list li::marker { color: var(--text); }
+.account-list { color: var(--text); }
+.btn-danger { background: #ff7a6b; border-color: #ff7a6b; color: #1a0705; }
+.btn-danger:disabled { opacity: 0.35; }
