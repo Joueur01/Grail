@@ -33,7 +33,7 @@ Contraintes de la bêta :
 1. **Booster** : un bouton « Ouvrir un booster » qui ouvre un booster de 3 cartes **tiré par le serveur** selon les taux de rareté (section 6), avec une petite animation de révélation carte par carte. ✅ Fait.
 2. **Inventaire** : la collection du joueur, sauvegardée **sur le serveur**, avec filtres simples (marque, catégorie, rareté) et le nombre d'exemplaires de chaque carte. ✅ Fait : progression « X / 300 », filtres Marque / Type / Rareté (menus natifs, collés en haut), grille triée de la plus rare à la plus commune, badge « ×N » pour les doublons.
 3. **Avatar** : un personnage en pixel art sur lequel on équipe une pièce par emplacement (section 7). ✅ Fait pour la bêta (fiche de tenue, tenue « à plat »).
-4. **Partager ma tenue** : **lien public** (principal, section 13 bis) ; l'export en image reste en option secondaire. Ancien fonctionnement de l'image : exporter l'avatar habillé en **image PNG** (canvas → PNG), avec le nom des pièces et leur rareté, puis partage natif (`navigator.share` avec fichier si disponible, sinon téléchargement). ✅ Fait : PNG 1080 × 1350 (tenue à plat ×6 + liste tête → pieds : nom, marque, coloris, rareté + adresse du jeu), **préparé à l'avance** à chaque changement de tenue (Safari n'ouvre le partage que juste après un toucher), repli téléchargement ; bouton désactivé tant que rien n'est porté.
+4. **Partager ma tenue** : **un seul bouton**, qui partage le **lien public** de la tenue avec l'image PNG (section 13 bis). Image : exporter l'avatar habillé en **image PNG** (canvas → PNG), avec le nom des pièces et leur rareté, puis partage natif (`navigator.share` avec fichier si disponible, sinon téléchargement). ✅ Fait : PNG 1080 × 1350 (tenue à plat ×6 + liste tête → pieds : nom, marque, coloris, rareté + adresse du jeu), **préparé à l'avance** à chaque changement de tenue (Safari n'ouvre le partage que juste après un toucher), repli téléchargement ; bouton désactivé tant que rien n'est porté.
 5. **Mise en ligne** sur GitHub Pages et test sur iPhone/Android.
 
 ### Hors périmètre de la bêta (ne pas coder pour l'instant)
@@ -351,10 +351,12 @@ Le développeur n'est pas juriste ; ces règles sont prudentes en attendant un a
 
 ## 13 bis. Tenue partagée par lien (migration 0008, `js/share.js`, `js/shared-outfit.js`)
 
-- Bouton principal « Partager ma tenue » : `create_outfit_share()` enregistre une **copie** de la tenue portée sous un **code secret de 20 caractères** (même tenue = même lien ; 50 liens récents gardés par joueur) et renvoie le code ; le lien est `<page du jeu>?tenue=CODE`, envoyé par `navigator.share` ou copié (champ + bouton « Copier » toujours affichés). Safari n'ouvre le menu de partage que juste après un toucher : si la création du lien l'a fait expirer, le lien reste affiché et le 2e toucher partage tout de suite.
+- **Un seul bouton** « Partager ma tenue » (onglet Tenue). `create_outfit_share()` enregistre une **copie** de la tenue portée sous un **code secret de 20 caractères** (même tenue = même lien ; 50 liens récents gardés par joueur) ; le lien est `<page du jeu>?tenue=CODE` et **n'est jamais affiché**.
+  - **Téléphone / tablette** (écran tactile + `navigator.share`) : menu de partage natif avec l'**image PNG + le lien** (le lien seul si `canShare` refuse le fichier). Safari n'ouvre le menu que juste après un toucher : si la création du lien l'a fait expirer, notification « Lien prêt : touche une 2e fois » et le 2e toucher partage tout de suite (lien gardé en mémoire).
+  - **Ordinateur** : petit menu posé au-dessus du bouton (ne décale pas la page) : « Copier le lien » / « Enregistrer en image ». Les confirmations (« Lien copié. », « Image enregistrée. ») sont des notifications temporaires (`showToast`).
 - **Visible sans compte** : `main.js` détecte `?tenue=` avant toute connexion et affiche `shared-outfit.js` (tenue « à plat » sur case claire + liste des pièces avec rareté + bouton « Jouer à Grail »). `get_shared_outfit(code)` est la **seule** fonction appelable par `anon` ; la table `outfit_shares` est illisible directement.
 - La copie ne change plus : changer de tenue donne un nouveau lien. **Aucun pseudo ni autre donnée du joueur** n'est exposé (le pseudo n'apparaît jamais publiquement, section 9).
-- L'image PNG reste en bouton secondaire « Enregistrer en image » (`buildShareImage`, inchangée).
+- L'image PNG (`buildShareImage`) est préparée à l'avance à chaque changement de tenue.
 - Pas d'aperçu riche (miniature) dans les messageries : le site est statique, il faudrait un serveur pour générer les balises Open Graph.
 
 ## 14. Amis (migration 0005, `js/friends.js`)

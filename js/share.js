@@ -1,10 +1,14 @@
 // share.js — « Partager ma tenue » : LIEN public (principal) ou image PNG (secondaire).
 //
+// Un seul bouton « Partager ma tenue ».
+//  - Téléphone / tablette : menu de partage natif avec l'image PNG + le lien (le lien seul si le
+//    partage de fichier n'est pas possible).
+//  - Ordinateur : petit menu « Copier le lien » / « Enregistrer en image ».
 // Lien : le serveur enregistre une copie de la tenue portée sous un code secret
 // (create_outfit_share) ; n'importe qui ouvre `…/?tenue=CODE` sans compte (shared-outfit.js).
-// Le lien est envoyé par le menu de partage du téléphone, ou copié.
+// L'URL n'est jamais affichée.
 //
-// Image (bouton « Enregistrer en image ») :
+// Image :
 // L'image (1080 × 1350, format portrait des réseaux) montre la tenue à plat
 // agrandie ×6 (facteur entier, sans lissage) et la liste des pièces avec leur
 // nom, coloris, marque et rareté.
@@ -13,9 +17,10 @@
 // préparée À L'AVANCE, à chaque changement de tenue, pour être prête au moment
 // où l'on touche le bouton (sinon le partage serait refusé).
 
-import { RARITIES } from "./data.js?v=40";
-import { SLOTS, drawAvatar } from "./avatar.js?v=40";
-import { createOutfitShare } from "./api.js?v=40";
+import { RARITIES } from "./data.js?v=41";
+import { SLOTS, drawAvatar } from "./avatar.js?v=41";
+import { createOutfitShare } from "./api.js?v=41";
+import { showToast } from "./wallet.js?v=41";
 
 const IMG_W = 1080;
 const IMG_H = 1350;
@@ -188,104 +193,121 @@ function shareUrl(token) {
   return `${location.origin}${location.pathname}?tenue=${token}`;
 }
 
+/** Téléphone / tablette (écran tactile) avec menu de partage natif ; sinon : petit menu sur ordinateur. */
+const isMobileShare = () => !!navigator.share && window.matchMedia("(pointer: coarse)").matches;
+
 /**
- * Branche les boutons de partage et renvoie la fonction à appeler
+ * Branche le bouton « Partager ma tenue » et renvoie la fonction à appeler
  * à chaque changement de tenue (elle prépare l'image à l'avance).
  */
 export function setupShare() {
   const button = document.getElementById("btn-share");
-  const imageButton = document.getElementById("btn-share-image");
+  const menu = document.getElementById("share-menu");
   const status = document.getElementById("share-status");
-  const linkBox = document.getElementById("share-link");
-  const linkInput = document.getElementById("share-link-input");
-  const copyButton = document.getElementById("btn-copy-link");
   let pending = null; // Promise du Blob de la tenue actuelle
   let version = 0;
   let current = null; // tenue actuelle
-  let link = null;    // { key, url } : lien déjà créé pour la tenue actuelle (le 2e partage est instantané)
+  let link = null;    // { key, url } : lien déjà créé pour la tenue actuelle (le partage suivant est instantané)
 
   function update(outfit) {
     const count = Object.keys(outfit).length;
     current = count ? outfit : null;
-    button.disabled = imageButton.disabled = count === 0;
+    button.disabled = count === 0;
     status.textContent = count === 0 ? "Porte au moins une pièce pour partager ta tenue." : "";
-    if (link && (!current || link.key !== outfitKey(current))) { link = null; linkBox.hidden = true; }
-    if (count === 0) { pending = null; return; }
+    if (link && (!current || link.key !== outfitKey(current))) link = null;
+    if (count === 0) { pending = null; closeMenu(); return; }
     const v = ++version;
     pending = buildShareImage(outfit);
     pending.catch((err) => { if (v === version) console.error("Image de partage :", err); });
   }
 
-  async function copy(url) {
-    try { await navigator.clipboard.writeText(url); return true; } catch { return false; }
+  /** Crée (ou retrouve) le lien de la tenue actuelle : le serveur en garde une copie. */
+  async function getLink() {
+    const key = outfitKey(current);
+    if (!link || link.key !== key) link = { key, url: shareUrl(await createOutfitShare()) };
+    return link.url;
   }
 
-  // Bouton principal : le lien. Safari n'ouvre le menu de partage que juste après un toucher ;
-  // si la création du lien l'a fait expirer, le lien reste affiché et le 2e toucher partage tout de suite.
-  button.addEventListener("click", async () => {
-    if (!current) return;
-    const key = outfitKey(current);
-    button.disabled = true;
+  /** Copie dans le presse-papiers ; la promesse du texte est donnée au navigateur pour que Safari accepte la copie. */
+  async function copyText(textPromise) {
     try {
-      if (!link || link.key !== key) {
-        status.textContent = "Création du lien…";
-        const token = await createOutfitShare(); // enregistre une copie de la tenue sur le serveur
-        link = { key, url: shareUrl(token) };
+      if (window.ClipboardItem && navigator.clipboard?.write) {
+        const blob = textPromise.then((t) => new Blob([t], { type: "text/plain" }));
+        await navigator.clipboard.write([new ClipboardItem({ "text/plain": blob })]);
+      } else {
+        await navigator.clipboard.writeText(await textPromise);
       }
-      linkInput.value = link.url;
-      linkBox.hidden = false;
-      linkBox.scrollIntoView({ block: "nearest", behavior: "smooth" });
-      status.textContent = "";
-      try {
-        if (!navigator.share) throw new Error("Pas de partage natif");
-        await navigator.share({ title: "Ma tenue Grail", text: "Regarde ma tenue sur Grail", url: link.url });
-      } catch (err) {
-        if (err && err.name === "AbortError") return; // menu fermé : rien à faire
-        status.textContent = (await copy(link.url))
-          ? "Lien copié : colle-le où tu veux."
-          : "Touche « Copier » pour récupérer le lien.";
+      return true;
+    } catch (err) {
+      await textPromise; // une erreur de création du lien est remontée par l'appelant
+      return false;
+    }
+  }
+
+  function closeMenu() { menu.hidden = true; button.setAttribute("aria-expanded", "false"); }
+  function openMenu() { menu.hidden = false; button.setAttribute("aria-expanded", "true"); }
+
+  // --- Mobile : menu de partage natif (image + lien ; le lien seul si l'image n'est pas acceptée) ---
+  async function shareNative() {
+    // Safari n'ouvre le menu de partage que juste après un toucher : si la création du lien l'a fait
+    // expirer, le lien est gardé et le 2e toucher partage tout de suite.
+    const url = await getLink();
+    const text = `Regarde ma tenue sur Grail : ${url}`;
+    try {
+      const blob = await pending;
+      const file = new File([blob], FILE_NAME, { type: "image/png" });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: "Ma tenue Grail", text });
+      } else {
+        await navigator.share({ title: "Ma tenue Grail", text: "Regarde ma tenue sur Grail", url });
       }
     } catch (err) {
-      status.textContent = err?.message || "Impossible de créer le lien.";
+      if (err && err.name === "AbortError") return; // menu fermé : rien à faire
+      if (err && err.name === "NotAllowedError") { showToast("Lien prêt : touche « Partager ma tenue » une 2e fois."); return; }
+      // Image impossible à construire ou refusée : on partage le lien seul.
+      await navigator.share({ title: "Ma tenue Grail", text: "Regarde ma tenue sur Grail", url });
+    }
+  }
+
+  button.addEventListener("click", async () => {
+    if (!current) return;
+    if (!isMobileShare()) { menu.hidden ? openMenu() : closeMenu(); return; }
+    button.disabled = true;
+    try {
+      await shareNative();
+    } catch (err) {
+      if (!err || err.name !== "AbortError") showToast(err?.message || "Partage impossible.", { error: true });
     } finally {
       button.disabled = !current;
     }
   });
 
-  copyButton.addEventListener("click", async () => {
-    if (!link) return;
-    if (await copy(link.url)) { status.textContent = "Lien copié."; return; }
-    linkInput.focus();
-    linkInput.select(); // repli : sélection pour copier à la main
-    status.textContent = "Sélectionne le lien et copie-le.";
-  });
-  linkInput.addEventListener("focus", () => linkInput.select());
-
-  // Bouton secondaire : l'image PNG.
-  imageButton.addEventListener("click", async () => {
-    if (!pending) return;
+  // --- Ordinateur : « Copier le lien » / « Enregistrer en image » ---
+  document.getElementById("share-copy").addEventListener("click", async () => {
+    closeMenu();
+    if (!current) return;
     try {
-      const blob = await pending;
-      const file = new File([blob], FILE_NAME, { type: "image/png" });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: "Ma tenue Grail" });
-      } else {
-        download(blob);
-        status.textContent = "Image téléchargée.";
-      }
+      const ok = await copyText(getLink());
+      showToast(ok ? "Lien copié." : "Copie impossible : autorise l'accès au presse-papiers.", { error: !ok });
     } catch (err) {
-      // L'utilisateur a fermé le menu de partage : rien à faire.
-      if (err && err.name === "AbortError") return;
-      // Autre souci (partage refusé, etc.) : on propose le téléchargement.
-      console.error("Partage :", err);
-      try {
-        download(await pending);
-        status.textContent = "Partage indisponible : image téléchargée.";
-      } catch {
-        status.textContent = "Impossible de créer l'image.";
-      }
+      showToast(err?.message || "Impossible de créer le lien.", { error: true });
     }
   });
+
+  document.getElementById("share-save").addEventListener("click", async () => {
+    closeMenu();
+    if (!pending) return;
+    try {
+      download(await pending);
+      showToast("Image enregistrée.");
+    } catch {
+      showToast("Impossible de créer l'image.", { error: true });
+    }
+  });
+
+  // Le menu se ferme en touchant ailleurs ou avec Échap.
+  document.addEventListener("pointerdown", (e) => { if (!menu.hidden && !e.target.closest(".share")) closeMenu(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeMenu(); });
 
   return update;
 }
