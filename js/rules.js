@@ -6,11 +6,11 @@
 // Si le serveur change une valeur, la mettre à jour dans ce fichier-là, pas ici.
 // Les règles cachées du Videur (Club, VIP) ne sont volontairement PAS décrites.
 
-import { RARITIES } from "./data.js?v=71";
+import { RARITIES } from "./data.js?v=73";
 import {
   DROP_RATES, BOOSTER, PITY, UPGRADE, DISCARD_VALUES, MARKET, FRIENDS, saleTax, saleNet,
   DAILY_BONUS, REPUTATION, SHOWCASE, VIDEUR_INFO,
-} from "./economy-config.js?v=71";
+} from "./economy-config.js?v=73";
 
 function el(tag, className, text) {
   const e = document.createElement(tag);
@@ -149,11 +149,14 @@ function buildSections(catalogue) {
     ]),
   ]);
 
+  // Les premiers niveaux seulement, puis une ligne « ainsi de suite » : la progression continue (pas de niveau maximum).
   const levels = [0, 1, 2, 3, 4].map((n) => [`Niveau ${n} → ${n + 1}`, `${REPUTATION.costStep * (n + 1)} Flow`]);
   const reputation = section("reputation", "Réputation et Flow", "Niveaux de réputation", [
     para("Le Flow que tu gagnes au Videur fait monter ta réputation. Tu commences niveau 0. Le niveau est visible sur l'anneau autour de ton bouton profil."),
     table(levels),
+    el("p", "rules-more", `… et ainsi de suite : ${REPUTATION.costStep} Flow de plus à chaque niveau.`),
     bullets([
+      "Pour l'instant, il n'y a pas de niveau maximum : la progression continue, avec un coût qui augmente à chaque niveau.",
       `Chaque niveau coûte ${REPUTATION.costStep} Flow de plus que le précédent.`,
       "À chaque passage de niveau, le Flow correspondant est dépensé : la barre repart avec ce qu'il te reste.",
       "Le Flow ne s'achète pas, ne s'échange pas et ne se convertit pas en pièces.",
