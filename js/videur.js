@@ -13,13 +13,14 @@
 // Pour le Club et le VIP, le serveur n'envoie jamais les règles, les seuils ni le score : il n'y a donc
 // ici aucun aperçu, aucune jauge, aucune coche. La règle du jour n'arrive qu'à la fin (`reveal`).
 
-import { getRarity } from "./data.js?v=79";
-import { getVideurNight, videurPreview, videurEnter } from "./api.js?v=79";
-import { SLOTS, readBodyChoice } from "./avatar.js?v=79";
-import { createAvatar3D } from "./avatar3d.js?v=79";
-import { refreshState, getEquipped, getReputation } from "./inventory.js?v=79";
-import { showToast, reportError } from "./wallet.js?v=79";
-import { playSound, vibrate } from "./effects.js?v=79";
+import { getRarity } from "./data.js?v=80";
+import { getVideurNight, videurPreview, videurEnter } from "./api.js?v=80";
+import { updateVideurBadge } from "./badges.js?v=80";
+import { SLOTS, readBodyChoice } from "./avatar.js?v=80";
+import { createAvatar3D } from "./avatar3d.js?v=80";
+import { refreshState, getEquipped, getReputation } from "./inventory.js?v=80";
+import { showToast, reportError } from "./wallet.js?v=80";
+import { playSound, vibrate } from "./effects.js?v=80";
 
 /** Couleur d'enseigne de chaque porte (comme les raretés : bleu, violet, or). */
 const DOOR_COLOR = { bar: "var(--rarity-rare)", club: "var(--rarity-epique)", vip: "var(--rarity-legendaire)" };
@@ -63,6 +64,7 @@ export function setupVideur({ catalogue }) {
   async function load({ silent = false } = {}) {
     try {
       night = await getVideurNight();
+      updateVideurBadge(night); // la pastille de l'onglet suit les essais du jour
       // Avant la migration 0013, le serveur n'envoie pas de `mode` : toutes les portes sont alors visibles.
       for (const d of night.doors) d.mode = d.mode || "visible";
       errorBox.hidden = true;

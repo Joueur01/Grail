@@ -430,6 +430,10 @@ Ne pas passer plus de 30 minutes bloqué sur l'avatar : simplifier plutôt que p
 
 - **Barre du bas : 5 onglets maximum**, dans cet ordre : **Collection · Market · Booster · Videur · Tenue**. Le **Booster est au centre**, dans une grande pastille crème (couleur du bouton principal du jeu, `.tab-main-pill`), plus grande que les autres onglets et un peu remontée au-dessus de la barre, avec un anneau de la couleur du fond ; elle s'allume quand le Booster est ouvert. Les autres onglets sont du texte (gris, blanc quand actif).
 - **En-tête (toutes les pages)** : à droite, de gauche à droite : **pastille ronde « Amis »** (`.friends-button`, icône de deux personnes, point rouge `#friends-badge` = nombre de demandes reçues), **bouton rond « profil »** (anneau de réputation), **solde de pièces**. Les deux boutons ronds passent en blanc quand leur page est ouverte. L'écran Amis (`#friends`) reste une page à part entière, ouverte par la pastille.
+- **Pastilles de notification** (`js/badges.js`, rouge corail, **le site ne fait que les afficher** : tout vient du serveur) :
+  - **Booster** : le nombre de boosters à ouvrir (stock lu par `get_booster_state`), sur la pastille centrale, dès qu'il y en a au moins un. Quand le minuteur arrive à zéro, `badges.js` relit l'état même hors de l'écran Booster (c'est le serveur qui ajoute le booster) ; `onStateChange()` d'`inventory.js` prévient après chaque relecture.
+  - **Videur** : un **point** tant que le joueur n'a joué **aucune porte aujourd'hui** (aucune porte n'a perdu d'essai, d'après `get_videur_night` ; jour de Paris décidé par le serveur). Il disparaît dès le premier essai (Bar, même raté), et revient le lendemain (relecture toutes les 5 min et au retour sur l'onglet). Rien n'est affiché si le serveur ne renvoie pas les compteurs d'essais.
+  - **Amis** : le nombre de demandes d'ami reçues, sur la pastille ronde du haut (`friends.js`, relue toutes les 45 s).
 - Tout nouvel écran doit trouver sa place sans dépasser 5 onglets : bouton rond en haut, lien depuis le profil, ou sous-vue d'un onglet existant. Vérifié à 320, 375 et 768 px.
 
 ## 9. Contraintes légales (non négociables)

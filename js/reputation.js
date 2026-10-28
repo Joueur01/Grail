@@ -3,9 +3,9 @@
 // niveau dans une pastille. Tout vient du SERVEUR (migration 0021) : niveau, Flow accumulé et Flow demandé.
 // Ce fichier affiche seulement ; il ne calcule aucun niveau.
 
-import { getReputation, onReputationChange } from "./inventory.js?v=79";
-import { showToast } from "./wallet.js?v=79";
-import { playSound, vibrate } from "./effects.js?v=79";
+import { getReputation, onReputationChange } from "./inventory.js?v=80";
+import { showToast } from "./wallet.js?v=80";
+import { playSound, vibrate } from "./effects.js?v=80";
 
 /** Branche le bouton profil. À appeler une fois le jeu démarré (l'état du joueur est déjà lu). */
 export function setupReputation() {

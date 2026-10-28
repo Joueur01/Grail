@@ -17,7 +17,7 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=79">
+  <link rel="stylesheet" href="style.css?v=80">
 </head>
 <body>
   <header class="topbar">
@@ -461,11 +461,11 @@
     <a class="tab" href="#collection" data-tab="collection">Collection</a>
     <a class="tab" href="#market" data-tab="market">Market</a>
     <!-- Booster : au centre, plus grand et d'une autre couleur (bouton principal du jeu) -->
-    <a class="tab tab-main" href="#booster" data-tab="booster"><span class="tab-main-pill">Booster</span></a>
-    <a class="tab" href="#videur" data-tab="videur">Videur</a>
+    <a class="tab tab-main" href="#booster" data-tab="booster"><span class="tab-main-pill">Booster<span class="tab-badge" id="badge-booster" hidden></span></span></a>
+    <a class="tab" href="#videur" data-tab="videur">Videur<span class="tab-badge tab-dot" id="badge-videur" hidden aria-label="Videur pas encore joué aujourd'hui"></span></a>
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=79"></script>
+  <script type="module" src="js/main.js?v=80"></script>
 </body>
 </html>
