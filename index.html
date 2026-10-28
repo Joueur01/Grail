@@ -17,7 +17,7 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=64">
+  <link rel="stylesheet" href="style.css?v=65">
 </head>
 <body>
   <header class="topbar">
@@ -321,6 +321,8 @@
     <!-- Mon profil (profile.js) : identité, avatar 3D, vitrine, statistiques — lu sur le serveur -->
     <section class="screen" data-screen="profile" id="screen-profile" hidden>
       <div id="profile-body"></div>
+      <!-- Se déconnecter (main.js) : hors de #profile-body, que le profil recharge ; reste visible même si le profil ne charge pas -->
+      <button class="signout" id="btn-signout">Se déconnecter</button>
     </section>
 
     <section class="screen" data-screen="avatar" id="screen-avatar" hidden>
@@ -366,7 +368,6 @@
         </div>
       </div>
       <p class="muted share-status" id="share-status" aria-live="polite"></p>
-      <button class="signout" id="btn-signout">Se déconnecter</button>
     </section>
   </main>
 
@@ -426,6 +427,6 @@
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=64"></script>
+  <script type="module" src="js/main.js?v=65"></script>
 </body>
 </html>
