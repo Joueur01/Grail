@@ -1857,3 +1857,63 @@ body[data-auth="public"] .public {
 #market-history-more { margin-top: 12px; }
 .history-sub { white-space: normal; }
 @media (max-width: 380px) { #screen-market .view-tab { padding-inline: 4px; font-size: 12px; white-space: nowrap; } }
+
+/* --- Videur : portes, dress code, jauges, verdict --- */
+.door-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0 16px; }
+.door-tab {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  min-height: 56px; padding: 8px 6px;
+  border: 1.5px solid var(--border); border-radius: 18px;
+  background: var(--surface); color: var(--muted);
+  font-family: var(--font); cursor: pointer;
+}
+.door-tab-name { font-weight: 800; font-size: 15px; letter-spacing: 0.04em; text-transform: uppercase; }
+.door-tab-state { font-size: 11px; }
+.door-tab[aria-selected="true"] { border-color: var(--door-color); color: var(--text); box-shadow: 0 0 14px -4px var(--door-color); }
+.door-tab[aria-selected="true"] .door-tab-name { color: var(--door-color); }
+
+/* Enseigne lumineuse (CSS seulement, pas d'illustration) */
+.door-sign {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 18px 12px; margin-bottom: 8px;
+  border: 2px solid var(--door-color); border-radius: 20px;
+  background: radial-gradient(ellipse at center, color-mix(in srgb, var(--door-color) 16%, transparent), transparent 70%);
+  box-shadow: 0 0 22px -6px var(--door-color), inset 0 0 18px -10px var(--door-color);
+}
+.door-sign-door { font-weight: 900; font-size: 30px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--door-color); text-shadow: 0 0 10px var(--door-color); }
+.door-sign-venue { font-weight: 700; font-size: 15px; }
+.door-intro { text-align: center; margin: 4px 0 8px; }
+.videur-h { margin: 16px 0 8px; font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+
+.rule-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.rule { display: flex; align-items: baseline; gap: 8px; padding: 9px 12px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); font-size: 14px; }
+.rule-label { flex: 1; min-width: 0; }
+.rule-weight { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.rule.ok { border-color: #3f8f5b; }
+.rule.ok .rule-mark { color: #7fd99a; }
+.rule.no .rule-mark { color: #ff8a7a; }
+
+.videur-canvas { display: block; margin: 0 auto 14px; width: 128px; height: 192px; /* ×2 : facteur entier */ background: #cccac4; border-radius: 28px; }
+.videur-empty { text-align: center; }
+.gauge { margin-bottom: 12px; }
+.gauge-head { display: flex; justify-content: space-between; font-weight: 700; font-size: 14px; margin-bottom: 6px; }
+.gauge-value { font-variant-numeric: tabular-nums; color: #ff8a7a; }
+.gauge-value.ok { color: #7fd99a; }
+.gauge-bar { position: relative; height: 12px; border-radius: 999px; background: var(--surface); border: 1px solid var(--border); }
+.gauge-fill { height: 100%; border-radius: 999px; background: #ff8a7a; transition: width 0.4s ease; }
+.gauge-fill.ok { background: #7fd99a; }
+.gauge-mark { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--text); transform: translateX(-1px); }
+.videur-change { display: grid; place-items: center; text-decoration: none; margin-bottom: 10px; }
+.videur-enter { margin-top: 4px; }
+.videur-note { text-align: center; font-size: 12px; margin: 10px 0 0; }
+
+.verdict { text-align: center; padding: 18px 12px; border-radius: 20px; margin-bottom: 14px; animation: verdict-flash 0.8s ease-out; }
+.verdict.pass { background: rgba(63, 143, 91, 0.2); border: 2px solid #3f8f5b; }
+.verdict.fail { background: rgba(224, 80, 63, 0.18); border: 2px solid #e0503f; }
+.verdict-word { margin: 0; font-weight: 900; font-size: 34px; letter-spacing: 0.1em; }
+.verdict.pass .verdict-word { color: #7fd99a; }
+.verdict.fail .verdict-word { color: #ff8a7a; }
+.verdict-line { margin: 6px 0 0; font-style: italic; }
+.verdict-gain { color: var(--rarity-legendaire); font-size: 20px; }
+@keyframes verdict-flash { 0% { filter: brightness(2.2); transform: scale(0.96); } 100% { filter: none; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .verdict { animation: none; } .gauge-fill { transition: none; } }

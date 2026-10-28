@@ -17,7 +17,7 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=44">
+  <link rel="stylesheet" href="style.css?v=45">
 </head>
 <body>
   <header class="topbar">
@@ -203,6 +203,16 @@
       </div>
     </section>
 
+    <!-- Videur : 3 portes par jour (Bar, Club, VIP), dress code du jour, jauges Style / Rareté (videur.js).
+         Tout est calculé par le serveur. -->
+    <section class="screen" data-screen="videur" id="screen-videur" hidden>
+      <h2 class="screen-title">Videur</h2>
+      <p class="muted" id="videur-summary">—</p>
+      <p class="friends-error" id="videur-error" role="status" hidden></p>
+      <div class="door-tabs" role="tablist" aria-label="Portes" id="door-tabs"></div>
+      <div id="videur-door"></div>
+    </section>
+
     <!-- Market entre joueurs : prix fixes, une seule offre (la moins chère) par carte (market.js).
          Géré par le serveur. -->
     <section class="screen" data-screen="market" id="screen-market" hidden>
@@ -368,10 +378,11 @@
     <a class="tab" href="#booster" data-tab="booster">Booster</a>
     <a class="tab" href="#collection" data-tab="collection">Collection</a>
     <a class="tab" href="#market" data-tab="market">Market</a>
+    <a class="tab" href="#videur" data-tab="videur">Videur</a>
     <a class="tab" href="#friends" data-tab="friends">Amis<span class="tab-badge" id="friends-badge" hidden></span></a>
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=44"></script>
+  <script type="module" src="js/main.js?v=45"></script>
 </body>
 </html>

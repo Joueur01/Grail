@@ -6,7 +6,7 @@
 // amélioration. Ne remettre AUCUNE logique de jeu ici ni ailleurs côté client.
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase-config.js?v=44";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase-config.js?v=45";
 
 // Le lien « mot de passe oublié » reçu par e-mail ramène sur le site avec « type=recovery » dans
 // l'adresse. On le note AVANT que supabase-js ne traite (et n'efface) l'adresse.
@@ -181,6 +181,17 @@ export const friendRespond = (id, accept) => rpc("friend_respond", { p_id: id, p
 export const friendRemove = (id) => rpc("friend_remove", { p_id: id });
 /** → { pseudo, equipped: { emplacement: "coloris|rareté" }, cards_owned, cards_total } (amis seulement) */
 export const getFriendProfile = (friendId) => rpc("get_friend_profile", { p_friend: friendId });
+
+// --- Videur (migration 0012) -----------------------------------------------------------
+
+/** La soirée du jour : { day, flow, streak, streak_bonus_cap, tries_per_door, rarity_points,
+ *  doors: [{ id, name, venue, intro, min_style, min_rarity, flow, rules: [{ label, weight }], tries_left, passed, locked }] } */
+export const getVideurNight = () => rpc("get_videur_night");
+/** Aperçu GRATUIT de la tenue portée pour une porte : { style, rarity_points, min_style, min_rarity,
+ *  style_ok, rarity_ok, rules: [{ label, weight, ok }], pieces: [{ slot, colorway_id, rarity }] } */
+export const videurPreview = (door) => rpc("videur_preview", { p_door: door });
+/** Se présenter (consomme un essai) : aperçu + { passed, line, flow_gained, streak_bonus, streak, tries_left, flow } */
+export const videurEnter = (door) => rpc("videur_enter", { p_door: door });
 
 // --- Statistiques d'usage (migration 0010) -------------------------------------------
 

@@ -7,22 +7,23 @@
 // ?v=… sur les imports : même numéro que dans index.html, et le même partout
 // (un module importé sous deux adresses différentes serait chargé deux fois).
 
-import { loadCatalogue } from "./data.js?v=44";
-import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=44";
-import { initAvatar, setupOutfit } from "./avatar.js?v=44";
-import { setupBooster } from "./booster.js?v=44";
-import { setupShare } from "./share.js?v=44";
-import { setupUpgrade } from "./upgrade.js?v=44";
-import { setupAtelier, setupViewSwitch } from "./atelier.js?v=44";
-import { setupWallet, reportError, showToast } from "./wallet.js?v=44";
-import { setupDiscard, createSelection } from "./discard.js?v=44";
-import { setupMarket } from "./market.js?v=44";
-import { setupFriends } from "./friends.js?v=44";
-import { startAnalytics, track } from "./analytics.js?v=44";
-import { showSharedOutfit } from "./shared-outfit.js?v=44";
-import { getSession, signIn, signUp, signOut, supabase, requestPasswordReset, updatePassword, isRecoveryLink, endRecovery, sharedOutfitToken } from "./api.js?v=44";
+import { loadCatalogue } from "./data.js?v=45";
+import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=45";
+import { initAvatar, setupOutfit } from "./avatar.js?v=45";
+import { setupBooster } from "./booster.js?v=45";
+import { setupShare } from "./share.js?v=45";
+import { setupUpgrade } from "./upgrade.js?v=45";
+import { setupAtelier, setupViewSwitch } from "./atelier.js?v=45";
+import { setupWallet, reportError, showToast } from "./wallet.js?v=45";
+import { setupDiscard, createSelection } from "./discard.js?v=45";
+import { setupMarket } from "./market.js?v=45";
+import { setupFriends } from "./friends.js?v=45";
+import { setupVideur } from "./videur.js?v=45";
+import { startAnalytics, track } from "./analytics.js?v=45";
+import { showSharedOutfit } from "./shared-outfit.js?v=45";
+import { getSession, signIn, signUp, signOut, supabase, requestPasswordReset, updatePassword, isRecoveryLink, endRecovery, sharedOutfitToken } from "./api.js?v=45";
 
-const SCREENS = ["booster", "collection", "market", "friends", "avatar"];
+const SCREENS = ["booster", "collection", "market", "videur", "friends", "avatar"];
 
 /** Affiche l'écran demandé et met à jour l'onglet actif. */
 function showScreen(name) {
@@ -238,6 +239,8 @@ async function boot() {
     market = setupMarket({ catalogue, onChange });
     // Amis : pseudo, demandes, liste, tenue d'un ami (géré par le serveur).
     setupFriends({ catalogue });
+    // Videur : 3 portes par jour, dress code du jour, Flow (tout est calculé par le serveur).
+    setupVideur({ catalogue });
   } catch (err) {
     console.error(err);
     statusEl.textContent = err?.message || "Impossible de charger le jeu. Recharge la page.";
