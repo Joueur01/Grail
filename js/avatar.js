@@ -6,12 +6,12 @@
 // bas, chaussures) avec un petit espace, et l'écharpe et le sac sont posés à côté.
 // Les sprites sont utilisés TELS QUELS, à leur taille réelle (×1 dans le canvas).
 
-import { RARITIES } from "./data.js?v=51";
-import { getOwnedCards, getEquipped, equip } from "./inventory.js?v=51";
-import { reportError } from "./wallet.js?v=51";
-import { createCardFace, createCardShell } from "./cards.js?v=51";
-import { createAvatar3D } from "./avatar3d.js?v=51";
-import { hasWearModel } from "./wear-models.js?v=51";
+import { RARITIES, matchesSearch, getRarity } from "./data.js?v=56";
+import { getOwnedCards, getEquipped, equip } from "./inventory.js?v=56";
+import { reportError } from "./wallet.js?v=56";
+import { createCardFace, createCardShell } from "./cards.js?v=56";
+import { createAvatar3D } from "./avatar3d.js?v=56";
+import { hasWearModel } from "./wear-models.js?v=56";
 
 // Les 7 emplacements.
 // Les identifiants correspondent au champ "slot" de pieces.json. L'ordre de cette liste
@@ -180,11 +180,19 @@ export function setupOutfit({ catalogue, onChange }) {
   const pickerTitle = document.getElementById("picker-title");
   const pickerGrid = document.getElementById("picker-grid");
   const pickerEmpty = document.getElementById("picker-empty");
-  const removeBtn = document.getElementById("picker-remove");
+  const pickerCount = document.getElementById("picker-count");
+  const searchInput = document.getElementById("picker-search");
+  const brandSelect = document.getElementById("picker-brand");
+  const raritySelect = document.getElementById("picker-rarity");
+  const sortSelect = document.getElementById("picker-sort");
   let currentSlot = null;
 
   const rarityRank = new Map(RARITIES.map((r, i) => [r.id, i]));
   const catalogueOrder = new Map(catalogue.colorways.map((c, i) => [c.id, i]));
+
+  // Menus de filtres du panneau (la 1re option « Marque », « Rareté » = tout afficher).
+  fillSelect(brandSelect, catalogue.brands);
+  fillSelect(raritySelect, [...RARITIES].reverse()); // Légendaire en premier
 
   const canvas = document.getElementById("avatar-canvas");
   const hint = document.getElementById("outfit-hint");
@@ -277,40 +285,83 @@ export function setupOutfit({ catalogue, onChange }) {
     return btn;
   }
 
-  /** Ouvre le panneau avec les cartes possédées pour cet emplacement. */
+  /** Ouvre le panneau avec les cartes possédées pour cet emplacement (filtres remis à zéro). */
   function openPicker(slot) {
     currentSlot = slot;
     pickerTitle.textContent = slot.name;
-    const equipped = getEquipped(slot.id);
+    searchInput.value = "";
+    brandSelect.value = "";
+    raritySelect.value = "";
+    sortSelect.value = "rarity";
+    picker.hidden = false;
+    renderPicker();
+    pickerGrid.parentElement.scrollTop = 0;
+  }
 
-    const choices = getOwnedCards()
-      .filter((c) => catalogue.colorwayById.get(c.colorwayId)?.piece.slot === slot.id)
-      // La plus rare d'abord, puis l'ordre du catalogue.
-      .sort((a, b) => (rarityRank.get(b.rarity) - rarityRank.get(a.rarity))
-        || (catalogueOrder.get(a.colorwayId) - catalogueOrder.get(b.colorwayId)));
+  /** Dessine la liste : la pièce PORTÉE d'abord (si elle correspond aux filtres), puis le reste trié. */
+  function renderPicker() {
+    const slot = currentSlot;
+    if (!slot) return;
+    const equipped = getEquipped(slot.id);
+    const isWorn = (c) => equipped && equipped.colorwayId === c.colorwayId && equipped.rarity === c.rarity;
+
+    const all = getOwnedCards()
+      .filter((c) => catalogue.colorwayById.get(c.colorwayId)?.piece.slot === slot.id);
+    const byRarity = (a, b) => (rarityRank.get(b.rarity) - rarityRank.get(a.rarity))
+      || (catalogueOrder.get(a.colorwayId) - catalogueOrder.get(b.colorwayId));
+    const byName = (a, b) => {
+      const ca = catalogue.colorwayById.get(a.colorwayId), cb = catalogue.colorwayById.get(b.colorwayId);
+      return ca.piece.name.localeCompare(cb.piece.name, "fr") || ca.name.localeCompare(cb.name, "fr") || byRarity(a, b);
+    };
+    const byCatalogue = (a, b) => (catalogueOrder.get(a.colorwayId) - catalogueOrder.get(b.colorwayId))
+      || (rarityRank.get(b.rarity) - rarityRank.get(a.rarity));
+    const sorter = { rarity: byRarity, name: byName, catalogue: byCatalogue }[sortSelect.value] || byRarity;
+
+    const choices = all
+      .filter((c) => {
+        const colorway = catalogue.colorwayById.get(c.colorwayId);
+        return matchesSearch(searchInput.value, [colorway.piece.name, colorway.name, colorway.brand.name, getRarity(c.rarity).name])
+          && (!brandSelect.value || colorway.brand.id === brandSelect.value)
+          && (!raritySelect.value || c.rarity === raritySelect.value);
+      })
+      // La pièce portée passe toujours en premier ; le tri choisi s'applique au reste.
+      .sort((a, b) => (isWorn(b) - isWorn(a)) || sorter(a, b));
 
     pickerGrid.replaceChildren(...choices.map((c) => {
       const colorway = catalogue.colorwayById.get(c.colorwayId);
-      // Chaque carte est un bouton : la toucher l'équipe.
+      const worn = isWorn(c);
+      // Chaque carte est un bouton : la toucher l'équipe ; toucher la pièce portée la retire.
       const btn = document.createElement("button");
       btn.className = "picker-choice";
+      btn.setAttribute("aria-pressed", String(!!worn));
+      btn.setAttribute("aria-label", `${colorway.piece.name}, ${colorway.name}, ${getRarity(c.rarity).name}`
+        + (worn ? " : portée, toucher pour la retirer" : ""));
       const card = createCardShell(colorway, c.rarity);
       card.classList.add("owned");
-      if (equipped && equipped.colorwayId === c.colorwayId && equipped.rarity === c.rarity) {
-        card.classList.add("equipped");
-      }
       card.append(createCardFace(colorway, c.rarity));
+      if (worn) {
+        card.classList.add("equipped");
+        const tag = document.createElement("span");
+        tag.className = "worn-tag";
+        tag.textContent = "✓ Portée";
+        card.append(tag);
+      }
       btn.append(card);
       btn.addEventListener("click", async () => {
         closePicker();
-        await changeSlot(slot.id, c);
+        await changeSlot(slot.id, worn ? null : c);
       });
       return btn;
     }));
 
-    pickerEmpty.hidden = choices.length > 0;
-    removeBtn.hidden = !equipped;
-    picker.hidden = false;
+    const shown = choices.length;
+    pickerCount.textContent = all.length
+      ? `${shown} / ${all.length} pièce${all.length > 1 ? "s" : ""}${equipped ? " · touche la pièce portée pour la retirer" : ""}`
+      : "";
+    pickerEmpty.hidden = shown > 0;
+    pickerEmpty.textContent = all.length
+      ? "Aucune pièce ne correspond à ta recherche."
+      : "Tu n'as pas encore de pièce pour cet emplacement. Ouvre des boosters !";
   }
 
   /** Change la tenue : le SERVEUR vérifie (carte possédée, bon emplacement) puis on relit et on redessine. */
@@ -328,15 +379,22 @@ export function setupOutfit({ catalogue, onChange }) {
     currentSlot = null;
   }
 
-  removeBtn.addEventListener("click", async () => {
-    const slotId = currentSlot?.id;
-    closePicker();
-    if (slotId) await changeSlot(slotId, null);
-  });
+  // Filtres : la liste se redessine à chaque frappe ou changement de menu.
+  for (const el of [searchInput, brandSelect, raritySelect, sortSelect]) el.addEventListener("input", renderPicker);
   document.getElementById("picker-close").addEventListener("click", closePicker);
   // Toucher le fond sombre (en dehors du panneau) ferme aussi.
   picker.addEventListener("click", (e) => { if (e.target === picker) closePicker(); });
 
   render();
   return render;
+}
+
+/** Ajoute une <option> par élément { id, name } (après l'option « tout »). */
+function fillSelect(select, items) {
+  for (const item of items) {
+    const option = document.createElement("option");
+    option.value = item.id;
+    option.textContent = item.name;
+    select.append(option);
+  }
 }

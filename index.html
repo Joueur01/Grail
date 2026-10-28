@@ -17,7 +17,7 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=51">
+  <link rel="stylesheet" href="style.css?v=56">
 </head>
 <body>
   <header class="topbar">
@@ -387,9 +387,23 @@
         <h3 class="picker-title" id="picker-title"></h3>
         <button class="picker-close" id="picker-close" aria-label="Fermer">✕</button>
       </div>
-      <p class="muted picker-empty" id="picker-empty" hidden>Tu n'as pas encore de pièce pour cet emplacement. Ouvre des boosters !</p>
-      <div class="card-grid" id="picker-grid"></div>
-      <button class="btn" id="picker-remove" hidden>Retirer la pièce</button>
+      <!-- Recherche, filtres et tri : l'emplacement est déjà choisi, donc pas de filtre « Type » -->
+      <div class="filters picker-filters">
+        <input class="search" id="picker-search" type="search" placeholder="Rechercher…" aria-label="Rechercher une pièce par nom" autocomplete="off" enterkeyhint="search">
+        <select id="picker-brand" aria-label="Filtrer par marque"><option value="">Marque</option></select>
+        <select id="picker-rarity" aria-label="Filtrer par rareté"><option value="">Rareté</option></select>
+        <select id="picker-sort" aria-label="Trier les pièces : rareté, nom ou marque">
+          <option value="rarity">↕ Rareté</option>
+          <option value="name">↕ Nom</option>
+          <option value="catalogue">↕ Marque</option>
+        </select>
+      </div>
+      <p class="muted picker-count" id="picker-count"></p>
+      <!-- Liste qui défile (l'en-tête et les filtres restent en haut) -->
+      <div class="picker-scroll">
+        <p class="muted picker-empty" id="picker-empty" hidden></p>
+        <div class="card-grid" id="picker-grid"></div>
+      </div>
     </div>
   </div>
 
@@ -403,6 +417,6 @@
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=51"></script>
+  <script type="module" src="js/main.js?v=56"></script>
 </body>
 </html>
