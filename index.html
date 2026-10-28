@@ -17,7 +17,7 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=47">
+  <link rel="stylesheet" href="style.css?v=48">
 </head>
 <body>
   <header class="topbar">
@@ -317,13 +317,26 @@
     <section class="screen" data-screen="avatar" id="screen-avatar" hidden>
       <h2 class="screen-title">Ma tenue</h2>
       <p class="muted" id="outfit-summary">—</p>
-      <!-- Fiche de tenue : tenue « à plat » au centre, une case par emplacement autour (avatar.js) -->
+      <!-- Vue de l'avatar : 3D (on le fait tourner en glissant) ou tenue « à plat » -->
+      <div class="view-switch outfit-switch" role="tablist" aria-label="Vue de la tenue">
+        <button class="view-tab" role="tab" data-view="avatar3d" aria-selected="true">3D</button>
+        <button class="view-tab" role="tab" data-view="avatarflat" aria-selected="false">À plat</button>
+      </div>
+      <!-- Fiche de tenue : l'avatar au centre, une case par emplacement autour (avatar.js) -->
       <div class="outfit">
         <div class="outfit-col" id="outfit-left"></div>
         <div class="outfit-body">
+          <!-- Avatar 3D (avatar3d.js) : canvas 48×96 « logique » (1 voxel = 1 pixel), agrandi d'un facteur entier en CSS -->
+          <div class="outfit-view" id="avatar3d-view">
+            <canvas id="avatar-3d" class="pixel avatar-3d" width="48" height="96" aria-label="Ton avatar en 3D : glisse pour le faire tourner"></canvas>
+            <p class="outfit-3d-hint">Glisse pour tourner</p>
+            <p class="outfit-3d-note" id="outfit-3d-note" hidden></p>
+          </div>
           <!-- Tenue à plat : canvas 64×96 « logique », agrandi d'un facteur entier en CSS -->
-          <canvas id="avatar-canvas" class="pixel avatar-canvas" width="64" height="96"></canvas>
-          <p class="outfit-hint" id="outfit-hint">Touche une case pour composer ta tenue</p>
+          <div class="outfit-view" id="avatarflat-view" hidden>
+            <canvas id="avatar-canvas" class="pixel avatar-canvas" width="64" height="96"></canvas>
+            <p class="outfit-hint" id="outfit-hint">Touche une case pour composer ta tenue</p>
+          </div>
         </div>
         <div class="outfit-col" id="outfit-right"></div>
       </div>
@@ -383,6 +396,6 @@
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=47"></script>
+  <script type="module" src="js/main.js?v=48"></script>
 </body>
 </html>
