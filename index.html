@@ -17,7 +17,7 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=68">
+  <link rel="stylesheet" href="style.css?v=70">
 </head>
 <body>
   <header class="topbar">
@@ -26,6 +26,8 @@
       <!-- Mon profil (profile.js) : pas d'onglet en bas, la barre en a déjà 6 -->
       <a class="profile-button" href="#profile" data-tab="profile" aria-label="Mon profil">
         <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><circle cx="10" cy="6.5" r="3.6" fill="currentColor"/><path d="M2.8 18c.6-3.9 3.6-6.2 7.2-6.2s6.6 2.3 7.2 6.2" fill="currentColor"/></svg>
+        <!-- Réputation (reputation.js) : niveau dans une pastille + anneau de progression autour du bouton -->
+        <span class="rep-badge" id="rep-badge" aria-hidden="true"></span>
       </a>
       <!-- Solde de pièces, visible sur toutes les pages (wallet.js) -->
       <span class="coins" id="coins" role="status" aria-label="Solde : 0 pièce">
@@ -427,6 +429,6 @@
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=68"></script>
+  <script type="module" src="js/main.js?v=70"></script>
 </body>
 </html>

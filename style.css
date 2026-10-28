@@ -107,6 +107,46 @@ body {
 }
 .profile-button[aria-current="page"] { background: var(--text); border-color: var(--text); color: var(--bg); }
 
+/* Réputation : anneau de progression vers le niveau suivant autour du bouton + pastille du niveau (reputation.js) */
+.profile-button { position: relative; }
+.rep-badge { display: none; }
+.profile-button.has-rep::before {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  /* anneau : la part --rep (0 à 1) est dorée, le reste gris */
+  background: conic-gradient(var(--rarity-legendaire) calc(var(--rep, 0) * 1turn), var(--border) 0);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px));
+  pointer-events: none;
+}
+.profile-button.has-rep .rep-badge {
+  position: absolute;
+  right: -8px;
+  bottom: -8px;
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border: 2px solid var(--bg);
+  border-radius: 999px;
+  background: var(--rarity-legendaire);
+  color: #1a1405;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
+}
+/* Montée de niveau : le bouton « pulse » */
+.profile-button.rep-up { animation: rep-pulse 1.1s ease-out; }
+@keyframes rep-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(242, 194, 48, 0.8); transform: scale(1); }
+  30%  { transform: scale(1.18); }
+  100% { box-shadow: 0 0 0 16px rgba(242, 194, 48, 0); transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) { .profile-button.rep-up { animation: none; } }
+
 /* Solde de pièces, en haut à droite de toutes les pages */
 .coins {
   display: inline-flex;
@@ -2237,3 +2277,19 @@ body[data-auth="public"] .public {
 
 /* Profil d'un ami dans le panneau : un peu moins d'espace */
 .sheet-body .profile { gap: 16px; }
+
+/* Carte Réputation de la page de profil */
+.rep-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border: 1.5px solid var(--rarity-legendaire);
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(242, 194, 48, 0.1), rgba(242, 194, 48, 0.02));
+}
+.rep-card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.rep-card-level { font-size: 26px; font-weight: 900; font-stretch: 112%; letter-spacing: -0.02em; text-transform: uppercase; color: var(--rarity-legendaire); }
+.rep-bar { height: 12px; border-radius: 999px; background: var(--border); overflow: hidden; }
+.rep-bar-fill { height: 100%; min-width: 4px; border-radius: 999px; background: var(--rarity-legendaire); transition: width 0.6s ease-out; }
+.rep-card-sub { margin: 0; font-size: 13px; font-weight: 600; color: var(--muted); }

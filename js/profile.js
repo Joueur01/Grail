@@ -6,13 +6,13 @@
 // que chaque carte est possédée. Ce fichier ne calcule rien : il met en page ce que le serveur
 // renvoie. Un ami ne reçoit pas le solde de pièces (le serveur renvoie null).
 
-import { RARITIES, getRarity, matchesSearch } from "./data.js?v=68";
-import { getPlayerProfile, setShowcase } from "./api.js?v=68";
-import { getOwnedCards } from "./inventory.js?v=68";
-import { showToast, reportError } from "./wallet.js?v=68";
-import { SLOTS } from "./avatar.js?v=68";
-import { createAvatar3D } from "./avatar3d.js?v=68";
-import { createCardFace, createCardShell } from "./cards.js?v=68";
+import { RARITIES, getRarity, matchesSearch } from "./data.js?v=70";
+import { getPlayerProfile, setShowcase } from "./api.js?v=70";
+import { getOwnedCards } from "./inventory.js?v=70";
+import { showToast, reportError } from "./wallet.js?v=70";
+import { SLOTS } from "./avatar.js?v=70";
+import { createAvatar3D } from "./avatar3d.js?v=70";
+import { createCardFace, createCardShell } from "./cards.js?v=70";
 
 function el(tag, className, text) {
   const e = document.createElement(tag);
@@ -42,6 +42,24 @@ function statTile(label, value, { progress = null, sub = "" } = {}) {
   return tile;
 }
 
+/** Carte « Réputation » : niveau en grand, barre de progression vers le niveau suivant, Flow restant. */
+function reputationCard(data) {
+  const card = el("section", "rep-card");
+  const head = el("div", "rep-card-head");
+  head.append(el("span", "eyebrow", "Réputation"), el("span", "rep-card-level", `Niveau ${data.rep_level}`));
+  const bar = el("div", "rep-bar");
+  bar.setAttribute("role", "progressbar");
+  bar.setAttribute("aria-valuemin", "0");
+  bar.setAttribute("aria-valuemax", String(data.rep_next));
+  bar.setAttribute("aria-valuenow", String(data.flow));
+  const fill = el("div", "rep-bar-fill");
+  fill.style.width = `${Math.max(0, Math.min(100, (data.flow / data.rep_next) * 100))}%`;
+  bar.append(fill);
+  const left = Math.max(0, data.rep_next - data.flow);
+  card.append(head, bar, el("p", "rep-card-sub", `${data.flow} / ${data.rep_next} Flow · encore ${left} pour le niveau ${data.rep_level + 1}`));
+  return card;
+}
+
 /**
  * Construit la page de profil à partir de la réponse du serveur.
  * - data : réponse de get_player_profile
@@ -67,6 +85,10 @@ export function buildProfileView(data, catalogue, { showName = true, onEditOutfi
     head.append(link);
   }
   root.append(head);
+
+  // --- Réputation (le Flow devenu niveaux) : grande carte bien visible, juste sous l'identité ---
+  const hasReputation = typeof data.rep_level === "number" && typeof data.rep_next === "number";
+  if (hasReputation) root.append(reputationCard(data));
 
   // --- Avatar 3D avec la tenue portée (même rendu que l'écran Tenue) ---
   const worn = {};
@@ -138,7 +160,8 @@ export function buildProfileView(data, catalogue, { showName = true, onEditOutfi
     statTile("Collection", `${data.cards_owned} / ${total}`, { progress: data.cards_owned / total, sub: `${data.copies} exemplaires` }),
     statTile("Boosters ouverts", String(data.boosters_opened ?? 0)),
     statTile("Série au Videur", `${data.videur_streak ?? 0} j`),
-    statTile("Flow", String(data.flow ?? 0)),
+    // Sans la migration 0021, le Flow reste une simple statistique ; sinon il est dans la carte Réputation.
+    ...(hasReputation ? [] : [statTile("Flow", String(data.flow ?? 0))]),
     statTile("Amis", String(data.friends ?? 0)),
   );
   // Le solde n'est renvoyé qu'au joueur lui-même.

@@ -6,9 +6,9 @@
 //   - relayer les actions simples (verrou, tenue) vers le serveur, puis relire l'état.
 // Il ne calcule rien d'important : pas de tirage, de gain ni de règle de jeu.
 
-import { RARITIES, matchesSearch, getRarity } from "./data.js?v=68";
-import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=68";
-import * as api from "./api.js?v=68";
+import { RARITIES, matchesSearch, getRarity } from "./data.js?v=70";
+import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=70";
+import * as api from "./api.js?v=70";
 
 // --- État en mémoire (rempli par refreshState) ---
 
@@ -19,6 +19,7 @@ const state = {
   booster: null,                 // dernier get_booster_state() + échéance du minuteur
 };
 const coinListeners = [];
+const reputationListeners = [];
 
 /** Clé unique d'une carte : un coloris + une rareté. */
 export function cardKey(colorwayId, rarityId) {
@@ -48,6 +49,7 @@ export function refreshState({ booster = true } = {}) {
     ]);
     if (!profile) throw new api.ApiError("Profil introuvable. Reconnecte-toi.");
     const before = state.profile ? state.profile.coins : null;
+    const levelBefore = state.profile ? state.profile.rep_level : undefined;
     state.profile = profile;
     state.cards = new Map(inventory.map((r) => [cardKey(r.colorway_id, r.rarity),
       { colorwayId: r.colorway_id, rarity: r.rarity, count: r.count, locked: r.locked }]));
@@ -58,6 +60,10 @@ export function refreshState({ booster = true } = {}) {
       state.booster = { ...boosterState, deadline: next === null || next === undefined ? null : Date.now() + next * 1000 };
     }
     if (before !== null && profile.coins !== before) for (const fn of coinListeners) fn(profile.coins);
+    // Réputation : on prévient quand le niveau MONTE (animation du bouton profil + notification).
+    const reputation = getReputation();
+    if (reputation && levelBefore !== undefined && reputation.level > levelBefore) for (const fn of reputationListeners) fn(reputation, levelBefore);
+    for (const fn of reputationListeners) fn(reputation, null);
   };
   const result = queue.then(run);
   queue = result.catch(() => {}); // une erreur ne bloque pas les relectures suivantes
@@ -88,6 +94,22 @@ export function getCoins() {
 /** Appelle fn(solde) quand le solde change après une relecture (sert à l'animation du solde). */
 export function onCoinsChange(fn) {
   coinListeners.push(fn);
+}
+
+/** Appelle fn(réputation, ancienNiveau) après chaque relecture : ancienNiveau est le niveau d'avant si le niveau vient de monter, sinon null. */
+export function onReputationChange(fn) {
+  reputationListeners.push(fn);
+}
+
+/**
+ * Réputation du joueur (le Flow est devenu une réputation, migration 0021) :
+ * { level, flow, next } où flow = Flow accumulé vers le niveau suivant et next = Flow demandé pour l'atteindre.
+ * null tant que la migration n'est pas exécutée. Tout vient du serveur : le site ne calcule rien.
+ */
+export function getReputation() {
+  const p = state.profile;
+  if (!p || typeof p.rep_level !== "number" || typeof p.rep_next !== "number") return null;
+  return { level: p.rep_level, flow: p.flow || 0, next: p.rep_next };
 }
 
 /** Boosters : { stock, max, nextInMs, signature, untilSignature, canOpen } (nextInMs = null : stock plein). */

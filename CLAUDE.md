@@ -64,6 +64,7 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 │   ├── data.js        # chargement du catalogue, raretés, recherche
 │   ├── economy-config.js  # valeurs de l'économie, pour l'AFFICHAGE seulement (le serveur décide)
 │   ├── wallet.js      # solde de pièces (en-tête), bonus quotidien, notification
+│   ├── reputation.js  # réputation : anneau de progression + niveau autour du bouton profil, notification de niveau
 │   ├── booster.js     # écran Booster : stock, minuteur, déchirure, révélation
 │   ├── effects.js     # sons synthétisés, vibrations, particules
 │   ├── gestures.js    # gestes : glisser, rester appuyé, toucher
@@ -108,7 +109,8 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 │       ├── 0017_apercu_amis.sql  # aperçu (avatar + vitrine) de chaque ami dans la liste
 │       ├── 0018_carte_utilisee_liberee.sql  # une carte portée / en vitrine qui quitte la collection en est retirée
 │       ├── 0019_partage_3d.sql  # tenue partagée : avatar Garçon / Fille enregistré avec le lien + date du dernier partage
-│       └── 0020_pseudo_sur_le_lien.sql  # le pseudo de la personne qui partage s'affiche sur la page du lien
+│       ├── 0020_pseudo_sur_le_lien.sql  # le pseudo de la personne qui partage s'affiche sur la page du lien
+│       └── 0021_reputation.sql  # le Flow devient une réputation (niveaux)
 ├── tools/
 │   └── extraire_sprites.py   # découpe les planches → PNG + SVG (Python + Pillow)
 └── CLAUDE.md
@@ -376,7 +378,7 @@ Le développeur n'est pas juriste ; ces règles sont prudentes en attendant un a
 
 ## 13. Back end Supabase (comptes + serveur de jeu) — le serveur est la source de vérité
 
-- Projet Supabase : `https://qsueqvsbhytqrotlxmak.supabase.co`. Les migrations SQL (**0001 à 0020**, exécutées par le développeur dans le SQL Editor, **ne jamais les modifier depuis le front** ; les 0005 à 0020 sont dans `supabase/migrations/`) créent : catalogue (`brands`, `pieces`, `colorways`), `economy_config`, `profiles`, `inventory`, `transactions`, `market_listings`, la vue `market_best_offers` et toutes les fonctions du jeu.
+- Projet Supabase : `https://qsueqvsbhytqrotlxmak.supabase.co`. Les migrations SQL (**0001 à 0021**, exécutées par le développeur dans le SQL Editor, **ne jamais les modifier depuis le front** ; les 0005 à 0021 sont dans `supabase/migrations/`) créent : catalogue (`brands`, `pieces`, `colorways`), `economy_config`, `profiles`, `inventory`, `transactions`, `market_listings`, la vue `market_best_offers` et toutes les fonctions du jeu.
 - **Règle d'or : ne jamais remettre de logique de jeu côté client.** Le front ne tire pas de carte, ne calcule ni gain ni chance réelle, ne vérifie pas de règle (limite de ventes, verrou, solde…). Il appelle une fonction, affiche le résultat, et relit l'état. Toute nouvelle règle ou nouvelle valeur d'économie se code **dans une migration SQL** (puis, si besoin d'affichage, dans `js/economy-config.js`).
 - **Le jeu n'est accessible que connecté** : e-mail + mot de passe (écran de connexion / création de compte dans `index.html`, géré par `main.js`). À l'inscription, le message « Confirme ton e-mail » s'affiche : le compte ne peut se connecter qu'après avoir cliqué le lien reçu. Un profil (3 boosters, 0 pièce) est créé automatiquement par le serveur. Bouton « Se déconnecter » **tout en bas de la page de profil** (bouton rond en haut ; il était dans l'écran Tenue), hors de la zone que le profil recharge : il reste visible même si le profil ne charge pas.
 - **Mot de passe oublié** : lien « Mot de passe oublié ? » sous le formulaire de connexion (pas à la création de compte) → e-mail de réinitialisation (`resetPasswordForEmail`, réponse toujours neutre pour ne pas révéler quelles adresses ont un compte). Le lien reçu ramène sur le site avec `type=recovery` : `api.js` le détecte (`isRecoveryLink`) et `main.js` affiche « Nouveau mot de passe » (6 caractères minimum, saisie en double, `updatePassword`) **avant** de lancer le jeu ; lien expiré → message + renvoi vers « Mot de passe oublié ? ». **À régler dans Supabase** (Authentication → URL Configuration) : Site URL `https://joueur01.github.io/Grail/` et Redirect URLs `https://joueur01.github.io/Grail/**`, sinon les liens (confirmation et réinitialisation) pointent vers localhost.
@@ -467,8 +469,9 @@ Chaque porte exige un minimum sur **les deux** ; le refus dit laquelle manque (�
 
 ### Récompenses de la V1
 
-- **Flow** (nouvelle monnaie, `profiles.flow`) : **garanti à chaque porte réussie**, par défaut Bar 5 · Club 12 · VIP 25 (`VIDEUR.doors[].flow`), plus un **bonus de série** (+1 par jour d'affilée avec au moins le Bar réussi, plafonné à +5, `VIDEUR.streakBonusCap`). Aucune pénalité si on rate un jour.
-- **Règles du Flow (non négociables)** : jamais convertible en pièces, jamais échangeable entre joueurs, jamais acheté avec des pièces ni de l'argent réel ; il ne servira qu'à des **cosmétiques purement visuels** (aucun avantage de jeu).
+- **Le Flow est devenu une RÉPUTATION (migration 0021, décision du développeur)** : voir la sous-section « Réputation » ci-dessous. Les gains de Flow ci-dessous n'ont pas changé.
+- **Flow** (`profiles.flow`) : **garanti à chaque porte réussie**, par défaut Bar 5 · Club 12 · VIP 25 (`VIDEUR.doors[].flow`), plus un **bonus de série** (+1 par jour d'affilée avec au moins le Bar réussi, plafonné à +5, `VIDEUR.streakBonusCap`). Aucune pénalité si on rate un jour.
+- **Règles du Flow (non négociables)** : jamais convertible en pièces, jamais échangeable entre joueurs, jamais acheté avec des pièces ni de l'argent réel, aucun avantage de jeu. **Il sert maintenant à monter en réputation** (il est dépensé à chaque niveau) ; les cosmétiques visuels éventuels seraient débloqués **par niveau** (voir « Étapes suivantes »).
 - **Pas de coffre, pas d'objet collector, pas de saison dans la V1.**
 
 ### Fonctions serveur (migration 0012, faites)
@@ -509,8 +512,17 @@ Le Videur devient un **jeu de déduction** (façon Wordle / Mastermind) : plus o
 - **Statistiques** : `analytics_videur_daily` ajoute le pourcentage moyen de critères respectés.
 
 **Points non tranchés (le développeur doit décider ; rien n'est implémenté)**
-1. **Rôle exact du Flow et de la Série** (usage du Flow, série au Club et au VIP, bonus) : à préciser avant de les modifier.
+1. ~~Rôle exact du Flow~~ : **tranché** (il fait monter la réputation, voir ci-dessus). **Reste à préciser** : la série au Club et au VIP, et le bonus de série.
 2. **Règle du jour impossible avec la petite collection d'un nouveau joueur** (ex. « au moins 18 points de rareté » avec quelques communes) : pistes à valider, dont **règles plus faciles au Club pour un joueur qui a peu de cartes**, ou **tenue d'essai prêtée** ; pour l'instant le joueur peut simplement échouer et lire la règle le soir.
+
+
+### Réputation (le Flow devenu niveaux, migration 0021, `js/reputation.js`)
+
+- **Règle** : on arrive **niveau 0**. Passer niveau 1 coûte **50 Flow**, niveau 2 **100**, niveau 3 **150**… : **50 de plus à chaque niveau** (coût du passage du niveau n au suivant = 50 × (n + 1), `economy_config.REPUTATION.costStep`). **À chaque passage de niveau, ce Flow est DÉPENSÉ** : `profiles.flow` est donc le Flow accumulé vers le niveau suivant (il baisse au passage), `profiles.rep_level` le niveau et `profiles.rep_next` le Flow à atteindre pour le suivant.
+- **Serveur** : un **déclencheur** sur `profiles` (`private.reputation_rankup`) applique les passages de niveau, **plusieurs d'un coup** si le gain est grand, sans modifier `videur_enter` (qui fait toujours `update profiles set flow = flow + …`). La migration **convertit une fois** le Flow déjà gagné (ex. 120 Flow → niveau 1 + 70) ; relancer ne change plus rien. `get_player_profile` renvoie `flow`, `rep_level` et `rep_next`. Le site ne calcule aucun niveau.
+- **Affichage (bien visible)** : (1) **anneau doré de progression + pastille du niveau autour du bouton rond « profil »**, en haut de toutes les pages, à côté du solde ; (2) **grande carte « Réputation / Niveau N »** avec barre et « 35 / 150 Flow · encore 115 pour le niveau 3 » **juste sous le pseudo** de la page de profil (un ami voit aussi le niveau de l'autre) ; (3) ligne « Réputation niv. N · 35 / 150 Flow · Série… » en haut de l'écran Videur. **Montée de niveau** : notification « Réputation : niveau N atteint ! », son, vibration et pulsation du bouton (détectée quand le niveau monte après une relecture).
+- **Sans la migration 0021** : bouton profil simple, tuile « Flow » dans les statistiques et « Flow : N » au Videur, comme avant.
+- **Vérifiée** sur une base PostgreSQL locale (faux schéma, migration lancée 2 fois) : 49 + 1 Flow → niveau 1 et Flow dépensé ; niveau 1 → 2 coûte 100 ; gros gain d'un coup → plusieurs niveaux sans perdre de Flow ; Flow existant converti ; autres mises à jour du profil sans effet.
 
 ### Points de vigilance
 
@@ -520,7 +532,7 @@ Le Videur devient un **jeu de déduction** (façon Wordle / Mastermind) : plus o
 
 ### Étapes suivantes (hors V1)
 
-1. Boutique de cosmétiques payée en Flow (cadres, fonds, effets, tenues visibles en plus) et **titres** affichés sur la tenue partagée.
+1. Cosmétiques (cadres, fonds, effets, tenues visibles en plus) et **titres** affichés sur la tenue partagée, **débloqués par niveau de réputation** (le Flow étant maintenant dépensé par les niveaux, une boutique « payée en Flow » n'a plus de sens : à redécider).
 2. Coffres gagnés au Videur (pièces, ou très petite chance d'objet collector), toujours gratuits, avec les chances affichées.
 3. Objets collector numérotés (exemplaires en nombre limité, revente au Market contre pièces uniquement : demande une vue de Market à part, annonces individuelles).
 4. Saisons et classement entre amis ; puis, plus tard, un mode histoire (chapitres par marque) si le Videur est bien joué.
