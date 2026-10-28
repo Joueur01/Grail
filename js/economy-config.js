@@ -32,9 +32,9 @@ export const SHOWCASE = { max: 3 };
 // critères du Club et du VIP sont SECRETS : ils ne sont JAMAIS dans le code du site (CLAUDE.md, section 16).
 export const VIDEUR_INFO = {
   doors: [
-    { id: "bar", name: "Bar", tries: 3, flow: 5 },
-    { id: "club", name: "Club", tries: 5, flow: 12 },
-    { id: "vip", name: "VIP", tries: 5, flow: 25 },
+    { id: "bar", name: "Bar", tries: 3, flow: 5, boosters: 1 },
+    { id: "club", name: "Club", tries: 5, flow: 12, boosters: 1 },
+    { id: "vip", name: "VIP", tries: 5, flow: 25, boosters: 2 },
   ],
   streakBonusCap: 5,
 };

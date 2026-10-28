@@ -554,6 +554,8 @@ main {
 .stock-pips { display: flex; gap: 5px; }
 .stock-pip { width: 12px; height: 17px; border-radius: 3px; border: 2px solid var(--border); }
 .stock-pip.full { border-color: var(--text); background: var(--text); }
+.stock-bonus { font-size: 13px; font-weight: 800; color: var(--rarity-legendaire); white-space: nowrap; }
+.stock-bonus[hidden] { display: none; }
 .stock-timer { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 /* Sous le paquet : compteur Signature */

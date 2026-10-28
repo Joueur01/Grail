@@ -6,9 +6,9 @@
 //   - relayer les actions simples (verrou, tenue) vers le serveur, puis relire l'état.
 // Il ne calcule rien d'important : pas de tirage, de gain ni de règle de jeu.
 
-import { RARITIES, matchesSearch, getRarity } from "./data.js?v=83";
-import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=83";
-import * as api from "./api.js?v=83";
+import { RARITIES, matchesSearch, getRarity } from "./data.js?v=84";
+import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=84";
+import * as api from "./api.js?v=84";
 
 // --- État en mémoire (rempli par refreshState) ---
 
@@ -149,17 +149,23 @@ export function getReputation() {
   return { level: p.rep_level, flow: p.flow || 0, next: p.rep_next };
 }
 
-/** Boosters : { stock, max, nextInMs, signature, untilSignature, canOpen } (nextInMs = null : stock plein). */
+/**
+ * Boosters : { stock, bonus, max, nextInMs, signature, untilSignature, canOpen }
+ * stock = boosters gratuits (plafonnés à max), bonus = boosters offerts (Videur, hors plafond),
+ * nextInMs = null : stock gratuit plein.
+ */
 export function getBoosterState() {
   const b = state.booster;
-  if (!b) return { stock: 0, max: 0, nextInMs: null, signature: false, untilSignature: 0, canOpen: false };
+  if (!b) return { stock: 0, bonus: 0, max: 0, nextInMs: null, signature: false, untilSignature: 0, canOpen: false };
+  const bonus = b.bonus_stock || 0; // absent tant que la migration 0026 n'est pas exécutée
   return {
     stock: b.stock,
+    bonus,
     max: b.max_stock,
     nextInMs: b.deadline === null ? null : Math.max(0, b.deadline - Date.now()),
     signature: b.signature_next,
     untilSignature: b.until_signature,
-    canOpen: b.stock > 0,
+    canOpen: b.stock + bonus > 0,
   };
 }
 

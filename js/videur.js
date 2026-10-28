@@ -13,14 +13,15 @@
 // Pour le Club et le VIP, le serveur n'envoie jamais les règles, les seuils ni le score : il n'y a donc
 // ici aucun aperçu, aucune jauge, aucune coche. La règle du jour n'arrive qu'à la fin (`reveal`).
 
-import { getRarity } from "./data.js?v=83";
-import { getVideurNight, videurPreview, videurEnter } from "./api.js?v=83";
-import { updateVideurBadge } from "./badges.js?v=83";
-import { SLOTS, readBodyChoice } from "./avatar.js?v=83";
-import { createAvatar3D } from "./avatar3d.js?v=83";
-import { refreshState, getEquipped, getReputation } from "./inventory.js?v=83";
-import { showToast, reportError } from "./wallet.js?v=83";
-import { playSound, vibrate } from "./effects.js?v=83";
+import { getRarity } from "./data.js?v=84";
+import { VIDEUR_INFO } from "./economy-config.js?v=84";
+import { getVideurNight, videurPreview, videurEnter } from "./api.js?v=84";
+import { updateVideurBadge } from "./badges.js?v=84";
+import { SLOTS, readBodyChoice } from "./avatar.js?v=84";
+import { createAvatar3D } from "./avatar3d.js?v=84";
+import { refreshState, getEquipped, getReputation } from "./inventory.js?v=84";
+import { showToast, reportError } from "./wallet.js?v=84";
+import { playSound, vibrate } from "./effects.js?v=84";
 
 /** Couleur d'enseigne de chaque porte (comme les raretés : bleu, violet, or). */
 const DOOR_COLOR = { bar: "var(--rarity-rare)", club: "var(--rarity-epique)", vip: "var(--rarity-legendaire)" };
@@ -256,7 +257,7 @@ export function setupVideur({ catalogue }) {
     else if (door.locked) enter.textContent = "Porte fermée : passe d'abord la précédente";
     else if (door.tries_left <= 0) enter.textContent = "Plus d'essai aujourd'hui";
     else if (!pieces.length) enter.textContent = "Porte au moins une pièce";
-    else enter.textContent = `Se présenter · ${door.tries_left} essai${door.tries_left > 1 ? "s" : ""} · +${door.flow} Flow`;
+    else enter.textContent = `Se présenter · ${door.tries_left} essai${door.tries_left > 1 ? "s" : ""} · ${rewardText(door)}`;
     enter.disabled = door.passed || door.locked || door.tries_left <= 0 || !pieces.length || busy;
     enter.addEventListener("click", () => enterDoor(door));
     nodes.push(enter);
@@ -301,7 +302,7 @@ export function setupVideur({ catalogue }) {
     else if (door.locked) enter.textContent = "Porte fermée : passe d'abord la précédente";
     else if (door.tries_left <= 0) enter.textContent = "Plus d'essai aujourd'hui";
     else if (preview && !preview.pieces.length) enter.textContent = "Porte au moins une pièce";
-    else enter.textContent = `Se présenter · ${door.tries_left} essai${door.tries_left > 1 ? "s" : ""} · +${door.flow} Flow`;
+    else enter.textContent = `Se présenter · ${door.tries_left} essai${door.tries_left > 1 ? "s" : ""} · ${rewardText(door)}`;
     enter.disabled = door.passed || door.locked || door.tries_left <= 0 || !preview || !preview.pieces.length || busy;
     enter.addEventListener("click", () => enterDoor(door));
     nodes.push(enter);
@@ -310,6 +311,18 @@ export function setupVideur({ catalogue }) {
   }
 
   // --- Se présenter ------------------------------------------------------------------
+
+  /** Récompense d'une porte pour le bouton « Se présenter » (le Flow vient du serveur, les boosters de la config d'affichage). */
+  function rewardText(door) {
+    const n = VIDEUR_INFO.doors.find((d) => d.id === door.id)?.boosters || 0;
+    return `+${door.flow} Flow` + (n ? ` · +${n} booster${n > 1 ? "s" : ""}` : "");
+  }
+
+  /** Gain annoncé sur la fiche de verdict : ce que le serveur a réellement versé. */
+  function gainText(r) {
+    const n = r.boosters_gained || 0;
+    return `+${r.flow_gained} Flow` + (n ? ` · +${n} booster${n > 1 ? "s" : ""}` : "");
+  }
 
   async function enterDoor(door) {
     if (busy) return;
@@ -320,6 +333,8 @@ export function setupVideur({ catalogue }) {
       playSound(result.passed ? "door_ok" : "door_no");
       vibrate(result.passed ? [40, 40, 80] : 120);
       showVerdict(door, result);
+      // Boosters offerts : on relit le stock (écran Booster et pastille de la barre du bas).
+      if (result.boosters_gained) { try { await refreshState(); } catch { /* sans importance */ } }
       await load({ silent: true });
       // Le Flow est dans l'écran Videur ; les pièces n'ont pas bougé.
     } catch (err) {
@@ -350,7 +365,7 @@ export function setupVideur({ catalogue }) {
     nodes.push(rulesList(r.rules));
 
     if (r.passed) {
-      const gain = el("p", "sheet-subtitle verdict-gain", `+${r.flow_gained} Flow`);
+      const gain = el("p", "sheet-subtitle verdict-gain", gainText(r));
       nodes.push(gain);
       if (r.streak_bonus > 0) nodes.push(el("p", "muted sheet-text", `dont +${r.streak_bonus} de bonus de série (${r.streak} jours d'affilée)`));
     } else {
@@ -373,7 +388,7 @@ export function setupVideur({ catalogue }) {
     const nodes = [verdict];
     if (r.mode === "count" && !r.passed) nodes.push(el("p", "sheet-subtitle verdict-count", `${r.matched} critère${r.matched > 1 ? "s" : ""} sur ${r.total}`));
     if (r.passed) {
-      nodes.push(el("p", "sheet-subtitle verdict-gain", `+${r.flow_gained} Flow`));
+      nodes.push(el("p", "sheet-subtitle verdict-gain", gainText(r)));
     } else {
       nodes.push(el("p", "muted sheet-text", r.tries_left > 0
         ? `Il te reste ${r.tries_left} essai${r.tries_left > 1 ? "s" : ""}. Change ta tenue d'après l'indice.`

@@ -1,6 +1,6 @@
 // cards.js — dessin d'une carte (utilisé par le booster ET par la collection).
 
-import { getRarity } from "./data.js?v=83";
+import { getRarity } from "./data.js?v=84";
 
 /**
  * Crée la face d'une carte : sprite sur case claire, marque, nom,
