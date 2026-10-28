@@ -6,13 +6,13 @@
 // et envoie les actions (market_list / market_cancel / market_buy / market_ack_sales).
 // Aucune règle du Market n'est calculée ici ; les messages d'erreur viennent du serveur.
 
-import { RARITIES, getRarity, matchesSearch } from "./data.js?v=43";
-import { MARKET } from "./economy-config.js?v=43";
-import { getOwnedCards, getCoins, getMyListings, refreshState } from "./inventory.js?v=43";
-import { getBestOffers, marketList, marketCancel, marketBuy, marketAckSales, marketHistory } from "./api.js?v=43";
-import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=43";
-import { playSound, vibrate } from "./effects.js?v=43";
-import { flyCoins, showToast, reportError } from "./wallet.js?v=43";
+import { RARITIES, getRarity, matchesSearch } from "./data.js?v=44";
+import { MARKET, saleTax, saleNet } from "./economy-config.js?v=44";
+import { getOwnedCards, getCoins, getMyListings, refreshState } from "./inventory.js?v=44";
+import { getBestOffers, marketList, marketCancel, marketBuy, marketAckSales, marketHistory } from "./api.js?v=44";
+import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=44";
+import { playSound, vibrate } from "./effects.js?v=44";
+import { flyCoins, showToast, reportError } from "./wallet.js?v=44";
 
 const CATEGORIES = [
   { id: "haut", name: "Haut" },
@@ -320,6 +320,7 @@ export function setupMarket({ catalogue, onChange }) {
       quick.append(button(`Moins cher · ${other - 1}`, { onClick: () => { price = other - 1; render(); } }));
     }
 
+    const taxNote = para("", "muted sheet-text");
     const limit = para(`Ventes en cours : ${used} / ${MARKET.maxListings}`, "muted sheet-text");
     const confirm = button("", { primary: true });
     confirm.addEventListener("click", () => sell());
@@ -327,6 +328,7 @@ export function setupMarket({ catalogue, onChange }) {
     const valid = () => Number.isInteger(price) && price >= MARKET.minPrice && price <= MARKET.maxPrice;
     function clamp(n) { return Math.min(MARKET.maxPrice, Math.max(MARKET.minPrice, n)); }
     function refreshButton() {
+      refreshTax();
       confirm.disabled = full || !valid();
       confirm.textContent = full ? `Limite de ${MARKET.maxListings} ventes atteinte`
         : !valid() ? `Prix entre ${MARKET.minPrice} et ${MARKET.maxPrice}`
@@ -335,6 +337,12 @@ export function setupMarket({ catalogue, onChange }) {
     function render() {
       input.value = String(price);
       refreshButton();
+    }
+    // Taxe annoncée (affichage seulement : le serveur applique la vraie règle).
+    function refreshTax() {
+      taxNote.textContent = valid()
+        ? `Taxe de ${MARKET.saleTaxPercent} % : tu recevras ${saleNet(price)} pièces (−${saleTax(price)}).`
+        : `Taxe de ${MARKET.saleTaxPercent} % sur chaque vente, payée par le vendeur.`;
     }
 
     /** Envoie la mise en vente : le serveur vérifie le prix, la limite et le verrou, et retire la carte. */
@@ -353,11 +361,11 @@ export function setupMarket({ catalogue, onChange }) {
       playSound("flip");
       vibrate([20]);
       close();
-      showToast(`En vente : ${colorway.piece.name} · ${price} pièces`);
+      showToast(`En vente : ${colorway.piece.name} · ${price} pièces (tu recevras ${saleNet(price)})`);
       await reloadAll();
     }
 
-    open("Vendre", bigCard(colorwayId, rarity), info, row, quick, limit, confirm);
+    open("Vendre", bigCard(colorwayId, rarity), info, row, quick, taxNote, limit, confirm);
     render();
   }
 
@@ -487,7 +495,8 @@ export function setupMarket({ catalogue, onChange }) {
       return;
     }
     if (!sold.length) return;
-    const total = sold.reduce((sum, x) => sum + x.price, 0);
+    // Pièces réellement reçues = prix − taxe (le serveur les a déjà versées).
+    const total = sold.reduce((sum, x) => sum + (x.received ?? x.price), 0);
     const first = catalogue.colorwayById.get(sold[0].colorway_id);
     // Les pièces sont déjà versées par le serveur (au moment de l'achat) : on relit le solde.
     await reloadAll();

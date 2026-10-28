@@ -43,7 +43,12 @@ export const MARKET = {
   minPrice: 1,
   maxPrice: 99999,
   referencePrice: { commun: 8, rare: 40, epique: 160, legendaire: 600 },
+  saleTaxPercent: 5, // taxe sur chaque vente, payée par le vendeur (le serveur applique la vraie règle)
 };
+
+/** Taxe affichée pour un prix de vente (arrondie à l'entier supérieur, comme le serveur) et pièces reçues. */
+export const saleTax = (price) => Math.min(price, Math.ceil((price * MARKET.saleTaxPercent) / 100));
+export const saleNet = (price) => price - saleTax(price);
 
 // Amis : délai entre deux changements de pseudo (affichage ; le serveur applique la vraie règle).
 export const FRIENDS = {

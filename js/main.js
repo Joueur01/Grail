@@ -7,20 +7,20 @@
 // ?v=… sur les imports : même numéro que dans index.html, et le même partout
 // (un module importé sous deux adresses différentes serait chargé deux fois).
 
-import { loadCatalogue } from "./data.js?v=43";
-import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=43";
-import { initAvatar, setupOutfit } from "./avatar.js?v=43";
-import { setupBooster } from "./booster.js?v=43";
-import { setupShare } from "./share.js?v=43";
-import { setupUpgrade } from "./upgrade.js?v=43";
-import { setupAtelier, setupViewSwitch } from "./atelier.js?v=43";
-import { setupWallet, reportError, showToast } from "./wallet.js?v=43";
-import { setupDiscard, createSelection } from "./discard.js?v=43";
-import { setupMarket } from "./market.js?v=43";
-import { setupFriends } from "./friends.js?v=43";
-import { startAnalytics, track } from "./analytics.js?v=43";
-import { showSharedOutfit } from "./shared-outfit.js?v=43";
-import { getSession, signIn, signUp, signOut, supabase, requestPasswordReset, updatePassword, isRecoveryLink, endRecovery, sharedOutfitToken } from "./api.js?v=43";
+import { loadCatalogue } from "./data.js?v=44";
+import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=44";
+import { initAvatar, setupOutfit } from "./avatar.js?v=44";
+import { setupBooster } from "./booster.js?v=44";
+import { setupShare } from "./share.js?v=44";
+import { setupUpgrade } from "./upgrade.js?v=44";
+import { setupAtelier, setupViewSwitch } from "./atelier.js?v=44";
+import { setupWallet, reportError, showToast } from "./wallet.js?v=44";
+import { setupDiscard, createSelection } from "./discard.js?v=44";
+import { setupMarket } from "./market.js?v=44";
+import { setupFriends } from "./friends.js?v=44";
+import { startAnalytics, track } from "./analytics.js?v=44";
+import { showSharedOutfit } from "./shared-outfit.js?v=44";
+import { getSession, signIn, signUp, signOut, supabase, requestPasswordReset, updatePassword, isRecoveryLink, endRecovery, sharedOutfitToken } from "./api.js?v=44";
 
 const SCREENS = ["booster", "collection", "market", "friends", "avatar"];
 
