@@ -105,7 +105,8 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 │       ├── 0014_profil.sql  # page de profil + choix Garçon / Fille enregistré sur le serveur
 │       ├── 0015_vitrine.sql  # vitrine choisie par le joueur (vide au départ)
 │       ├── 0016_vitrine_3_cartes.sql  # vitrine limitée à 3 cartes
-│       └── 0017_apercu_amis.sql  # aperçu (avatar + vitrine) de chaque ami dans la liste
+│       ├── 0017_apercu_amis.sql  # aperçu (avatar + vitrine) de chaque ami dans la liste
+│       └── 0018_carte_utilisee_liberee.sql  # une carte portée / en vitrine qui quitte la collection en est retirée
 ├── tools/
 │   └── extraire_sprites.py   # découpe les planches → PNG + SVG (Python + Pillow)
 └── CLAUDE.md
@@ -373,7 +374,7 @@ Le développeur n'est pas juriste ; ces règles sont prudentes en attendant un a
 
 ## 13. Back end Supabase (comptes + serveur de jeu) — le serveur est la source de vérité
 
-- Projet Supabase : `https://qsueqvsbhytqrotlxmak.supabase.co`. Les migrations SQL (**0001 à 0017**, exécutées par le développeur dans le SQL Editor, **ne jamais les modifier depuis le front** ; les 0005 à 0017 sont dans `supabase/migrations/`) créent : catalogue (`brands`, `pieces`, `colorways`), `economy_config`, `profiles`, `inventory`, `transactions`, `market_listings`, la vue `market_best_offers` et toutes les fonctions du jeu.
+- Projet Supabase : `https://qsueqvsbhytqrotlxmak.supabase.co`. Les migrations SQL (**0001 à 0018**, exécutées par le développeur dans le SQL Editor, **ne jamais les modifier depuis le front** ; les 0005 à 0018 sont dans `supabase/migrations/`) créent : catalogue (`brands`, `pieces`, `colorways`), `economy_config`, `profiles`, `inventory`, `transactions`, `market_listings`, la vue `market_best_offers` et toutes les fonctions du jeu.
 - **Règle d'or : ne jamais remettre de logique de jeu côté client.** Le front ne tire pas de carte, ne calcule ni gain ni chance réelle, ne vérifie pas de règle (limite de ventes, verrou, solde…). Il appelle une fonction, affiche le résultat, et relit l'état. Toute nouvelle règle ou nouvelle valeur d'économie se code **dans une migration SQL** (puis, si besoin d'affichage, dans `js/economy-config.js`).
 - **Le jeu n'est accessible que connecté** : e-mail + mot de passe (écran de connexion / création de compte dans `index.html`, géré par `main.js`). À l'inscription, le message « Confirme ton e-mail » s'affiche : le compte ne peut se connecter qu'après avoir cliqué le lien reçu. Un profil (3 boosters, 0 pièce) est créé automatiquement par le serveur. Bouton « Se déconnecter » **tout en bas de la page de profil** (bouton rond en haut ; il était dans l'écran Tenue), hors de la zone que le profil recharge : il reste visible même si le profil ne charge pas.
 - **Mot de passe oublié** : lien « Mot de passe oublié ? » sous le formulaire de connexion (pas à la création de compte) → e-mail de réinitialisation (`resetPasswordForEmail`, réponse toujours neutre pour ne pas révéler quelles adresses ont un compte). Le lien reçu ramène sur le site avec `type=recovery` : `api.js` le détecte (`isRecoveryLink`) et `main.js` affiche « Nouveau mot de passe » (6 caractères minimum, saisie en double, `updatePassword`) **avant** de lancer le jeu ; lien expiré → message + renvoi vers « Mot de passe oublié ? ». **À régler dans Supabase** (Authentication → URL Configuration) : Site URL `https://joueur01.github.io/Grail/` et Redirect URLs `https://joueur01.github.io/Grail/**`, sinon les liens (confirmation et réinitialisation) pointent vers localhost.
@@ -415,6 +416,15 @@ Le développeur n'est pas juriste ; ces règles sont prudentes en attendant un a
 - **Si la migration 0015 n'est pas exécutée** (mais la 0014 oui) : la vitrine montre encore les 3 cartes les plus rares, sans bouton de modification.
 - **Si la migration 0014 n'est pas exécutée** : la page affiche « Cette fonction n'est pas encore activée sur le serveur. » ; le profil d'un ami retombe sur l'ancienne vue (tenue à plat + progression) ; le choix Garçon / Fille reste dans le navigateur.
 - **Vérifiée** sur une base PostgreSQL locale avec un faux schéma (migration lancée 2 fois, profil soi-même / ami / non-ami / non connecté, droits `anon` refusés).
+
+### Carte utilisée qui quitte la collection (migration 0018)
+
+- **Règle** : une carte **portée** (tenue, `profiles.equipped`) ou **en vitrine** (`profiles.showcase`) dont le **dernier exemplaire** quitte l'inventaire — **mise en vente** (et vente), **défausse**, carte **misée à la roue** (amélioration) — est **retirée** de la tenue et de la vitrine. S'il reste au moins un exemplaire (ex. 3 → 2), rien ne change.
+- **Comment** : un **déclencheur sur `public.inventory`** (`private.release_card_from_use`) : dès qu'une ligne passe à 0 exemplaire ou est supprimée, la carte est retirée de la tenue et de la vitrine **de ce joueur seulement**. Il agit au niveau de la table : il couvre `market_list`, `market_buy`, `discard_cards`, `upgrade_cards` et toute fonction future, **sans modifier** ces fonctions (les migrations 0001 à 0004 ne sont pas dans le dépôt, on ne peut pas les relire). Si l'offre est retirée du Market, la carte revient **dans la collection mais pas dans la tenue ni la vitrine** (avant, elle s'y remettait toute seule). La migration nettoie aussi une fois les données existantes.
+- **Les écrans filtraient déjà** les cartes non possédées (tenue, vitrine, Videur, amis) ; le déclencheur règle les données elles-mêmes (lien de partage, statistiques).
+- **Hors règle** : un **lien de partage déjà créé** reste une copie figée de la tenue du moment (section 13 bis) ; il n'est pas modifié.
+- **Avertissement à la défausse** (`js/discard.js`) : « Une carte portée quitte ta tenue. », « Une carte quitte ta vitrine. » ou « … ta tenue et ta vitrine. » quand le dernier exemplaire d'une carte portée / en vitrine est sélectionné (le cache lit `profiles.showcase`, `getShowcaseKeys()` dans `js/inventory.js`).
+- **Vérifié** sur une base PostgreSQL locale (faux schéma) : exemplaires restants → rien ; dernier exemplaire mis en vente / défaussé / misé → retiré de la tenue et de la vitrine ; carte qui revient → pas remise ; un autre joueur avec la même carte n'est pas touché ; migration relançable ; droits (le déclencheur n'est pas appelable par les joueurs). **Les vraies fonctions du serveur ne sont pas testées.**
 
 ## 15. Rétention et statistiques joueurs (migration 0010, `js/analytics.js`)
 

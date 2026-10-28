@@ -6,9 +6,9 @@
 //   - relayer les actions simples (verrou, tenue) vers le serveur, puis relire l'état.
 // Il ne calcule rien d'important : pas de tirage, de gain ni de règle de jeu.
 
-import { RARITIES, matchesSearch, getRarity } from "./data.js?v=65";
-import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=65";
-import * as api from "./api.js?v=65";
+import { RARITIES, matchesSearch, getRarity } from "./data.js?v=66";
+import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=66";
+import * as api from "./api.js?v=66";
 
 // --- État en mémoire (rempli par refreshState) ---
 
@@ -139,6 +139,11 @@ export function getEquipped(slot) {
   if (!key || !state.cards.has(key)) return null; // on ne garde que les cartes réellement possédées
   const [colorwayId, rarity] = key.split("|");
   return { colorwayId, rarity };
+}
+
+/** Cartes de la vitrine ("coloris|rareté"), telles qu'enregistrées sur le serveur (migration 0015), ou []. */
+export function getShowcaseKeys() {
+  return Array.isArray(state.profile?.showcase) ? state.profile.showcase : [];
 }
 
 // --- Actions simples : le serveur vérifie et écrit, puis on relit l'état ---
