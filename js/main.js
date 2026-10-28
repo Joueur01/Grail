@@ -7,26 +7,27 @@
 // ?v=… sur les imports : même numéro que dans index.html, et le même partout
 // (un module importé sous deux adresses différentes serait chargé deux fois).
 
-import { loadCatalogue } from "./data.js?v=70";
-import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=70";
-import { initAvatar, setupOutfit } from "./avatar.js?v=70";
-import { setupBooster } from "./booster.js?v=70";
-import { setupShare } from "./share.js?v=70";
-import { setupUpgrade } from "./upgrade.js?v=70";
-import { setupAtelier, setupViewSwitch } from "./atelier.js?v=70";
-import { setupWallet, reportError, showToast } from "./wallet.js?v=70";
-import { setupReputation } from "./reputation.js?v=70";
-import { setupDiscard, createSelection } from "./discard.js?v=70";
-import { setupMarket } from "./market.js?v=70";
-import { setupFriends } from "./friends.js?v=70";
-import { setupVideur } from "./videur.js?v=70";
-import { setupProfile } from "./profile.js?v=70";
-import { startAnalytics, track } from "./analytics.js?v=70";
-import { showSharedOutfit } from "./shared-outfit.js?v=70";
-import { getSession, signIn, signUp, signOut, supabase, requestPasswordReset, updatePassword, isRecoveryLink, endRecovery, sharedOutfitToken } from "./api.js?v=70";
+import { loadCatalogue } from "./data.js?v=71";
+import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=71";
+import { initAvatar, setupOutfit } from "./avatar.js?v=71";
+import { setupBooster } from "./booster.js?v=71";
+import { setupShare } from "./share.js?v=71";
+import { setupUpgrade } from "./upgrade.js?v=71";
+import { setupAtelier, setupViewSwitch } from "./atelier.js?v=71";
+import { setupWallet, reportError, showToast } from "./wallet.js?v=71";
+import { setupReputation } from "./reputation.js?v=71";
+import { setupDiscard, createSelection } from "./discard.js?v=71";
+import { setupMarket } from "./market.js?v=71";
+import { setupFriends } from "./friends.js?v=71";
+import { setupVideur } from "./videur.js?v=71";
+import { setupProfile } from "./profile.js?v=71";
+import { setupRules } from "./rules.js?v=71";
+import { startAnalytics, track } from "./analytics.js?v=71";
+import { showSharedOutfit } from "./shared-outfit.js?v=71";
+import { getSession, signIn, signUp, signOut, supabase, requestPasswordReset, updatePassword, isRecoveryLink, endRecovery, sharedOutfitToken } from "./api.js?v=71";
 
-// « profile » n'a pas d'onglet : on y va par le bouton rond en haut (#profile).
-const SCREENS = ["booster", "collection", "market", "videur", "friends", "avatar", "profile"];
+// « profile » n'a pas d'onglet : on y va par le bouton rond en haut (#profile). « rules » non plus : par le profil ou un lien « ? » (#rules, #rules/market…).
+const SCREENS = ["booster", "collection", "market", "videur", "friends", "avatar", "profile", "rules"];
 
 /** Affiche l'écran demandé et met à jour l'onglet actif. */
 function showScreen(name) {
@@ -44,7 +45,7 @@ function showScreen(name) {
 // La navigation passe par l'ancre de l'URL (#booster, #collection, #avatar) :
 // simple, et le bouton « retour » du téléphone fonctionne tout seul.
 function currentScreenFromHash() {
-  return location.hash.replace("#", "");
+  return location.hash.replace("#", "").split("/")[0]; // « rules/market » → « rules » (la suite désigne une section)
 }
 
 // Safari sur iPhone ignore « user-scalable=no » pour le pincement à deux doigts :
@@ -246,6 +247,7 @@ async function boot() {
     // Videur : 3 portes par jour, dress code du jour, Flow (tout est calculé par le serveur).
     setupVideur({ catalogue });
     setupProfile({ catalogue }); // page de profil (bouton rond en haut)
+    setupRules({ catalogue }); // page « Règles du jeu » : taux de drop et spécificités
   } catch (err) {
     console.error(err);
     statusEl.textContent = err?.message || "Impossible de charger le jeu. Recharge la page.";

@@ -14,6 +14,29 @@ export const DROP_RATES = {
 
 export const BOOSTER = {
   cardsPerPack: 3,        // cartes par booster (texte « 3e carte Rare ou mieux »)
+  refillHours: 6,         // 1 booster gratuit généré toutes les 6 h (page « Règles du jeu »)
+  maxStock: 3,            // stock maximum
+  signatureEvery: 4,      // 1 booster gratuit sur 4 est un Booster Signature
+};
+
+// Bonus de connexion quotidien (page « Règles du jeu » ; le serveur verse le vrai montant).
+export const DAILY_BONUS = { coins: 20 };
+
+// Réputation (le Flow devenu niveaux) : le niveau n → n+1 coûte costStep × (n + 1) Flow.
+export const REPUTATION = { costStep: 50 };
+
+// Vitrine du profil : nombre maximum de cartes (le serveur renvoie le vrai maximum).
+export const SHOWCASE = { max: 3 };
+
+// Videur : essais par jour et Flow gagné par porte (affichage seulement). Les règles, les seuils et les
+// critères du Club et du VIP sont SECRETS : ils ne sont JAMAIS dans le code du site (CLAUDE.md, section 16).
+export const VIDEUR_INFO = {
+  doors: [
+    { id: "bar", name: "Bar", tries: 3, flow: 5 },
+    { id: "club", name: "Club", tries: 5, flow: 12 },
+    { id: "vip", name: "VIP", tries: 5, flow: 25 },
+  ],
+  streakBonusCap: 5,
 };
 
 // Pity : seuils des jauges sous le paquet.

@@ -13,13 +13,13 @@
 // Pour le Club et le VIP, le serveur n'envoie jamais les règles, les seuils ni le score : il n'y a donc
 // ici aucun aperçu, aucune jauge, aucune coche. La règle du jour n'arrive qu'à la fin (`reveal`).
 
-import { getRarity } from "./data.js?v=70";
-import { getVideurNight, videurPreview, videurEnter } from "./api.js?v=70";
-import { SLOTS, readBodyChoice } from "./avatar.js?v=70";
-import { createAvatar3D } from "./avatar3d.js?v=70";
-import { refreshState, getEquipped, getReputation } from "./inventory.js?v=70";
-import { showToast, reportError } from "./wallet.js?v=70";
-import { playSound, vibrate } from "./effects.js?v=70";
+import { getRarity } from "./data.js?v=71";
+import { getVideurNight, videurPreview, videurEnter } from "./api.js?v=71";
+import { SLOTS, readBodyChoice } from "./avatar.js?v=71";
+import { createAvatar3D } from "./avatar3d.js?v=71";
+import { refreshState, getEquipped, getReputation } from "./inventory.js?v=71";
+import { showToast, reportError } from "./wallet.js?v=71";
+import { playSound, vibrate } from "./effects.js?v=71";
 
 /** Couleur d'enseigne de chaque porte (comme les raretés : bleu, violet, or). */
 const DOOR_COLOR = { bar: "var(--rarity-rare)", club: "var(--rarity-epique)", vip: "var(--rarity-legendaire)" };

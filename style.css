@@ -2293,3 +2293,92 @@ body[data-auth="public"] .public {
 .rep-bar { height: 12px; border-radius: 999px; background: var(--border); overflow: hidden; }
 .rep-bar-fill { height: 100%; min-width: 4px; border-radius: 999px; background: var(--rarity-legendaire); transition: width 0.6s ease-out; }
 .rep-card-sub { margin: 0; font-size: 13px; font-weight: 600; color: var(--muted); }
+
+/* --- Page « Règles du jeu » (rules.js) : sections repliables, tableaux, pastilles de rareté --- */
+.rules-back {
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 0 14px 0 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.rules-list { display: flex; flex-direction: column; gap: 10px; }
+.rules-section {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  overflow: hidden;
+}
+.rules-section[open] { border-color: #4a4a54; }
+.rules-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  padding: 12px 16px;
+  list-style: none;
+  cursor: pointer;
+}
+.rules-summary::-webkit-details-marker { display: none; }
+.rules-summary-names { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.rules-summary-title { font-size: 17px; font-weight: 800; }
+.rules-summary-sub { font-size: 13px; color: var(--muted); }
+.rules-chevron { flex: none; color: var(--muted); font-size: 24px; line-height: 1; transition: transform 0.2s ease; }
+.rules-section[open] .rules-chevron { transform: rotate(90deg); }
+.rules-body { display: flex; flex-direction: column; gap: 10px; padding: 0 16px 18px; }
+.rules-text { margin: 0; font-size: 14px; line-height: 1.5; color: var(--text); }
+.rules-sub {
+  margin: 8px 0 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.rules-list li, .rules-body ul li { font-size: 14px; line-height: 1.5; }
+ul.rules-list { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
+.rules-table { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--bg); }
+.rules-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; font-size: 14px; }
+.rules-row + .rules-row { border-top: 1px solid var(--border); }
+.rules-label { min-width: 0; }
+.rules-value { flex: none; font-weight: 800; text-align: right; }
+.rules-chip {
+  display: inline-block;
+  padding: 3px 11px;
+  border: 1.5px solid var(--rarity-color);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--rarity-color);
+}
+/* Liens « ? » discrets vers la bonne rubrique + bouton du profil */
+.rules-link {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  text-decoration: underline;
+}
+.rules-open {
+  align-self: stretch;
+  display: grid;
+  place-items: center;
+  min-height: 48px;
+  margin-top: 4px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+}
+@media (prefers-reduced-motion: reduce) { .rules-chevron { transition: none; } }
