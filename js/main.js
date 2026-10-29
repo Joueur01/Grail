@@ -7,28 +7,28 @@
 // ?v=… sur les imports : même numéro que dans index.html, et le même partout
 // (un module importé sous deux adresses différentes serait chargé deux fois).
 
-import { loadCatalogue } from "./data.js?v=89";
-import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=89";
-import { initAvatar, setupOutfit } from "./avatar.js?v=89";
-import { setupBooster } from "./booster.js?v=89";
-import { setupShare } from "./share.js?v=89";
-import { setupUpgrade } from "./upgrade.js?v=89";
-import { setupAtelier, setupViewSwitch } from "./atelier.js?v=89";
-import { setupAlbum } from "./album.js?v=89";
-import { setupBadges } from "./badges.js?v=89";
-import { setupPrivacy } from "./privacy.js?v=89";
-import { setupAccountDeletion, DELETED_FLAG } from "./account.js?v=89";
-import { setupWallet, reportError, showToast } from "./wallet.js?v=89";
-import { setupReputation } from "./reputation.js?v=89";
-import { setupDiscard, createSelection } from "./discard.js?v=89";
-import { setupMarket } from "./market.js?v=89";
-import { setupFriends } from "./friends.js?v=89";
-import { setupVideur } from "./videur.js?v=89";
-import { setupProfile } from "./profile.js?v=89";
-import { setupRules } from "./rules.js?v=89";
-import { startAnalytics, track } from "./analytics.js?v=89";
-import { showSharedOutfit } from "./shared-outfit.js?v=89";
-import { getSession, signIn, signUp, signOut, supabase, requestPasswordReset, updatePassword, isRecoveryLink, endRecovery, sharedOutfitToken } from "./api.js?v=89";
+import { loadCatalogue } from "./data.js?v=90";
+import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=90";
+import { initAvatar, setupOutfit } from "./avatar.js?v=90";
+import { setupBooster } from "./booster.js?v=90";
+import { setupShare } from "./share.js?v=90";
+import { setupUpgrade } from "./upgrade.js?v=90";
+import { setupAtelier, setupViewSwitch } from "./atelier.js?v=90";
+import { setupAlbum } from "./album.js?v=90";
+import { setupBadges } from "./badges.js?v=90";
+import { setupPrivacy } from "./privacy.js?v=90";
+import { setupAccountDeletion, DELETED_FLAG } from "./account.js?v=90";
+import { setupWallet, reportError, showToast } from "./wallet.js?v=90";
+import { setupReputation } from "./reputation.js?v=90";
+import { setupDiscard, createSelection } from "./discard.js?v=90";
+import { setupMarket } from "./market.js?v=90";
+import { setupFriends } from "./friends.js?v=90";
+import { setupVideur } from "./videur.js?v=90";
+import { setupProfile } from "./profile.js?v=90";
+import { setupRules } from "./rules.js?v=90";
+import { startAnalytics, track } from "./analytics.js?v=90";
+import { showSharedOutfit } from "./shared-outfit.js?v=90";
+import { getSession, signIn, signUp, signOut, supabase, requestPasswordReset, updatePassword, isRecoveryLink, endRecovery, sharedOutfitToken } from "./api.js?v=90";
 
 // « profile » et « friends » n'ont pas d'onglet : on y va par les boutons ronds en haut (#profile, #friends). « rules » non plus : par le profil ou un lien « ? » (#rules, #rules/market…).
 const SCREENS = ["booster", "collection", "market", "videur", "friends", "avatar", "profile", "rules"];
@@ -71,10 +71,16 @@ function showPanel(name) {
   document.getElementById("reset-form").hidden = name !== "reset";
   document.getElementById("recovery-form").hidden = name !== "recovery";
   document.querySelector(".auth-card .view-switch").hidden = name !== "main";
+  document.getElementById("auth-intro").hidden = name !== "main";
 }
 
 /** Montre l'écran de connexion (le jeu reste caché tant qu'on n'est pas connecté). */
-function showAuth({ message = "", tab = "signin", kind = "ok" } = {}) {
+// Mémorise (sur cet appareil seulement) qu'un compte existe : l'écran propose alors « Connexion » d'abord.
+const KNOWN_KEY = "grail_has_account";
+const hasAccount = () => { try { return !!localStorage.getItem(KNOWN_KEY); } catch { return false; } };
+const rememberAccount = () => { try { localStorage.setItem(KNOWN_KEY, "1"); } catch { /* navigation privée : sans importance */ } };
+
+function showAuth({ message = "", tab = hasAccount() ? "signin" : "signup", kind = "ok" } = {}) {
   showPanel("main");
   const form = document.getElementById("auth-form");
   const tabs = document.querySelectorAll(".auth-tab");
@@ -111,6 +117,7 @@ function showAuth({ message = "", tab = "signin", kind = "ok" } = {}) {
     try {
       if (mode === "signup") {
         const { needsConfirmation } = await signUp(email, pass);
+        rememberAccount();
         if (needsConfirmation) {
           // Compte créé : il faut cliquer le lien reçu par e-mail avant de pouvoir se connecter.
           setMode("signin");
@@ -120,6 +127,7 @@ function showAuth({ message = "", tab = "signin", kind = "ok" } = {}) {
         }
       } else {
         await signIn(email, pass);
+        rememberAccount();
       }
       // Connecté : le jeu démarre (onAuthStateChange ci-dessous).
     } catch (err) {
@@ -301,7 +309,7 @@ async function start() {
   }
   const linkExpired = /error_code=otp_expired|error=access_denied/.test(location.hash);
   if (isRecoveryLink()) showRecovery();                // lien « mot de passe oublié » : nouveau mot de passe d'abord
-  else if (session) boot();
+  else if (session) { rememberAccount(); boot(); }
   else if (linkExpired) showAuth({ message: "Ce lien a expiré. Utilise « Mot de passe oublié ? » pour en recevoir un nouveau.", kind: "error" });
   else showAuth(takeDeletedMessage());
 

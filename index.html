@@ -9,6 +9,19 @@
   <meta name="theme-color" content="#0f0f11">
   <meta name="description" content="Ouvre des boosters de vêtements en pixel art, collectionne, habille ton avatar et partage ta tenue.">
   <title>Grail</title>
+  <!-- Aperçu du lien dans les messageries (WhatsApp, Snapchat, iMessage, Discord…) : site statique, donc une seule
+       carte pour tout le site (image : tools/creer_apercu_og.js). Les adresses doivent être absolues. -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Grail">
+  <meta property="og:locale" content="fr_FR">
+  <meta property="og:url" content="https://huntgrail.eu/">
+  <meta property="og:title" content="Grail : ouvre des boosters, habille ton avatar">
+  <meta property="og:description" content="Collectionne des vêtements streetwear en pixel art, passe le Videur et partage ta tenue.">
+  <meta property="og:image" content="https://huntgrail.eu/assets/brand/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Grail : un avatar en pixel art habillé en streetwear et trois cartes de vêtements">
+  <meta name="twitter:card" content="summary_large_image">
   <!-- Logo (tools/creer_logo.py) : icône de l'onglet et des résultats Google (favicon.ico, 48 px),
        version SVG nette pour les navigateurs récents, icône de l'écran d'accueil iPhone et Android. -->
   <link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48">
@@ -23,7 +36,7 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=89">
+  <link rel="stylesheet" href="style.css?v=90">
 </head>
 <body>
   <header class="topbar">
@@ -61,6 +74,24 @@
   <div class="auth" id="auth">
     <div class="auth-card">
       <h1 class="logo auth-logo">GRAIL</h1>
+      <!-- Accueil : une phrase et 3 visuels (cachés hors connexion / création de compte, main.js) -->
+      <div class="auth-intro" id="auth-intro">
+        <p class="auth-pitch">Ouvre des boosters de vêtements, habille ton avatar et passe le Videur.</p>
+        <ul class="auth-visuals">
+          <li class="auth-visual">
+            <span class="auth-visual-tile"><img class="pixel" src="assets/pieces/pigeon_social_club_hoodie_dalle_moutarde.png" width="64" height="64" alt=""></span>
+            <span class="auth-visual-name">Collectionne</span>
+          </li>
+          <li class="auth-visual">
+            <span class="auth-visual-tile auth-visual-dark"><img class="pixel" src="assets/ui/accueil-avatar.png" width="46" height="88" alt=""></span>
+            <span class="auth-visual-name">Habille-toi</span>
+          </li>
+          <li class="auth-visual">
+            <span class="auth-visual-tile auth-visual-dark"><span class="auth-door"><b>BAR</b><b>CLUB</b><b>VIP</b></span></span>
+            <span class="auth-visual-name">Le Videur</span>
+          </li>
+        </ul>
+      </div>
       <div class="view-switch" role="tablist" aria-label="Compte">
         <button class="auth-tab" type="button" role="tab" data-mode="signin" aria-selected="true">Connexion</button>
         <button class="auth-tab" type="button" role="tab" data-mode="signup" aria-selected="false">Créer un compte</button>
@@ -494,6 +525,6 @@
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=89"></script>
+  <script type="module" src="js/main.js?v=90"></script>
 </body>
 </html>

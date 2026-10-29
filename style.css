@@ -191,6 +191,31 @@ body[data-auth="out"] .auth {
 }
 .auth-card { display: flex; flex-direction: column; gap: 18px; width: min(420px, 100%); }
 .auth-logo { font-size: 40px; text-align: center; }
+/* Accueil : une phrase + 3 visuels (sprite, avatar 3D, enseigne du Videur) */
+.auth-intro { display: grid; gap: 14px; }
+.auth-intro[hidden] { display: none; }
+.auth-pitch { margin: 0; font-size: 16px; line-height: 1.4; font-weight: 600; text-align: center; }
+.auth-visuals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 0; padding: 0; list-style: none; }
+.auth-visual { display: grid; gap: 6px; justify-items: center; }
+.auth-visual-tile {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 96px;
+  border-radius: var(--radius);
+  background: #cccac4; /* les contours noirs des sprites demandent une case claire (section 5) */
+}
+.auth-visual-tile.auth-visual-dark { background: var(--surface-2); }
+.auth-visual-tile img { image-rendering: pixelated; }
+.auth-visual-name { font-size: 12px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); text-align: center; }
+/* Enseigne du Videur : les trois portes aux couleurs du jeu (bleu, violet, or) */
+.auth-door { display: grid; gap: 4px; }
+.auth-door b { padding: 3px 10px; border: 2px solid; border-radius: 999px; font-size: 12px; font-weight: 900; letter-spacing: 0.08em; text-align: center; }
+.auth-door b:nth-child(1) { color: var(--rarity-rare); }
+.auth-door b:nth-child(2) { color: var(--rarity-epique); }
+.auth-door b:nth-child(3) { color: var(--rarity-legendaire); }
+/* Petit écran en hauteur : on garde la phrase, on retire les visuels pour que le formulaire reste en vue */
+@media (max-height: 640px) { .auth-visuals { display: none; } }
 .auth-tab {
   min-height: 40px;
   border: 0;
