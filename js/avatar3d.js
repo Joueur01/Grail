@@ -10,7 +10,7 @@
 //      sprites. Le canvas est agrandi d'un facteur entier en CSS : rendu pixel art.
 //   Aucune bibliothèque : tout est calculé ici, en JavaScript.
 
-import { getBody, BODY_COLOR, DRAW_ORDER, WEAR_MODELS } from "./wear-models.js?v=92";
+import { getBody, BODY_COLOR, DRAW_ORDER, WEAR_MODELS } from "./wear-models.js?v=93";
 
 // --- La grille ---
 const GX = 48, GY = 84, GZ = 48;      // taille en voxels

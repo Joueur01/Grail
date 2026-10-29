@@ -6,13 +6,13 @@
 // que chaque carte est possédée. Ce fichier ne calcule rien : il met en page ce que le serveur
 // renvoie. Un ami ne reçoit pas le solde de pièces (le serveur renvoie null).
 
-import { RARITIES, ALL_RARITIES, getRarity, matchesSearch, catalogueOrderMap } from "./data.js?v=92";
-import { getPlayerProfile, setShowcase } from "./api.js?v=92";
-import { getOwnedCards, getOwnedUltimates } from "./inventory.js?v=92";
-import { showToast, reportError } from "./wallet.js?v=92";
-import { SLOTS } from "./avatar.js?v=92";
-import { createAvatar3D } from "./avatar3d.js?v=92";
-import { createCardFace, createCardShell } from "./cards.js?v=92";
+import { RARITIES, ALL_RARITIES, getRarity, matchesSearch, catalogueOrderMap } from "./data.js?v=93";
+import { getPlayerProfile, setShowcase } from "./api.js?v=93";
+import { getOwnedCards, getOwnedUltimates } from "./inventory.js?v=93";
+import { showToast, reportError } from "./wallet.js?v=93";
+import { SLOTS } from "./avatar.js?v=93";
+import { createAvatar3D } from "./avatar3d.js?v=93";
+import { createCardFace, createCardShell } from "./cards.js?v=93";
 
 function el(tag, className, text) {
   const e = document.createElement(tag);
@@ -61,6 +61,31 @@ function reputationCard(data) {
 }
 
 /**
+ * Carte « Niveau » du Videur (migration 0032) : niveau en cours en grand, les 3 portes du niveau (passées ou non)
+ * et le nombre de niveaux validés. videur_level = niveaux validés, videur_doors = portes passées (0 à 2) : le
+ * serveur décide, on affiche seulement (niveau en cours = validés + 1).
+ */
+function videurLevelCard(data) {
+  const level = data.videur_level + 1;
+  const passed = data.videur_doors || 0;
+  const card = el("section", "rep-card");
+  const head = el("div", "rep-card-head");
+  head.append(el("span", "eyebrow", "Videur"), el("span", "rep-card-level", `Niveau ${level}`));
+  const doors = el("div", "level-doors");
+  doors.setAttribute("role", "img");
+  doors.setAttribute("aria-label", `${passed} porte${passed > 1 ? "s" : ""} sur 3 passée${passed > 1 ? "s" : ""} au niveau ${level}`);
+  ["Bar", "Club", "VIP"].forEach((name, i) => {
+    const d = el("span", i < passed ? "level-door passed" : "level-door", i < passed ? `✔ ${name}` : name);
+    doors.append(d);
+  });
+  const done = data.videur_level;
+  card.append(head, doors, el("p", "rep-card-sub", done
+    ? `${done} niveau${done > 1 ? "x" : ""} validé${done > 1 ? "s" : ""} · porte ${passed + 1} sur 3 en cours`
+    : `Porte ${passed + 1} sur 3 en cours · passe le Bar, le Club et le VIP pour monter`));
+  return card;
+}
+
+/**
  * Construit la page de profil à partir de la réponse du serveur.
  * - data : réponse de get_player_profile
  * - catalogue : résultat de loadCatalogue()
@@ -86,9 +111,11 @@ export function buildProfileView(data, catalogue, { showName = true, onEditOutfi
   }
   root.append(head);
 
-  // --- Réputation (le Flow devenu niveaux) : grande carte bien visible, juste sous l'identité ---
-  const hasReputation = typeof data.rep_level === "number" && typeof data.rep_next === "number";
-  if (hasReputation) root.append(reputationCard(data));
+  // --- Niveau du Videur (migration 0032), sinon l'ancienne réputation (0021) : grande carte sous l'identité ---
+  const hasLevel = typeof data.videur_level === "number";
+  const hasReputation = !hasLevel && typeof data.rep_level === "number" && typeof data.rep_next === "number";
+  if (hasLevel) root.append(videurLevelCard(data));
+  else if (hasReputation) root.append(reputationCard(data));
 
   // --- Avatar 3D avec la tenue portée (même rendu que l'écran Tenue) ---
   const worn = {};
@@ -162,8 +189,8 @@ export function buildProfileView(data, catalogue, { showName = true, onEditOutfi
     ...(typeof data.ultimates === "number" ? [statTile("Ultimes", `${data.ultimates} / ${catalogue.pieces.length}`, { sub: `${data.album_cards} cartes dans l'album` })] : []),
     statTile("Boosters ouverts", String(data.boosters_opened ?? 0)),
     statTile("Série au Videur", `${data.videur_streak ?? 0} j`),
-    // Sans la migration 0021, le Flow reste une simple statistique ; sinon il est dans la carte Réputation.
-    ...(hasReputation ? [] : [statTile("Flow", String(data.flow ?? 0))]),
+    // Le Flow n'est plus affiché depuis la tour de niveaux (0032) ; avant la 0021, c'était une simple statistique.
+    ...(hasLevel || hasReputation ? [] : [statTile("Flow", String(data.flow ?? 0))]),
     statTile("Amis", String(data.friends ?? 0)),
   );
   // Le solde n'est renvoyé qu'au joueur lui-même.

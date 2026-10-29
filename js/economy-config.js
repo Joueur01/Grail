@@ -40,21 +40,29 @@ export const SHOP = {
   },
 };
 
-// Réputation (le Flow devenu niveaux) : le niveau n → n+1 coûte costStep × (n + 1) Flow.
-export const REPUTATION = { costStep: 50 };
-
 // Vitrine du profil : nombre maximum de cartes (le serveur renvoie le vrai maximum).
 export const SHOWCASE = { max: 3 };
 
-// Videur : essais par jour et Flow gagné par porte (affichage seulement). Les règles, les seuils et les
-// critères du Club et du VIP sont SECRETS : ils ne sont JAMAIS dans le code du site (CLAUDE.md, section 16).
+// Videur : tour de niveaux (migration 0032). Affichage seulement : essais, récompenses, limite du jour, et ce
+// que le joueur voit selon son niveau. Les règles, les seuils de rareté, leur formule et le nombre de critères
+// sont SECRETS : ils ne sont JAMAIS dans le code du site (CLAUDE.md, section 16).
 export const VIDEUR_INFO = {
+  // Boosters offerts par porte, une fois par jour et par porte.
   doors: [
-    { id: "bar", name: "Bar", tries: 3, flow: 5, boosters: 1 },
-    { id: "club", name: "Club", tries: 5, flow: 12, boosters: 1 },
-    { id: "vip", name: "VIP", tries: 5, flow: 25, boosters: 2 },
+    { id: "bar", name: "Bar", boosters: 1 },
+    { id: "club", name: "Club", boosters: 1 },
+    { id: "vip", name: "VIP", boosters: 2 },
   ],
-  streakBonusCap: 5,
+  maxLevelsPerDay: 5,     // niveaux validés par jour au maximum
+  levelBonusEvery: 5,     // + levelBonusBoosters booster(s) tous les 5 niveaux validés
+  levelBonusBoosters: 1,
+  // Paliers : à partir du niveau « from », essais par porte et ce que montre le videur.
+  tiers: [
+    { from: 1, to: 5, tries: 3, view: "Règles écrites en clair, aperçu gratuit de ta tenue" },
+    { from: 6, to: 15, tries: 4, view: "Règles cachées : « X critères sur N » et un indice clair" },
+    { from: 16, to: 30, tries: 5, view: "Règles cachées : « X critères sur N » et un indice du videur, plus vague" },
+    { from: 31, to: null, tries: 5, view: "Comme avant, mais au VIP le videur ne donne plus qu'un indice" },
+  ],
 };
 
 // Pity : seuils des jauges sous le paquet.
