@@ -23,7 +23,7 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=88">
+  <link rel="stylesheet" href="style.css?v=89">
 </head>
 <body>
   <header class="topbar">
@@ -128,6 +128,18 @@
           </span>
         </button>
         <p class="muted booster-status" id="booster-status">Chargement…</p>
+        <!-- « Et maintenant ? » : affiché seulement quand il n'y a plus de booster (booster.js) -->
+        <nav class="next-steps" id="booster-next" aria-label="Et maintenant ?" hidden>
+          <p class="next-steps-title">Et maintenant ?</p>
+          <a class="next-step" href="#videur">
+            <span class="next-step-name">Passe le Bar au Videur</span>
+            <span class="next-step-sub" id="next-videur-sub"></span>
+          </a>
+          <a class="next-step" href="#avatar">
+            <span class="next-step-name">Habille ton avatar</span>
+            <span class="next-step-sub">Porte tes cartes, puis partage ta tenue</span>
+          </a>
+        </nav>
         <!-- Compteur Signature (booster.js) -->
         <div class="stock">
           <p class="stock-signature" id="stock-signature"></p>
@@ -482,6 +494,6 @@
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=88"></script>
+  <script type="module" src="js/main.js?v=89"></script>
 </body>
 </html>
