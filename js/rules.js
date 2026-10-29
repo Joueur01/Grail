@@ -6,11 +6,11 @@
 // Si le serveur change une valeur, la mettre à jour dans ce fichier-là, pas ici.
 // Les règles cachées du Videur (Club, VIP) ne sont volontairement PAS décrites.
 
-import { RARITIES } from "./data.js?v=90";
+import { RARITIES } from "./data.js?v=91";
 import {
   DROP_RATES, BOOSTER, PITY, UPGRADE, DISCARD_VALUES, MARKET, SHOP, FRIENDS, saleTax, saleNet,
-  DAILY_BONUS, REPUTATION, SHOWCASE, VIDEUR_INFO,
-} from "./economy-config.js?v=90";
+  DAILY_BONUS, REPUTATION, SHOWCASE, VIDEUR_INFO, STARTER_KIT,
+} from "./economy-config.js?v=91";
 
 function el(tag, className, text) {
   const e = document.createElement(tag);
@@ -86,6 +86,7 @@ function buildSections(catalogue) {
     bullets([
       `1 booster est généré toutes les ${BOOSTER.refillHours} h, jusqu'à ${BOOSTER.maxStock} en stock. Tu peux fermer le jeu : le stock se remplit sur le serveur.`,
       "Les boosters ne s'achètent pas et le minuteur ne s'accélère pas : aucun argent réel dans le jeu.",
+      `Kit de départ : à ta première ouverture, tu choisis une marque et tu reçois une tenue complète (4 pièces Communes de cette marque) et ${STARTER_KIT.boosters} boosters offerts, une seule fois.`,
       "Le Videur offre des boosters en plus (voir « Le Videur »). Ils suivent les mêmes taux et les mêmes garanties.",
       "Les cartes sont enregistrées dès que tu déchires le paquet : recharger la page ne permet pas de retirer.",
     ]),

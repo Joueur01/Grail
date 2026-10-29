@@ -6,7 +6,7 @@
 // amélioration. Ne remettre AUCUNE logique de jeu ici ni ailleurs côté client.
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase-config.js?v=90";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase-config.js?v=91";
 
 // Le lien « mot de passe oublié » reçu par e-mail ramène sur le site avec « type=recovery » dans
 // l'adresse. On le note AVANT que supabase-js ne traite (et n'efface) l'adresse.
@@ -156,6 +156,10 @@ export const upgradeCards = (rarity, stake) => rpc("upgrade_cards", { p_rarity: 
 export const discardCards = (cards) => rpc("discard_cards", { p_cards: cards });
 /** → pièces gagnées (0 si le bonus du jour est déjà pris) */
 export const claimDailyBonus = () => rpc("claim_daily_bonus");
+/** Kit de départ (migration 0030) → { claimed, boosters, brands: ["signal9", …] } (marques proposées) */
+export const getStarterKit = () => rpc("starter_kit_state");
+/** Choisit sa marque (une seule fois) → { brand, cards: [{ slot, colorway_id, rarity }], boosters } */
+export const claimStarterKit = (brand) => rpc("claim_starter_kit", { p_brand: brand });
 export const setLocked = (colorway, rarity, locked) =>
   rpc("set_locked", { p_colorway: colorway, p_rarity: rarity, p_locked: locked });
 /** colorway = null : vide l'emplacement */

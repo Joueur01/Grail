@@ -7,28 +7,29 @@
 // ?v=… sur les imports : même numéro que dans index.html, et le même partout
 // (un module importé sous deux adresses différentes serait chargé deux fois).
 
-import { loadCatalogue } from "./data.js?v=90";
-import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=90";
-import { initAvatar, setupOutfit } from "./avatar.js?v=90";
-import { setupBooster } from "./booster.js?v=90";
-import { setupShare } from "./share.js?v=90";
-import { setupUpgrade } from "./upgrade.js?v=90";
-import { setupAtelier, setupViewSwitch } from "./atelier.js?v=90";
-import { setupAlbum } from "./album.js?v=90";
-import { setupBadges } from "./badges.js?v=90";
-import { setupPrivacy } from "./privacy.js?v=90";
-import { setupAccountDeletion, DELETED_FLAG } from "./account.js?v=90";
-import { setupWallet, reportError, showToast } from "./wallet.js?v=90";
-import { setupReputation } from "./reputation.js?v=90";
-import { setupDiscard, createSelection } from "./discard.js?v=90";
-import { setupMarket } from "./market.js?v=90";
-import { setupFriends } from "./friends.js?v=90";
-import { setupVideur } from "./videur.js?v=90";
-import { setupProfile } from "./profile.js?v=90";
-import { setupRules } from "./rules.js?v=90";
-import { startAnalytics, track } from "./analytics.js?v=90";
-import { showSharedOutfit } from "./shared-outfit.js?v=90";
-import { getSession, signIn, signUp, signOut, supabase, requestPasswordReset, updatePassword, isRecoveryLink, endRecovery, sharedOutfitToken } from "./api.js?v=90";
+import { loadCatalogue } from "./data.js?v=91";
+import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=91";
+import { initAvatar, setupOutfit } from "./avatar.js?v=91";
+import { setupBooster } from "./booster.js?v=91";
+import { setupShare } from "./share.js?v=91";
+import { setupUpgrade } from "./upgrade.js?v=91";
+import { setupAtelier, setupViewSwitch } from "./atelier.js?v=91";
+import { setupAlbum } from "./album.js?v=91";
+import { setupBadges } from "./badges.js?v=91";
+import { setupPrivacy } from "./privacy.js?v=91";
+import { setupAccountDeletion, DELETED_FLAG } from "./account.js?v=91";
+import { setupWallet, reportError, showToast } from "./wallet.js?v=91";
+import { setupReputation } from "./reputation.js?v=91";
+import { setupDiscard, createSelection } from "./discard.js?v=91";
+import { setupMarket } from "./market.js?v=91";
+import { setupFriends } from "./friends.js?v=91";
+import { setupVideur } from "./videur.js?v=91";
+import { setupProfile } from "./profile.js?v=91";
+import { setupRules } from "./rules.js?v=91";
+import { setupStarterKit } from "./starter.js?v=91";
+import { startAnalytics, track } from "./analytics.js?v=91";
+import { showSharedOutfit } from "./shared-outfit.js?v=91";
+import { getSession, signIn, signUp, signOut, supabase, requestPasswordReset, updatePassword, isRecoveryLink, endRecovery, sharedOutfitToken } from "./api.js?v=91";
 
 // « profile » et « friends » n'ont pas d'onglet : on y va par les boutons ronds en haut (#profile, #friends). « rules » non plus : par le profil ou un lien « ? » (#rules, #rules/market…).
 const SCREENS = ["booster", "collection", "market", "videur", "friends", "avatar", "profile", "rules"];
@@ -264,6 +265,8 @@ async function boot() {
     setupBadges(); // pastilles de la barre du bas : boosters à ouvrir, Videur pas encore joué
     setupProfile({ catalogue }); // page de profil (bouton rond en haut)
     setupRules({ catalogue }); // page « Règles du jeu » : taux de drop et spécificités
+    // Kit de départ : une marque au choix (4 pièces Communes + boosters offerts), une seule fois par compte.
+    setupStarterKit({ catalogue, onClaimed: onChange }).check();
   } catch (err) {
     console.error(err);
     statusEl.textContent = err?.message || "Impossible de charger le jeu. Recharge la page.";

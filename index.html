@@ -36,7 +36,7 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=90">
+  <link rel="stylesheet" href="style.css?v=91">
 </head>
 <body>
   <header class="topbar">
@@ -477,6 +477,17 @@
     </div>
   </div>
 
+  <!-- Kit de départ : choix d'une marque à la première ouverture (starter.js) -->
+  <div class="picker" id="starter-kit" hidden>
+    <div class="picker-sheet" role="dialog" aria-modal="true" aria-labelledby="starter-kit-title">
+      <div class="picker-head">
+        <h3 class="picker-title" id="starter-kit-title">Ton kit de départ</h3>
+        <button class="picker-close" id="starter-kit-close" aria-label="Plus tard">✕</button>
+      </div>
+      <div class="sheet-body" id="starter-kit-body"></div>
+    </div>
+  </div>
+
   <!-- Politique de confidentialité (privacy.js) : visible partout, même sans compte -->
   <div class="picker privacy" id="privacy" hidden>
     <div class="picker-sheet" role="dialog" aria-modal="true" aria-labelledby="privacy-title">
@@ -525,6 +536,6 @@
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=90"></script>
+  <script type="module" src="js/main.js?v=91"></script>
 </body>
 </html>

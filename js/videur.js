@@ -13,15 +13,15 @@
 // Pour le Club et le VIP, le serveur n'envoie jamais les règles, les seuils ni le score : il n'y a donc
 // ici aucun aperçu, aucune jauge, aucune coche. La règle du jour n'arrive qu'à la fin (`reveal`).
 
-import { getRarity } from "./data.js?v=90";
-import { VIDEUR_INFO } from "./economy-config.js?v=90";
-import { getVideurNight, videurPreview, videurEnter } from "./api.js?v=90";
-import { updateVideurBadge } from "./badges.js?v=90";
-import { SLOTS, readBodyChoice } from "./avatar.js?v=90";
-import { createAvatar3D } from "./avatar3d.js?v=90";
-import { refreshState, getEquipped, getReputation } from "./inventory.js?v=90";
-import { showToast, reportError } from "./wallet.js?v=90";
-import { playSound, vibrate } from "./effects.js?v=90";
+import { getRarity } from "./data.js?v=91";
+import { VIDEUR_INFO } from "./economy-config.js?v=91";
+import { getVideurNight, videurPreview, videurEnter } from "./api.js?v=91";
+import { updateVideurBadge } from "./badges.js?v=91";
+import { SLOTS, readBodyChoice } from "./avatar.js?v=91";
+import { createAvatar3D } from "./avatar3d.js?v=91";
+import { refreshState, getEquipped, getReputation } from "./inventory.js?v=91";
+import { showToast, reportError } from "./wallet.js?v=91";
+import { playSound, vibrate } from "./effects.js?v=91";
 
 /** Couleur d'enseigne de chaque porte (comme les raretés : bleu, violet, or). */
 const DOOR_COLOR = { bar: "var(--rarity-rare)", club: "var(--rarity-epique)", vip: "var(--rarity-legendaire)" };
