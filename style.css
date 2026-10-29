@@ -2745,3 +2745,27 @@ ul.rules-list { margin: 0; padding-left: 18px; display: flex; flex-direction: co
 .account-list { color: var(--text); }
 .btn-danger { background: #ff7a6b; border-color: #ff7a6b; color: #1a0705; }
 .btn-danger:disabled { opacity: 0.35; }
+
+/* --- Kit de départ (starter.js) : choix d'une marque, puis les 4 pièces reçues --- */
+.kit-brands { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.kit-brand {
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  padding: 10px 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  text-align: center;
+}
+.kit-brand[aria-pressed="true"] { border-color: var(--kit-color); box-shadow: 0 0 0 2px var(--kit-color); background: var(--surface-2); }
+.kit-brand-name { font-size: 14px; font-weight: 800; }
+.kit-brand-style { font-size: 12px; color: var(--muted); }
+.kit-sprite { display: grid; place-items: center; width: 80px; height: 80px; border-radius: 12px; background: #cccac4; }
+.kit-sprite img { image-rendering: pixelated; }
+.kit-received { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; justify-items: center; }
+.kit-item { display: grid; gap: 6px; justify-items: center; max-width: 100%; }
+.kit-item-name { max-width: 100%; font-size: 12px; font-weight: 700; color: var(--muted); text-align: center; }
+/* Le bouton de validation reste visible en bas de la fiche pendant qu'on fait défiler les marques */
+.kit-footer { position: sticky; bottom: -20px; margin: 0 -20px -20px; padding: 10px 20px calc(20px + env(safe-area-inset-bottom)); background: var(--bg); }

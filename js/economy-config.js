@@ -19,6 +19,10 @@ export const BOOSTER = {
   signatureEvery: 4,      // 1 booster gratuit sur 4 est un Booster Signature
 };
 
+// Kit de départ (migration 0030) : boosters offerts avec les 4 pièces Communes de la marque choisie
+// (copie d'AFFICHAGE de economy_config.STARTER ; le serveur envoie aussi le vrai nombre).
+export const STARTER_KIT = { boosters: 2 };
+
 // Bonus de connexion quotidien (page « Règles du jeu » ; le serveur verse le vrai montant).
 // Bonus de connexion : 20 pièces par jour, 50 pour le tout premier bonus du compte (migration 0027).
 export const DAILY_BONUS = { coins: 20, signup: 50 };
