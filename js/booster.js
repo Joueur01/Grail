@@ -15,14 +15,14 @@
 // Effets de révélation, du plus discret au plus fort : Rare (reflet + particules),
 // Épique (éclair violet, gerbe de particules, titre), Légendaire (plein écran).
 
-import { RARITIES, getRarity } from "./data.js?v=93";
-import { BOOSTER, DROP_RATES, PITY, VIDEUR_INFO } from "./economy-config.js?v=93";
-import { getPity, getPityEpic, isTutorialDone, markTutorialDone, getBoosterState, refreshState } from "./inventory.js?v=93";
-import { openBooster } from "./api.js?v=93";
-import { reportError } from "./wallet.js?v=93";
-import { createCardFace, createCardShell } from "./cards.js?v=93";
-import { playSound, vibrate, burst } from "./effects.js?v=93";
-import { attachGesture } from "./gestures.js?v=93";
+import { RARITIES, getRarity } from "./data.js?v=94";
+import { BOOSTER, DROP_RATES, PITY, VIDEUR_INFO } from "./economy-config.js?v=94";
+import { getPity, getPityEpic, isTutorialDone, markTutorialDone, getBoosterState, refreshState } from "./inventory.js?v=94";
+import { openBooster } from "./api.js?v=94";
+import { reportError } from "./wallet.js?v=94";
+import { createCardFace, createCardShell } from "./cards.js?v=94";
+import { playSound, vibrate, burst } from "./effects.js?v=94";
+import { attachGesture } from "./gestures.js?v=94";
 
 // Durées (en millisecondes), faciles à ajuster.
 const TEAR_TIME = 550;    // la bande s'envole, le paquet descend
@@ -269,6 +269,10 @@ export function setupBooster({ catalogue, onOpened }) {
     cards = result.cards.map((c) => ({
       colorwayId: c.colorway_id, rarity: c.rarity, forced: c.forced, signature: c.signature, isNew: c.is_new,
     }));
+    // Garde-fou d'affichage : la plus rare est TOUJOURS en dernier. Le serveur met la carte Signature en
+    // dernier même si une Épique la précède (Épique en 2e, Rare en 3e) : on remet les raretés dans l'ordre,
+    // la Signature passant en dernier seulement à rareté égale. (Tri stable : rien d'autre ne bouge.)
+    cards.sort((a, b) => rank.get(a.rarity) - rank.get(b.rarity) || Number(!!a.signature) - Number(!!b.signature));
     // Le tirage est déjà enregistré par le serveur : recharger la page ne permet pas de retirer.
     // On relit l'état (collection, stock, pity) pendant l'animation.
     refreshState().then(() => onOpened?.()).catch(reportError);
@@ -456,13 +460,17 @@ export function setupBooster({ catalogue, onOpened }) {
   }
 
   // Glisser sur le plein écran : on le ferme et on passe à la carte suivante.
+  function closeOverlay(dir) {
+    if (overlay.hidden) return;
+    overlay.hidden = true;
+    if (current) next(current, dir);
+  }
   attachGesture(overlay, {
     threshold: 0.25,
-    onSwipe: (dir) => {
-      if (overlay.hidden) return;
-      overlay.hidden = true;
-      if (current) next(current, dir);
-    },
+    onSwipe: closeOverlay,
+    // Secours : un simple toucher (après le temps de savourer) ferme aussi le plein écran, au cas où le
+    // glissement n'est pas reconnu par le téléphone.
+    onTap: () => closeOverlay(-1),
   });
 
   // --- 5. Carte suivante, puis récapitulatif ---------------------------------

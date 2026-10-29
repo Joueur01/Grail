@@ -6,11 +6,11 @@
 // Si le serveur change une valeur, la mettre à jour dans ce fichier-là, pas ici.
 // Les règles cachées du Videur (Club, VIP) ne sont volontairement PAS décrites.
 
-import { RARITIES } from "./data.js?v=93";
+import { RARITIES } from "./data.js?v=94";
 import {
   DROP_RATES, BOOSTER, PITY, UPGRADE, DISCARD_VALUES, MARKET, SHOP, FRIENDS, saleTax, saleNet,
   DAILY_BONUS, SHOWCASE, VIDEUR_INFO, STARTER_KIT,
-} from "./economy-config.js?v=93";
+} from "./economy-config.js?v=94";
 
 function el(tag, className, text) {
   const e = document.createElement(tag);

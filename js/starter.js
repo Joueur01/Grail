@@ -6,10 +6,10 @@
 // sur les emplacements encore VIDES (set_equipped, validé par le serveur) : la tenue d'un joueur qui en a déjà
 // une n'est jamais écrasée. Sans la migration 0030, rien ne s'affiche (la fonction n'existe pas encore).
 
-import * as api from "./api.js?v=93";
-import { refreshState, getEquipped } from "./inventory.js?v=93";
-import { reportError } from "./wallet.js?v=93";
-import { playSound, vibrate } from "./effects.js?v=93";
+import * as api from "./api.js?v=94";
+import { refreshState, getEquipped } from "./inventory.js?v=94";
+import { reportError } from "./wallet.js?v=94";
+import { playSound, vibrate } from "./effects.js?v=94";
 
 function el(tag, className, text) {
   const e = document.createElement(tag);
