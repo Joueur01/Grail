@@ -5,7 +5,7 @@
 // Le texte décrit ce que fait réellement le jeu (voir CLAUDE.md, sections 13, 15 et 17) : si le jeu change
 // (nouvelle donnée collectée, nouveau prestataire…), mettre ce fichier à jour.
 
-import { PRIVACY } from "./privacy-config.js?v=91";
+import { PRIVACY } from "./privacy-config.js?v=92";
 
 function el(tag, className, text) {
   const e = document.createElement(tag);
