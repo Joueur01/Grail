@@ -1220,7 +1220,10 @@ main {
 .mb-offers { display: flex; flex-direction: column; gap: 6px; }
 .mb-offer { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
 .mb-offer .coin-text { flex: 1; font-size: 17px; font-weight: 800; }
-.mb-offer .btn { flex: none; min-height: 40px; padding: 0 14px; font-size: 14px; }
+/* .btn a width: 100% : sans « width: auto », le bouton prend toute la ligne et dépasse de l'écran (iPhone). */
+.mb-offer { flex-wrap: wrap; }
+.mb-offer .coin-text { min-width: 0; }
+.mb-offer .btn { flex: none; width: auto; max-width: 100%; min-height: 40px; padding: 0 14px; font-size: 14px; white-space: nowrap; }
 .mb-tag { flex: none; padding: 3px 8px; border-radius: 999px; background: var(--border); color: var(--text); font-size: 11px; font-weight: 800; }
 .mb-tag.shop { background: #2bb28a; color: #04140f; }
 .mb-tag.mine { background: #4d8dff; color: #fff; }
