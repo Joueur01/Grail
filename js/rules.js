@@ -6,11 +6,11 @@
 // Si le serveur change une valeur, la mettre à jour dans ce fichier-là, pas ici.
 // Les règles cachées du Videur (Club, VIP) ne sont volontairement PAS décrites.
 
-import { RARITIES } from "./data.js?v=91";
+import { RARITIES } from "./data.js?v=92";
 import {
   DROP_RATES, BOOSTER, PITY, UPGRADE, DISCARD_VALUES, MARKET, SHOP, FRIENDS, saleTax, saleNet,
   DAILY_BONUS, REPUTATION, SHOWCASE, VIDEUR_INFO, STARTER_KIT,
-} from "./economy-config.js?v=91";
+} from "./economy-config.js?v=92";
 
 function el(tag, className, text) {
   const e = document.createElement(tag);
@@ -152,7 +152,7 @@ function buildSections(catalogue) {
     table(VIDEUR_INFO.doors.map((d) => [d.name, `${d.tries} essais · +${d.flow} Flow · +${d.boosters} booster${d.boosters > 1 ? "s" : ""}`])),
     bullets([
       "Au Bar, les règles du jour sont visibles et tu as un aperçu gratuit de ta tenue.",
-      "Au Club et au VIP, les règles sont cachées : à toi de les deviner grâce aux indices du videur.",
+      "Au Club et au VIP, les règles sont cachées : à toi de les deviner. Après chaque refus, le videur te dit combien de critères tu respectes et te donne un indice sur un critère raté.",
       "Quand la porte est réussie ou que tes essais sont épuisés, la règle du jour est révélée.",
       "Une porte réussie rapporte du Flow et des boosters, une seule fois par jour. Les essais sont comptés par le serveur.",
       "Les boosters offerts s'ajoutent à ton stock sans la limite de " + BOOSTER.maxStock + " et s'ouvrent après tes boosters gratuits : rien n'est perdu.",

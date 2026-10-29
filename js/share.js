@@ -17,13 +17,13 @@
 // préparée À L'AVANCE, à chaque changement de tenue, pour être prête au moment
 // où l'on touche le bouton (sinon le partage serait refusé).
 
-import { ALL_RARITIES, getRarity } from "./data.js?v=91";
-import { SLOTS, readBodyChoice } from "./avatar.js?v=91";
-import { getPseudo } from "./inventory.js?v=91";
-import { buildModel, renderModel, DEFAULT_YAW } from "./avatar3d.js?v=91";
-import { createOutfitShare } from "./api.js?v=91";
-import { showToast } from "./wallet.js?v=91";
-import { track } from "./analytics.js?v=91";
+import { ALL_RARITIES, getRarity } from "./data.js?v=92";
+import { SLOTS, readBodyChoice } from "./avatar.js?v=92";
+import { getPseudo } from "./inventory.js?v=92";
+import { buildModel, renderModel, DEFAULT_YAW } from "./avatar3d.js?v=92";
+import { createOutfitShare } from "./api.js?v=92";
+import { showToast } from "./wallet.js?v=92";
+import { track } from "./analytics.js?v=92";
 
 const IMG_W = 1080;
 const IMG_H = 1350;

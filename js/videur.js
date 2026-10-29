@@ -6,22 +6,23 @@
 //  - videur_enter   : se présenter (consomme un essai).
 // Aucune règle du Videur n'est codée ici.
 //
-// Trois niveaux de difficulté (le serveur envoie `mode` pour chaque porte) :
-//  - « visible » (Bar)  : règles, aperçu gratuit et jauges, comme un tutoriel ;
-//  - « count »  (Club)  : règles CACHÉES ; après chaque essai : « X sur N » + un indice vague ;
-//  - « hint »   (VIP)   : règles CACHÉES ; après chaque essai : l'indice vague seulement.
+// Trois modes (le serveur envoie `mode` pour chaque porte) :
+//  - « visible » (Bar)        : règles, aperçu gratuit et jauges, comme un tutoriel ;
+//  - « count »  (Club, VIP)   : règles CACHÉES ; après chaque essai : « X sur N » + un indice
+//                               (le VIP est en « count » depuis la migration 0031) ;
+//  - « hint »   (VIP avant la 0031) : règles CACHÉES ; après chaque essai : l'indice seulement.
 // Pour le Club et le VIP, le serveur n'envoie jamais les règles, les seuils ni le score : il n'y a donc
 // ici aucun aperçu, aucune jauge, aucune coche. La règle du jour n'arrive qu'à la fin (`reveal`).
 
-import { getRarity } from "./data.js?v=91";
-import { VIDEUR_INFO } from "./economy-config.js?v=91";
-import { getVideurNight, videurPreview, videurEnter } from "./api.js?v=91";
-import { updateVideurBadge } from "./badges.js?v=91";
-import { SLOTS, readBodyChoice } from "./avatar.js?v=91";
-import { createAvatar3D } from "./avatar3d.js?v=91";
-import { refreshState, getEquipped, getReputation } from "./inventory.js?v=91";
-import { showToast, reportError } from "./wallet.js?v=91";
-import { playSound, vibrate } from "./effects.js?v=91";
+import { getRarity } from "./data.js?v=92";
+import { VIDEUR_INFO } from "./economy-config.js?v=92";
+import { getVideurNight, videurPreview, videurEnter } from "./api.js?v=92";
+import { updateVideurBadge } from "./badges.js?v=92";
+import { SLOTS, readBodyChoice } from "./avatar.js?v=92";
+import { createAvatar3D } from "./avatar3d.js?v=92";
+import { refreshState, getEquipped, getReputation } from "./inventory.js?v=92";
+import { showToast, reportError } from "./wallet.js?v=92";
+import { playSound, vibrate } from "./effects.js?v=92";
 
 /** Couleur d'enseigne de chaque porte (comme les raretés : bleu, violet, or). */
 const DOOR_COLOR = { bar: "var(--rarity-rare)", club: "var(--rarity-epique)", vip: "var(--rarity-legendaire)" };
@@ -180,7 +181,7 @@ export function setupVideur({ catalogue }) {
     return pieces;
   }
 
-  /** Une ligne de carrés par essai, SANS rien révéler des règles : 🟩 entré · 🟨 presque (Club) · ⬛ loin. */
+  /** Une ligne de carrés par essai, SANS rien révéler des règles : 🟩 entré · 🟨 presque (mode « count ») · ⬛ loin. */
   function squares(door) {
     return door.attempts.map((a) => {
       if (a.passed) return "🟩";
@@ -380,7 +381,7 @@ export function setupVideur({ catalogue }) {
     sheet.hidden = false;
   }
 
-  /** Verdict d'une porte cachée : entrée / refusé, indice, « X sur N » (Club), règle du jour à la fin. */
+  /** Verdict d'une porte cachée : entrée / refusé, indice, « X sur N » (mode « count »), règle du jour à la fin. */
   function showHiddenVerdict(door, r) {
     const verdict = el("div", r.passed ? "verdict pass" : "verdict fail");
     verdict.append(el("p", "verdict-word", r.passed ? "ENTRÉE" : "REFUSÉ"));
