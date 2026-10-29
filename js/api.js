@@ -6,7 +6,7 @@
 // amélioration. Ne remettre AUCUNE logique de jeu ici ni ailleurs côté client.
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase-config.js?v=92";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase-config.js?v=93";
 
 // Le lien « mot de passe oublié » reçu par e-mail ramène sur le site avec « type=recovery » dans
 // l'adresse. On le note AVANT que supabase-js ne traite (et n'efface) l'adresse.
@@ -230,6 +230,18 @@ export const getVideurNight = () => rpc("get_videur_night");
 export const videurPreview = (door) => rpc("videur_preview", { p_door: door });
 /** Se présenter (consomme un essai) : aperçu + { passed, line, flow_gained, streak_bonus, streak, tries_left, flow } */
 export const videurEnter = (door) => rpc("videur_enter", { p_door: door });
+
+// --- Videur : tour de niveaux (migration 0032 ; remplace les fonctions ci-dessus) -------------
+
+/** État de la tour : { day, level, levels_done, doors_passed, today_cleared, max_per_day, status (play | blocked | limit),
+ *  streak, played_today, level_bonus_every, level_bonus_boosters, next_bonus_level, doors: [{ id, name, state }],
+ *  door: { id, name, mode, tries, tries_left, boosters, attempts, rules? (mode visible), reveal? (porte bloquée) } } */
+export const getVideurTower = () => rpc("get_videur_tower");
+/** Aperçu GRATUIT (mode visible seulement) : { rules: [{ label, ok }], pieces, rarity_points, matched, total } */
+export const videurTowerPreview = () => rpc("videur_tower_preview");
+/** Se présenter à la porte en cours : { passed, line, hint, tries_left, boosters_gained, level_bonus, level_cleared,
+ *  level, today_cleared, max_per_day, blocked, matched? total? (visible, count), rules? (visible), reveal? } */
+export const videurTowerEnter = () => rpc("videur_tower_enter");
 
 // --- Compte (migration 0025) ---------------------------------------------------------
 

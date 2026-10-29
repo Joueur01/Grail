@@ -14,9 +14,9 @@
 // La navigation passe par l'ancre de l'URL (#market/m/<modèle>/<coloris>, #market/c/<coloris>/<rareté>) :
 // le bouton « retour » du téléphone fonctionne.
 
-import { RARITIES, getRarity, matchesSearch } from "./data.js?v=92";
-import { SLOTS } from "./avatar.js?v=92";
-import { getOwnedCards, getCoins } from "./inventory.js?v=92";
+import { RARITIES, getRarity, matchesSearch } from "./data.js?v=93";
+import { SLOTS } from "./avatar.js?v=93";
+import { getOwnedCards, getCoins } from "./inventory.js?v=93";
 
 const PAGE = 60; // lignes ajoutées à chaque « Voir plus » (vue « Cartes »)
 const EMPTY = Object.freeze({ offers: 0, best: null, mine: 0, shop: false, last: null, lastAt: null, recent: 0 });

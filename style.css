@@ -2769,3 +2769,25 @@ ul.rules-list { margin: 0; padding-left: 18px; display: flex; flex-direction: co
 .kit-item-name { max-width: 100%; font-size: 12px; font-weight: 700; color: var(--muted); text-align: center; }
 /* Le bouton de validation reste visible en bas de la fiche pendant qu'on fait défiler les marques */
 .kit-footer { position: sticky; bottom: -20px; margin: 0 -20px -20px; padding: 10px 20px calc(20px + env(safe-area-inset-bottom)); background: var(--bg); }
+
+/* --- Videur en tour de niveaux (videur-tour.js) : repères des 3 portes, message du jour --- */
+.door-step { cursor: default; }
+.door-step[data-state="current"] { border-color: var(--door-color); color: var(--text); box-shadow: 0 0 14px -4px var(--door-color); }
+.door-step[data-state="current"] .door-tab-name { color: var(--door-color); }
+.door-step[data-state="passed"] { border-color: #3f8f5b; color: #7fd99a; }
+.door-step[data-state="locked"] { opacity: 0.6; }
+.videur-banner {
+  margin: 4px 0 8px; padding: 12px 14px;
+  border: 1px solid var(--border); border-radius: 14px; background: var(--surface);
+  font-size: 14px; font-weight: 600; text-align: center;
+}
+.verdict-level { font-weight: 800; color: var(--rarity-legendaire); text-align: center; }
+
+/* Carte « Niveau » du Videur sur la page de profil : les 3 portes du niveau en cours */
+.level-doors { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.level-door {
+  padding: 7px 4px; border-radius: 999px; border: 1px solid var(--border);
+  font-size: 12px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; text-align: center;
+  color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.level-door.passed { border-color: var(--rarity-legendaire); color: var(--rarity-legendaire); background: rgba(242, 194, 48, 0.1); }

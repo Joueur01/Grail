@@ -1,4 +1,8 @@
-// videur.js — écran « Videur » : 3 portes par jour (Bar, Club, VIP), dress code du jour, deux jauges.
+// videur.js — écran « Videur ».
+//
+// Depuis la migration 0032, le Videur est une TOUR DE NIVEAUX : c'est js/videur-tour.js qui s'en occupe.
+// Ce fichier choisit le bon écran au démarrage : la tour si le serveur la connaît, sinon (migration 0032 pas
+// encore exécutée) l'ANCIEN Videur ci-dessous : 3 portes par jour (Bar, Club, VIP), dress code du jour.
 //
 // ⚠️ Tout est calculé par le SERVEUR (migration 0012) : dress code du jour, score de style, points de
 // rareté, essais, verrous, Flow. Ce fichier affiche ce que le serveur renvoie et envoie deux actions :
@@ -14,15 +18,16 @@
 // Pour le Club et le VIP, le serveur n'envoie jamais les règles, les seuils ni le score : il n'y a donc
 // ici aucun aperçu, aucune jauge, aucune coche. La règle du jour n'arrive qu'à la fin (`reveal`).
 
-import { getRarity } from "./data.js?v=92";
-import { VIDEUR_INFO } from "./economy-config.js?v=92";
-import { getVideurNight, videurPreview, videurEnter } from "./api.js?v=92";
-import { updateVideurBadge } from "./badges.js?v=92";
-import { SLOTS, readBodyChoice } from "./avatar.js?v=92";
-import { createAvatar3D } from "./avatar3d.js?v=92";
-import { refreshState, getEquipped, getReputation } from "./inventory.js?v=92";
-import { showToast, reportError } from "./wallet.js?v=92";
-import { playSound, vibrate } from "./effects.js?v=92";
+import { getRarity } from "./data.js?v=93";
+import { VIDEUR_INFO } from "./economy-config.js?v=93";
+import { getVideurNight, videurPreview, videurEnter, getVideurTower } from "./api.js?v=93";
+import { updateVideurBadge } from "./badges.js?v=93";
+import { SLOTS, readBodyChoice } from "./avatar.js?v=93";
+import { createAvatar3D } from "./avatar3d.js?v=93";
+import { refreshState, getEquipped, getReputation } from "./inventory.js?v=93";
+import { showToast, reportError } from "./wallet.js?v=93";
+import { playSound, vibrate } from "./effects.js?v=93";
+import { setupTower } from "./videur-tour.js?v=93";
 
 /** Couleur d'enseigne de chaque porte (comme les raretés : bleu, violet, or). */
 const DOOR_COLOR = { bar: "var(--rarity-rare)", club: "var(--rarity-epique)", vip: "var(--rarity-legendaire)" };
@@ -34,11 +39,34 @@ function el(tag, className, text) {
   return e;
 }
 
+/** Message renvoyé par api.js quand une fonction n'existe pas encore sur le serveur. */
+const NOT_ACTIVATED = "Cette fonction n'est pas encore activée sur le serveur.";
+
 /**
- * Branche l'écran Videur.
+ * Branche l'écran Videur : la tour de niveaux (migration 0032) si le serveur la connaît, sinon l'ancien Videur.
  * - catalogue : résultat de loadCatalogue() (pour dessiner la tenue)
  */
-export function setupVideur({ catalogue }) {
+export async function setupVideur({ catalogue }) {
+  try {
+    const first = await getVideurTower();
+    setupTower({ catalogue, first });
+    return;
+  } catch (err) {
+    if (err?.message !== NOT_ACTIVATED) {
+      // Serveur injoignable : on garde la tour (l'ancien Videur est désactivé par la 0032) et on réessaie plus tard.
+      const errorBox = document.getElementById("videur-error");
+      errorBox.textContent = err?.message || String(err);
+      errorBox.hidden = false;
+      const retry = () => { if (location.hash === "#videur") { window.removeEventListener("hashchange", retry); setupVideur({ catalogue }); } };
+      window.addEventListener("hashchange", retry);
+      return;
+    }
+  }
+  setupLegacyVideur({ catalogue });
+}
+
+/** Ancien Videur (avant la migration 0032) : 3 portes par jour, dress code du jour. */
+function setupLegacyVideur({ catalogue }) {
   const summary = document.getElementById("videur-summary");
   const errorBox = document.getElementById("videur-error");
   const tabs = document.getElementById("door-tabs");

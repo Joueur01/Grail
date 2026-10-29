@@ -36,7 +36,7 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=92">
+  <link rel="stylesheet" href="style.css?v=93">
 </head>
 <body>
   <header class="topbar">
@@ -163,7 +163,7 @@
         <nav class="next-steps" id="booster-next" aria-label="Et maintenant ?" hidden>
           <p class="next-steps-title">Et maintenant ?</p>
           <a class="next-step" href="#videur">
-            <span class="next-step-name">Passe le Bar au Videur</span>
+            <span class="next-step-name">Passe les portes du Videur</span>
             <span class="next-step-sub" id="next-videur-sub"></span>
           </a>
           <a class="next-step" href="#avatar">
@@ -287,7 +287,8 @@
       </div>
     </section>
 
-    <!-- Videur : 3 portes par jour (Bar, Club, VIP), dress code du jour, jauges Style / Rareté (videur.js).
+    <!-- Videur : tour de niveaux, niveau N = Bar N → Club N → VIP N (videur-tour.js, migration 0032) ;
+         sans la 0032, l'ancien Videur : 3 portes par jour, dress code du jour (videur.js).
          Tout est calculé par le serveur. -->
     <section class="screen" data-screen="videur" id="screen-videur" hidden>
       <h2 class="screen-title">Videur</h2>
@@ -536,6 +537,6 @@
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=92"></script>
+  <script type="module" src="js/main.js?v=93"></script>
 </body>
 </html>

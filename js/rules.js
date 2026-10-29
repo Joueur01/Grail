@@ -6,11 +6,11 @@
 // Si le serveur change une valeur, la mettre à jour dans ce fichier-là, pas ici.
 // Les règles cachées du Videur (Club, VIP) ne sont volontairement PAS décrites.
 
-import { RARITIES } from "./data.js?v=92";
+import { RARITIES } from "./data.js?v=93";
 import {
   DROP_RATES, BOOSTER, PITY, UPGRADE, DISCARD_VALUES, MARKET, SHOP, FRIENDS, saleTax, saleNet,
-  DAILY_BONUS, REPUTATION, SHOWCASE, VIDEUR_INFO, STARTER_KIT,
-} from "./economy-config.js?v=92";
+  DAILY_BONUS, SHOWCASE, VIDEUR_INFO, STARTER_KIT,
+} from "./economy-config.js?v=93";
 
 function el(tag, className, text) {
   const e = document.createElement(tag);
@@ -147,30 +147,37 @@ function buildSections(catalogue) {
     ]),
   ]);
 
-  const videur = section("videur", "Le Videur", "3 portes par jour, essais, Flow, boosters", [
-    para("Chaque jour, un videur juge la tenue que tu portes (seulement les pièces que tu possèdes encore). Il y a 3 portes, à passer dans l'ordre : Bar, Club, VIP."),
-    table(VIDEUR_INFO.doors.map((d) => [d.name, `${d.tries} essais · +${d.flow} Flow · +${d.boosters} booster${d.boosters > 1 ? "s" : ""}`])),
+  const V = VIDEUR_INFO;
+  // Pluriel simple (« niveau » → « niveaux », sinon un « s »).
+  const plural = (n, word) => `${n} ${word}${n > 1 ? (word.endsWith("eau") ? "x" : "s") : ""}`;
+  const videur = section("videur", "Le Videur", "Une tour de niveaux : Bar, Club, VIP", [
+    para("Le videur juge la tenue que tu portes (seulement les pièces que tu possèdes encore). Le Videur est une tour de niveaux : pour valider le niveau N, tu passes le Bar N, puis le Club N, puis le VIP N, dans l'ordre."),
     bullets([
-      "Au Bar, les règles du jour sont visibles et tu as un aperçu gratuit de ta tenue.",
-      "Au Club et au VIP, les règles sont cachées : à toi de les deviner. Après chaque refus, le videur te dit combien de critères tu respectes et te donne un indice sur un critère raté.",
-      "Quand la porte est réussie ou que tes essais sont épuisés, la règle du jour est révélée.",
-      "Une porte réussie rapporte du Flow et des boosters, une seule fois par jour. Les essais sont comptés par le serveur.",
+      `Tu peux valider jusqu'à ${plural(V.maxLevelsPerDay, "niveau")} par jour (jour de Paris). Ta progression est gardée d'un jour à l'autre.`,
+      "Chaque porte a sa propre règle, tirée pour toi : elle est différente pour chaque joueur et ne change pas dans la journée.",
+      "Jusqu'au niveau 10, la règle peut toujours être respectée avec les cartes que tu possèdes. Plus haut, certaines portes demandent un peu plus que ta collection.",
+      "Si tu rates tous tes essais à une porte, le niveau est bloqué jusqu'au lendemain. La règle est alors révélée, et une nouvelle règle est tirée le lendemain.",
+      "Les essais sont comptés par le serveur : recharger la page ne rend rien.",
+    ]),
+    sub("Ce que tu vois selon ton niveau"),
+    table(V.tiers.map((tr) => [tr.to ? `Niveaux ${tr.from} à ${tr.to}` : `Niveau ${tr.from} et +`, `${tr.view} · ${plural(tr.tries, "essai")} par porte`])),
+    sub("Récompenses"),
+    table(V.doors.map((d) => [d.name, `+${plural(d.boosters, "booster")}, une fois par jour`])),
+    bullets([
+      `Tous les ${V.levelBonusEvery} niveaux validés (${V.levelBonusEvery}, ${V.levelBonusEvery * 2}, ${V.levelBonusEvery * 3}…) : +${plural(V.levelBonusBoosters, "booster")} en plus, une seule fois par niveau.`,
       "Les boosters offerts s'ajoutent à ton stock sans la limite de " + BOOSTER.maxStock + " et s'ouvrent après tes boosters gratuits : rien n'est perdu.",
-      `Série : +1 Flow de bonus par jour d'affilée avec au moins le Bar réussi, jusqu'à +${VIDEUR_INFO.streakBonusCap}.`,
+      "Le Videur ne donne jamais de pièces.",
+      "Série : le nombre de jours d'affilée où tu as passé au moins un Bar (simple statistique).",
     ]),
   ]);
 
-  // Les premiers niveaux seulement, puis une ligne « ainsi de suite » : la progression continue (pas de niveau maximum).
-  const levels = [0, 1, 2, 3, 4].map((n) => [`Niveau ${n} → ${n + 1}`, `${REPUTATION.costStep * (n + 1)} Flow`]);
-  const reputation = section("reputation", "Réputation et Flow", "Niveaux de réputation", [
-    para("Le Flow que tu gagnes au Videur fait monter ta réputation. Tu commences niveau 0. Le niveau est visible sur l'anneau autour de ton bouton profil."),
-    table(levels),
-    el("p", "rules-more", `… et ainsi de suite : ${REPUTATION.costStep} Flow de plus à chaque niveau.`),
+  const reputation = section("reputation", "Niveaux du Videur", "Ton niveau, affiché partout", [
+    para("Ton niveau est celui que tu joues dans la tour du Videur. Tu commences au niveau 1. Il est affiché autour de ton bouton profil (l'anneau doré se remplit à chaque porte passée), sur ta page de profil et dans l'écran Videur."),
     bullets([
-      "Pour l'instant, il n'y a pas de niveau maximum : la progression continue, avec un coût qui augmente à chaque niveau.",
-      `Chaque niveau coûte ${REPUTATION.costStep} Flow de plus que le précédent.`,
-      "À chaque passage de niveau, le Flow correspondant est dépensé : la barre repart avec ce qu'il te reste.",
-      "Le Flow ne s'achète pas, ne s'échange pas et ne se convertit pas en pièces.",
+      "Le niveau monte quand tu passes la 3e porte (le VIP) du niveau en cours.",
+      "Il n'y a pas de niveau maximum : les portes deviennent plus difficiles à mesure que tu montes.",
+      "Le niveau ne s'achète pas, ne s'échange pas et ne donne aucun avantage de jeu.",
+      "L'ancien Flow (et la réputation qui en dépendait) n'est plus utilisé.",
     ]),
   ]);
 
