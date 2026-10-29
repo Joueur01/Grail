@@ -5,7 +5,7 @@
 // Le texte décrit ce que fait réellement le jeu (voir CLAUDE.md, sections 13, 15 et 17) : si le jeu change
 // (nouvelle donnée collectée, nouveau prestataire…), mettre ce fichier à jour.
 
-import { PRIVACY } from "./privacy-config.js?v=86";
+import { PRIVACY } from "./privacy-config.js?v=87";
 
 function el(tag, className, text) {
   const e = document.createElement(tag);
@@ -70,7 +70,8 @@ function sections() {
         "GitHub Pages : hébergement du site (les pages et les images du jeu).",
         "Google Fonts : la police de caractères Archivo.",
         "jsDelivr : le fichier qui permet au site de parler à Supabase.",
-        "GitHub Pages, Google Fonts et jsDelivr peuvent traiter les données techniques de ta visite (dont ton adresse IP) hors de l'Union européenne ; ils encadrent ces transferts dans leurs propres conditions (par exemple par des clauses contractuelles types). Tes données de jeu, elles, restent chez Supabase dans l'Union européenne.",
+        "Resend : envoi des e-mails du jeu (confirmation de ton compte, réinitialisation de ton mot de passe). Il reçoit ton adresse e-mail et le contenu de ces messages ; les e-mails sont envoyés depuis l'Union européenne (Irlande).",
+        "GitHub Pages, Google Fonts et jsDelivr peuvent traiter les données techniques de ta visite (dont ton adresse IP), et Resend ton adresse e-mail, hors de l'Union européenne ; ils encadrent ces transferts dans leurs propres conditions (par exemple par des clauses contractuelles types). Tes données de jeu, elles, restent chez Supabase dans l'Union européenne.",
       ],
     },
     {
