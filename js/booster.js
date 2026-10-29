@@ -15,14 +15,14 @@
 // Effets de révélation, du plus discret au plus fort : Rare (reflet + particules),
 // Épique (éclair violet, gerbe de particules, titre), Légendaire (plein écran).
 
-import { RARITIES, getRarity } from "./data.js?v=88";
-import { BOOSTER, DROP_RATES, PITY } from "./economy-config.js?v=88";
-import { getPity, getPityEpic, isTutorialDone, markTutorialDone, getBoosterState, refreshState } from "./inventory.js?v=88";
-import { openBooster } from "./api.js?v=88";
-import { reportError } from "./wallet.js?v=88";
-import { createCardFace, createCardShell } from "./cards.js?v=88";
-import { playSound, vibrate, burst } from "./effects.js?v=88";
-import { attachGesture } from "./gestures.js?v=88";
+import { RARITIES, getRarity } from "./data.js?v=89";
+import { BOOSTER, DROP_RATES, PITY, VIDEUR_INFO } from "./economy-config.js?v=89";
+import { getPity, getPityEpic, isTutorialDone, markTutorialDone, getBoosterState, refreshState } from "./inventory.js?v=89";
+import { openBooster } from "./api.js?v=89";
+import { reportError } from "./wallet.js?v=89";
+import { createCardFace, createCardShell } from "./cards.js?v=89";
+import { playSound, vibrate, burst } from "./effects.js?v=89";
+import { attachGesture } from "./gestures.js?v=89";
 
 // Durées (en millisecondes), faciles à ajuster.
 const TEAR_TIME = 550;    // la bande s'envole, le paquet descend
@@ -94,6 +94,8 @@ export function setupBooster({ catalogue, onOpened }) {
   const stockTimer = document.getElementById("stock-timer");
   const stockBonus = document.getElementById("stock-bonus");
   const stockSignature = document.getElementById("stock-signature");
+  const nextSteps = document.getElementById("booster-next");
+  const nextVideurSub = document.getElementById("next-videur-sub");
 
   packTop.style.clipPath = tearClip(true);
   packBody.style.clipPath = tearClip(false);
@@ -124,6 +126,11 @@ export function setupBooster({ catalogue, onOpened }) {
     if (text) container.append(swipeHint(text));
   }
 
+  const barBoosters = VIDEUR_INFO.doors.find((d) => d.id === "bar")?.boosters ?? 0;
+  nextVideurSub.textContent = barBoosters > 0
+    ? `Une fois par jour : +${barBoosters} booster${barBoosters > 1 ? "s" : ""} offert${barBoosters > 1 ? "s" : ""}`
+    : "Un défi chaque jour";
+
   let packCanOpen = null; // le paquet affiché est-il ouvrable ? (pour savoir quand le redessiner)
 
   // Met le paquet dans le bon état (disponible ou non, standard ou Signature), d'après le serveur.
@@ -132,6 +139,7 @@ export function setupBooster({ catalogue, onOpened }) {
     const available = state.canOpen;
     packCanOpen = available;
     pack.disabled = !available;
+    nextSteps.hidden = available; // plus de booster : on propose quoi faire ensuite
     pack.dataset.locked = "0";
     pack.classList.remove("nudge", "torn", "dragging");
     pack.classList.toggle("signature", state.signature);

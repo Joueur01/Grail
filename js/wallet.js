@@ -4,9 +4,9 @@
 // Le solde vient du SERVEUR (lu via inventory.js) ; ce fichier ne fait que l'afficher.
 // Le bonus quotidien est décidé et versé par le serveur (claim_daily_bonus).
 
-import { getCoins, onCoinsChange, refreshState } from "./inventory.js?v=88";
-import { claimDailyBonus } from "./api.js?v=88";
-import { DAILY_BONUS } from "./economy-config.js?v=88";
+import { getCoins, onCoinsChange, refreshState } from "./inventory.js?v=89";
+import { claimDailyBonus } from "./api.js?v=89";
+import { DAILY_BONUS } from "./economy-config.js?v=89";
 
 let toastTimer = null;
 

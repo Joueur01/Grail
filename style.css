@@ -429,6 +429,39 @@ main {
 
 .booster-status { text-align: center; }
 
+/* « Et maintenant ? » : deux pistes quand il n'y a plus de booster */
+.next-steps {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  max-width: 360px;
+  margin: 4px auto 0;
+}
+.next-steps[hidden] { display: none; }
+.next-steps-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: center;
+}
+.next-step {
+  display: grid;
+  gap: 2px;
+  min-height: 56px;
+  padding: 10px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  text-decoration: none;
+}
+.next-step:active { background: var(--surface-2); }
+.next-step-name { font-size: 15px; font-weight: 800; }
+.next-step-sub { font-size: 13px; color: var(--muted); }
+
 /* --- Tutoriel du 1er booster : un « doigt » qui glisse de gauche à droite --- */
 .swipe-hint {
   position: absolute;
