@@ -6,14 +6,14 @@
 // jamais l'identité d'un vendeur : voir market-browse.js) et envoie les actions (market_list / market_cancel / market_buy / market_ack_sales).
 // Aucune règle du Market n'est calculée ici ; les messages d'erreur viennent du serveur.
 
-import { RARITIES, getRarity, matchesSearch } from "./data.js?v=95";
-import { MARKET, saleTax, saleNet } from "./economy-config.js?v=95";
-import { getOwnedCards, getCoins, getMyListings, refreshState } from "./inventory.js?v=95";
-import { getBestOffers, getMarketShop, getMarketCatalog, getMarketCardOffers, marketList, marketCancel, marketBuy, marketAckSales, marketHistory } from "./api.js?v=95";
-import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=95";
-import { createMarketBrowse } from "./market-browse.js?v=95";
-import { playSound, vibrate } from "./effects.js?v=95";
-import { flyCoins, showToast, reportError } from "./wallet.js?v=95";
+import { RARITIES, getRarity, matchesSearch } from "./data.js?v=96";
+import { MARKET, saleTax, saleNet } from "./economy-config.js?v=96";
+import { getOwnedCards, getCoins, getMyListings, refreshState } from "./inventory.js?v=96";
+import { getBestOffers, getMarketShop, getMarketCatalog, getMarketCardOffers, marketList, marketCancel, marketBuy, marketAckSales, marketHistory } from "./api.js?v=96";
+import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=96";
+import { createMarketBrowse } from "./market-browse.js?v=96";
+import { playSound, vibrate } from "./effects.js?v=96";
+import { flyCoins, showToast, reportError } from "./wallet.js?v=96";
 
 const CATEGORIES = [
   { id: "haut", name: "Haut" },

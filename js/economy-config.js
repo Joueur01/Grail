@@ -44,8 +44,8 @@ export const SHOP = {
 export const SHOWCASE = { max: 3 };
 
 // Videur : tour de niveaux (migration 0032). Affichage seulement : essais, récompenses, limite du jour, et ce
-// que le joueur voit selon son niveau. Les règles, les seuils de rareté, leur formule et le nombre de critères
-// sont SECRETS : ils ne sont JAMAIS dans le code du site (CLAUDE.md, section 16).
+// que le joueur voit selon son niveau. Depuis la migration 0034, les règles sont visibles à tous les niveaux,
+// mais elles restent tirées par le serveur pour chaque joueur : aucune règle ni formule dans le site.
 export const VIDEUR_INFO = {
   // Boosters offerts par porte, une fois par jour et par porte.
   doors: [
@@ -58,10 +58,10 @@ export const VIDEUR_INFO = {
   levelBonusBoosters: 1,
   // Paliers : à partir du niveau « from », essais par porte et ce que montre le videur.
   tiers: [
-    { from: 1, to: 3, tries: 3, view: "Règles écrites en clair, aperçu gratuit de ta tenue" },
-    { from: 4, to: 25, tries: 4, view: "Règles cachées : « X critères sur N » et un indice clair" },
-    { from: 26, to: 75, tries: 5, view: "Règles cachées : « X critères sur N » et un indice du videur, plus imagé" },
-    { from: 76, to: null, tries: 5, view: "Difficulté maximale : plus de critères, mêmes indices" },
+    { from: 1, to: 3, tries: 3, view: "2 ou 3 critères, peu de rareté demandée" },
+    { from: 4, to: 25, tries: 4, view: "2 à 4 critères, plus de rareté" },
+    { from: 26, to: 75, tries: 5, view: "3 à 5 critères, encore plus de rareté" },
+    { from: 76, to: null, tries: 5, view: "Difficulté maximale : 4 à 6 critères" },
   ],
 };
 

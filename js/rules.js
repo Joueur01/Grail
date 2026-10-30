@@ -4,13 +4,13 @@
 // #rules/market, #rules/album, #rules/videur, #rules/reputation) : la section demandée s'ouvre toute seule.
 // ⚠️ Les valeurs affichées viennent de js/economy-config.js (copie d'AFFICHAGE : le serveur décide).
 // Si le serveur change une valeur, la mettre à jour dans ce fichier-là, pas ici.
-// Les règles cachées du Videur (Club, VIP) ne sont volontairement PAS décrites.
+// Le Videur : seulement le principe et les paliers (les règles sont tirées pour chaque joueur par le serveur).
 
-import { RARITIES } from "./data.js?v=95";
+import { RARITIES } from "./data.js?v=96";
 import {
   DROP_RATES, BOOSTER, PITY, UPGRADE, DISCARD_VALUES, MARKET, SHOP, FRIENDS, saleTax, saleNet,
   DAILY_BONUS, SHOWCASE, VIDEUR_INFO, STARTER_KIT,
-} from "./economy-config.js?v=95";
+} from "./economy-config.js?v=96";
 
 function el(tag, className, text) {
   const e = document.createElement(tag);
@@ -156,11 +156,12 @@ function buildSections(catalogue) {
       `Tu peux valider jusqu'à ${plural(V.maxLevelsPerDay, "niveau")} par jour (jour de Paris). Ta progression est gardée d'un jour à l'autre.`,
       "Chaque porte a sa propre règle, tirée pour toi : elle est différente pour chaque joueur et ne change pas dans la journée.",
       "La règle peut toujours être respectée avec les cartes que tu possèdes au moment où elle est tirée : pas besoin d'acheter pour passer.",
-      "Après un refus, le videur te parle en priorité d'un critère dont il ne t'a pas encore parlé.",
-      "Si tu rates tous tes essais à une porte, le niveau est bloqué jusqu'au lendemain. La règle est alors révélée, et une nouvelle règle est tirée le lendemain.",
+      "Les règles sont écrites en clair à tous les niveaux, et l'aperçu de ta tenue (✔ / ✖ par critère) est gratuit et illimité. Seul « Se présenter » consomme un essai.",
+      "Après un refus, le videur te dit ce qui manque.",
+      "Si tu rates tous tes essais à une porte, le niveau est bloqué jusqu'au lendemain, et une nouvelle règle est tirée le lendemain.",
       "Les essais sont comptés par le serveur : recharger la page ne rend rien.",
     ]),
-    sub("Ce que tu vois selon ton niveau"),
+    sub("Difficulté selon ton niveau"),
     table(V.tiers.map((tr) => [tr.to ? `Niveaux ${tr.from} à ${tr.to}` : `Niveau ${tr.from} et +`, `${tr.view} · ${plural(tr.tries, "essai")} par porte`])),
     sub("Récompenses"),
     table(V.doors.map((d) => [d.name, `+${plural(d.boosters, "booster")}, une fois par jour`])),
