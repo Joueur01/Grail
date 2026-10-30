@@ -420,6 +420,15 @@ main {
   animation: none;
   opacity: 0.35;
 }
+/* Paquet vide touché ou glissé : il fait « non » de gauche à droite, sans se déchirer */
+.booster-pack:disabled.refuse { animation: booster-refuse 0.35s ease-in-out; }
+@keyframes booster-refuse {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(5px); }
+}
 
 /* Tablette et PC assez hauts : ×8 (256 × 384 px) */
 @media (min-width: 600px) and (min-height: 700px) {
