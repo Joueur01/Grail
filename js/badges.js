@@ -7,8 +7,8 @@
 //               et qu'il peut encore jouer (tour : ni bloqué, ni limite du jour atteinte) ;
 //   - Amis    : le nombre de demandes d'ami reçues, sur la pastille ronde du haut (c'est friends.js qui la remplit).
 
-import { getBoosterState, onStateChange, refreshState } from "./inventory.js?v=102";
-import { getVideurNight, getVideurTower } from "./api.js?v=102";
+import { getBoosterState, onStateChange, refreshState } from "./inventory.js?v=103";
+import { getVideurNight, getVideurTower } from "./api.js?v=103";
 
 const VIDEUR_RECHECK_MS = 5 * 60 * 1000; // le jour change à minuit (Paris) : on relit de temps en temps
 
