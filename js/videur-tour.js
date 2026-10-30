@@ -12,13 +12,13 @@
 //  - « hint »    : règles CACHÉES ; après chaque essai, l'indice seulement.
 // En mode caché, le serveur n'envoie jamais les règles ni les seuils : il n'y a ici aucune règle, aucun seuil.
 
-import { getVideurTower, videurTowerPreview, videurTowerEnter } from "./api.js?v=96";
-import { updateVideurBadge } from "./badges.js?v=96";
-import { SLOTS, readBodyChoice } from "./avatar.js?v=96";
-import { createAvatar3D } from "./avatar3d.js?v=96";
-import { refreshState, getEquipped } from "./inventory.js?v=96";
-import { showToast, reportError } from "./wallet.js?v=96";
-import { playSound, vibrate } from "./effects.js?v=96";
+import { getVideurTower, videurTowerPreview, videurTowerEnter } from "./api.js?v=97";
+import { updateVideurBadge } from "./badges.js?v=97";
+import { SLOTS, readBodyChoice } from "./avatar.js?v=97";
+import { createAvatar3D } from "./avatar3d.js?v=97";
+import { refreshState, getEquipped } from "./inventory.js?v=97";
+import { showToast, reportError } from "./wallet.js?v=97";
+import { playSound, vibrate } from "./effects.js?v=97";
 
 /** Couleur d'enseigne de chaque porte (comme les raretés : bleu, violet, or). */
 const DOOR_COLOR = { bar: "var(--rarity-rare)", club: "var(--rarity-epique)", vip: "var(--rarity-legendaire)" };
