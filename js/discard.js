@@ -7,14 +7,14 @@
 // On peut l'ouvrir depuis la fiche d'une carte, une ligne de l'Atelier ou le
 // bouton « Sélectionner » de la Collection (createSelection, plus bas).
 
-import { RARITIES, getRarity } from "./data.js?v=100";
-import { DISCARD_VALUES, DISCARD_CONFIRM_FROM, DISCARD_KEEP } from "./economy-config.js?v=100";
-import { getOwnedCards, getEquipped, getShowcaseKeys, refreshState, cardKey } from "./inventory.js?v=100";
-import { discardCards as sendDiscardToServer } from "./api.js?v=100";
-import { SLOTS } from "./avatar.js?v=100";
-import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=100";
-import { playSound, vibrate } from "./effects.js?v=100";
-import { flyCoins, showToast, reportError } from "./wallet.js?v=100";
+import { RARITIES, getRarity } from "./data.js?v=101";
+import { DISCARD_VALUES, DISCARD_CONFIRM_FROM, DISCARD_KEEP } from "./economy-config.js?v=101";
+import { getOwnedCards, getEquipped, getShowcaseKeys, refreshState, cardKey } from "./inventory.js?v=101";
+import { discardCards as sendDiscardToServer } from "./api.js?v=101";
+import { SLOTS } from "./avatar.js?v=101";
+import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=101";
+import { playSound, vibrate } from "./effects.js?v=101";
+import { flyCoins, showToast, reportError } from "./wallet.js?v=101";
 
 /**
  * Envoie la défausse au SERVEUR (tout ou rien) et relit l'état. Renvoie les pièces gagnées, calculées

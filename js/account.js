@@ -4,9 +4,9 @@
 // confirmation claire (il faut écrire SUPPRIMER), appeler le serveur, puis effacer la session du navigateur
 // et revenir à l'écran de connexion. Irréversible.
 
-import { deleteAccount } from "./api.js?v=100";
-import { stopAnalytics } from "./analytics.js?v=100";
-import { reportError } from "./wallet.js?v=100";
+import { deleteAccount } from "./api.js?v=101";
+import { stopAnalytics } from "./analytics.js?v=101";
+import { reportError } from "./wallet.js?v=101";
 
 const WORD = "SUPPRIMER";
 export const DELETED_FLAG = "grail_account_deleted"; // lu par main.js pour afficher « compte supprimé »

@@ -15,14 +15,14 @@
 // Effets de révélation, du plus discret au plus fort : Rare (reflet + particules),
 // Épique (éclair violet, gerbe de particules, titre), Légendaire (plein écran).
 
-import { RARITIES, getRarity } from "./data.js?v=100";
-import { BOOSTER, DROP_RATES, PITY, VIDEUR_INFO } from "./economy-config.js?v=100";
-import { getPity, getPityEpic, isTutorialDone, markTutorialDone, getBoosterState, refreshState } from "./inventory.js?v=100";
-import { openBooster } from "./api.js?v=100";
-import { reportError } from "./wallet.js?v=100";
-import { createCardFace, createCardShell } from "./cards.js?v=100";
-import { playSound, vibrate, burst } from "./effects.js?v=100";
-import { attachGesture } from "./gestures.js?v=100";
+import { RARITIES, getRarity } from "./data.js?v=101";
+import { BOOSTER, DROP_RATES, PITY, VIDEUR_INFO } from "./economy-config.js?v=101";
+import { getPity, getPityEpic, isTutorialDone, markTutorialDone, getBoosterState, refreshState } from "./inventory.js?v=101";
+import { openBooster } from "./api.js?v=101";
+import { reportError } from "./wallet.js?v=101";
+import { createCardFace, createCardShell } from "./cards.js?v=101";
+import { playSound, vibrate, burst } from "./effects.js?v=101";
+import { attachGesture } from "./gestures.js?v=101";
 
 // Durées (en millisecondes), faciles à ajuster.
 const TEAR_TIME = 550;    // la bande s'envole, le paquet descend
@@ -479,6 +479,8 @@ export function setupBooster({ catalogue, onOpened }) {
     overlay.hidden = true;
     if (current) next(current, dir);
   }
+  // Bouton « retour » du téléphone (sheet-back.js) : ferme aussi le plein écran, après le temps de savourer.
+  overlay.addEventListener("grail:close", () => { if (overlay.dataset.locked !== "1") closeOverlay(1); });
   attachGesture(overlay, {
     threshold: 0.25,
     onSwipe: closeOverlay,
