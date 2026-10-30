@@ -1,0 +1,316 @@
+/* =========================================================
+   Grail — panel admin (admin.html), lecture seule.
+   Mêmes couleurs et même police que le jeu (style.css), mais une page
+   qui défile normalement et une mise en page large pour iPad et ordinateur.
+   Tout reste utilisable au doigt (zones de 44 px au moins).
+   ========================================================= */
+
+:root {
+  --bg: #0f0f11;
+  --surface: #1a1a1e;
+  --surface-2: #242429;
+  --border: #2c2c33;
+  --text: #f2f1ee;
+  --muted: #8f8d88;
+  --accent: #f2f1ee;          /* crème du bouton principal du jeu */
+  --ok: #5fd08a;
+  --warn: #f2a53a;
+  --bad: #ff7a6b;
+
+  --rarity-commun: #9a9aa4;
+  --rarity-rare: #4d8dff;
+  --rarity-epique: #a56bff;
+  --rarity-legendaire: #f2c230;
+
+  --brand-signal9: #ff6a13;
+  --brand-halvane: #d4a72c;
+  --brand-pigeon_social_club: #4f9a68;
+  --brand-ferrant_fils: #6f8fcf;
+  --brand-brume: #8fc2a8;
+  --brand-faubourg_78: #e0384f;
+  --brand-orbite_2000: #ff7ad9;
+
+  --radius: 16px;
+  --font: "Archivo", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --gutter: max(16px, env(safe-area-inset-left));
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;          /* la PAGE ne défile jamais de côté : seuls les tableaux le font */
+}
+a { color: inherit; }
+button, input, select { font: inherit; color: inherit; }
+
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+.pos { color: var(--ok); font-weight: 700; }
+.neg { color: var(--bad); font-weight: 700; }
+
+/* --- En-tête et onglets ------------------------------------------------- */
+.admin-top {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+  padding: max(10px, env(safe-area-inset-top)) var(--gutter) 10px;
+  background: rgba(15, 15, 17, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+}
+.admin-brand {
+  font-weight: 900;
+  font-stretch: 125%;
+  font-size: 20px;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+}
+.admin-brand span { color: var(--muted); font-weight: 700; font-stretch: 100%; font-size: 14px; margin-left: 4px; }
+.admin-nav { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.admin-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.admin-nav a[aria-current="page"] { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+
+.admin-main {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 16px var(--gutter) max(40px, env(safe-area-inset-bottom));
+}
+.page-title { margin: 8px 0 12px; font-size: 28px; font-weight: 900; font-stretch: 125%; line-height: 1.1; overflow-wrap: anywhere; }
+.page-title.denied { margin-top: 30vh; text-align: center; }
+
+.error-box {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 122, 107, 0.12);
+  color: var(--bad);
+  font-weight: 600;
+}
+
+/* --- Pastilles et boutons ----------------------------------------------- */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.pill.ok { background: rgba(95, 208, 138, 0.15); color: var(--ok); }
+.pill.warn { background: rgba(242, 165, 58, 0.15); color: var(--warn); }
+.pill.bad { background: rgba(255, 122, 107, 0.15); color: var(--bad); }
+.pill.tiny { margin-left: 6px; padding: 1px 6px; font-size: 10px; }
+
+.chip {
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.chip:disabled { opacity: 0.4; cursor: default; }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.chip-static {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.field {
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  min-width: 0;
+}
+.field:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+select.field { padding-right: 10px; }
+
+/* --- Liste des joueurs -------------------------------------------------- */
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.toolbar input[type="search"] { flex: 1 1 220px; }
+.toolbar select { flex: 0 1 auto; }
+.list-info { margin: 6px 0 10px; }
+
+/* Le tableau défile de côté dans sa boîte ; la page, jamais. */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  max-width: 100%;
+}
+.data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.data-table th, .data-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.data-table td .chips { flex-wrap: nowrap; }
+.data-table tbody tr:last-child td { border-bottom: 0; }
+.data-table th { color: var(--muted); font-size: 12px; font-weight: 800; letter-spacing: 0.02em; background: var(--surface); }
+/* Liste des joueurs : en-têtes sur deux lignes si besoin, cellules plus serrées (16 colonnes sur iPad paysage). */
+.players-table th, .players-table td { padding: 8px 9px; }
+.players-table th { white-space: normal; line-height: 1.2; min-width: 56px; }
+.players-table th .sort { text-align: left; }
+.players-table th.num .sort { text-align: right; }
+.data-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.players-table tbody tr { cursor: pointer; }
+.players-table tbody tr:hover, .players-table tbody tr:active { background: var(--surface-2); }
+.players-table td:first-child a { font-weight: 800; text-decoration: none; }
+/* Pseudo collé à gauche pendant le défilement horizontal */
+.players-table th:first-child, .players-table td:first-child { position: sticky; left: 0; z-index: 1; background: var(--surface); }
+.players-table tbody tr:hover td:first-child { background: var(--surface-2); }
+
+.sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 36px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+th.num .sort { justify-content: flex-end; width: 100%; }
+th[aria-sort="ascending"], th[aria-sort="descending"] { color: var(--text); }
+th[aria-sort="ascending"] .sort::after { content: "▲"; font-size: 9px; }
+th[aria-sort="descending"] .sort::after { content: "▼"; font-size: 9px; }
+
+/* Écran étroit (téléphone, iPad en portrait, grand iPad Pro en portrait compris) : colonnes principales
+   seulement, sauf « Toutes les colonnes ». En paysage, tout est affiché (le pseudo reste collé à gauche). */
+@media (max-width: 1023px), (orientation: portrait) and (max-width: 1199px) {
+  .players:not(.all-columns) .players-table .extra { display: none; }
+}
+@media (min-width: 1024px) and (orientation: landscape), (min-width: 1200px) {
+  .toolbar .chip[aria-pressed] { display: none; } /* toutes les colonnes sont déjà affichées */
+}
+
+.pager { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 12px; }
+
+/* --- Fiche joueur -------------------------------------------------------- */
+.back { display: inline-flex; align-items: center; min-height: 44px; color: var(--muted); font-weight: 700; text-decoration: none; }
+.player-head { margin-bottom: 14px; }
+.player-head .page-title { margin-bottom: 8px; }
+.player-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; font-size: 14px; }
+.id-line { margin: 6px 0 0; color: var(--muted); font-size: 11px; font-family: ui-monospace, Menlo, monospace; overflow-wrap: anywhere; }
+
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-bottom: 14px; }
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  min-width: 0;
+}
+.tile-label { color: var(--muted); font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
+.tile-value { font-size: 24px; font-weight: 900; font-stretch: 112%; line-height: 1.15; overflow-wrap: anywhere; }
+.tile-sub { color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+
+.two-cols { display: grid; gap: 14px; margin-bottom: 14px; }
+@media (min-width: 900px) { .two-cols { grid-template-columns: 1fr 1fr; } }
+.two-cols > .card { margin-bottom: 0; }
+
+.card {
+  min-width: 0;
+  margin-bottom: 14px;
+  padding: 14px 16px 16px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.card .table-scroll { border: 0; border-radius: 0; background: none; margin: 0 -16px; }
+.card .data-table th { background: var(--surface); }
+.card .more { display: block; margin: 10px auto 0; }
+.card-title { margin: 0 0 10px; font-size: 16px; font-weight: 800; }
+.card-body > p:last-child { margin-bottom: 0; }
+
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; margin: 0 0 10px; font-size: 14px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; font-weight: 700; text-align: right; }
+
+/* --- Graphiques (charts.js) ---------------------------------------------- */
+.chart { position: relative; width: 100%; min-width: 0; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+.chart-svg { display: block; overflow: visible; }
+.chart-label { fill: var(--muted); font-size: 11px; font-family: var(--font); }
+.chart-label-strong { fill: var(--text); font-size: 13px; font-weight: 700; }
+.chart-grid { stroke: var(--border); stroke-width: 1; }
+.chart-track { fill: var(--surface-2); }
+.chart-area { opacity: 0.12; }
+.chart-hit { fill: transparent; cursor: pointer; }
+.chart-hit.is-active { fill: rgba(255, 255, 255, 0.06); }
+.chart-bar.is-active, rect[data-tip].chart-bar.is-active { opacity: 0.75; }
+.chart-cal { cursor: pointer; }
+.chart-cal.is-active { stroke: var(--text); stroke-width: 2; }
+.chart-cal-0 { fill: var(--surface-2); background: var(--surface-2); }
+.chart-cal-1 { fill: #3b4a3f; background: #3b4a3f; }
+.chart-cal-2 { fill: #3f7a54; background: #3f7a54; }
+.chart-cal-3 { fill: #4fa86d; background: #4fa86d; }
+.chart-cal-4 { fill: #6fe08f; background: #6fe08f; }
+.cal-legend { display: flex; align-items: center; gap: 4px; margin-top: 8px; }
+.cal-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; }
+
+.chart-tip {
+  position: absolute;
+  z-index: 5;
+  max-width: min(260px, 90%);
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: var(--text);
+  color: var(--bg);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.3;
+  pointer-events: none;
+  white-space: normal;
+}
+.chart-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 8px; color: var(--muted); font-size: 12px; font-weight: 700; }
+.chart-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.chart-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; }

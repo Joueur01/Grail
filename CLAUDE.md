@@ -58,6 +58,8 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 /
 ├── index.html
 ├── style.css
+├── admin.html       # panel admin en lecture seule (page à part, non liée sauf pour les admins ; section 15 bis)
+├── admin.css        # styles du panel admin (mêmes couleurs et police que le jeu)
 ├── CNAME            # domaine du site : huntgrail.eu (GitHub Pages)
 ├── favicon.ico      # logo de l'onglet / de Google (16, 32, 48 px ; tools/creer_logo.py)
 ├── manifest.webmanifest  # nom et icônes pour l'écran d'accueil Android
@@ -97,7 +99,13 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 │   ├── account.js     # suppression de son compte (bouton en bas du profil)
 │   ├── starter.js     # kit de départ : choix d'une marque à la première ouverture (4 pièces Communes + boosters offerts)
 │   ├── share.js       # partage de la tenue : lien public (principal) + export PNG (option)
-│   └── shared-outfit.js  # page publique d'une tenue partagée (?tenue=CODE), sans compte
+│   ├── shared-outfit.js  # page publique d'une tenue partagée (?tenue=CODE), sans compte
+│   └── admin/         # panel admin (admin.html) : jamais chargé par le jeu
+│       ├── main.js    # accès (is_admin, sinon « Accès réservé ») + onglets par l'ancre (#overview, #players, #player/<id>)
+│       ├── players.js # liste des joueurs : tri par colonne, recherche, filtres statut / plateforme, pages, export CSV
+│       ├── player.js  # fiche d'un joueur : tuiles, graphiques, sessions, première session, collection, transactions, Videur
+│       ├── charts.js  # graphiques SVG faits main : colonnes, courbe, barres, barres empilées, calendrier ; infobulle au toucher
+│       └── format.js  # dates, nombres, durées et libellés en français
 ├── data/
 │   └── pieces.json    # catalogue des pièces et coloris
 ├── assets/
@@ -144,7 +152,8 @@ Ces fonctionnalités viendront plus tard **seulement si le test est positif**. L
 │   │   ├── 0035_videur_booster_par_niveau.sql  # le Videur donne 1 booster par niveau validé (plus de booster par porte)
 │   │   ├── 0036_tenues_enregistrees.sql  # tenues enregistrées : 3 emplacements, remettre une tenue en un toucher
 │   │   ├── 0037_stats_par_joueur.sql  # statistiques par joueur : sessions, temps par écran, première session, résumé étendu, nettoyage à 90 jours
-│   │   └── 0038_admin_lecture.sql  # panel admin en lecture seule : table admins, is_admin(), fonctions admin_* (pas encore de page)
+│   │   ├── 0038_admin_lecture.sql  # panel admin en lecture seule : table admins, is_admin(), fonctions admin_*
+│   │   └── 0039_admin_filtre_plateforme.sql  # admin_players : filtre par plateforme (p_platform)
 │   └── email-templates/   # e-mails de Supabase en français, avec le logo (à coller dans Supabase, section 18)
 ├── tools/
 │   ├── extraire_sprites.py   # découpe les planches → PNG + SVG (Python + Pillow)
@@ -552,7 +561,7 @@ Le développeur n'est pas juriste ; ces règles sont prudentes en attendant un a
 
 ## 13. Back end Supabase (comptes + serveur de jeu) — le serveur est la source de vérité
 
-- Projet Supabase : `https://qsueqvsbhytqrotlxmak.supabase.co`. Les migrations SQL (**0001 à 0038**, exécutées par le développeur dans le SQL Editor, **ne jamais les modifier depuis le front** ; les 0005 à 0038 sont dans `supabase/migrations/`) créent : catalogue (`brands`, `pieces`, `colorways`), `economy_config`, `profiles`, `inventory`, `transactions`, `market_listings`, la vue `market_best_offers` et toutes les fonctions du jeu.
+- Projet Supabase : `https://qsueqvsbhytqrotlxmak.supabase.co`. Les migrations SQL (**0001 à 0039**, exécutées par le développeur dans le SQL Editor, **ne jamais les modifier depuis le front** ; les 0005 à 0039 sont dans `supabase/migrations/`) créent : catalogue (`brands`, `pieces`, `colorways`), `economy_config`, `profiles`, `inventory`, `transactions`, `market_listings`, la vue `market_best_offers` et toutes les fonctions du jeu.
 - **Règle d'or : ne jamais remettre de logique de jeu côté client.** Le front ne tire pas de carte, ne calcule ni gain ni chance réelle, ne vérifie pas de règle (limite de ventes, verrou, solde…). Il appelle une fonction, affiche le résultat, et relit l'état. Toute nouvelle règle ou nouvelle valeur d'économie se code **dans une migration SQL** (puis, si besoin d'affichage, dans `js/economy-config.js`).
 - **Le jeu n'est accessible que connecté** : e-mail + mot de passe (écran de connexion / création de compte dans `index.html`, géré par `main.js`). **Accueil (29 octobre 2026)** : au-dessus du formulaire, une phrase (« Ouvre des boosters de vêtements, habille ton avatar et passe le Videur. ») et 3 visuels (un sprite, l'avatar 3D `assets/ui/accueil-avatar.png`, l'enseigne BAR / CLUB / VIP en CSS), cachés sur les panneaux « mot de passe oublié » / « nouveau mot de passe » et sur les écrans de moins de 640 px de haut (seule la phrase reste). **« Créer un compte » est l'onglet par défaut** ; « Connexion » s'ouvre d'abord si l'appareil a déjà eu un compte (clé `grail_has_account` du navigateur, posée à la création, à la connexion ou au démarrage avec une session). À l'inscription, le message « Confirme ton e-mail » s'affiche : le compte ne peut se connecter qu'après avoir cliqué le lien reçu. Un profil (3 boosters, 0 pièce) est créé automatiquement par le serveur ; les **50 pièces de bienvenue** arrivent au premier bonus de connexion (section 6, Économie). Bouton « Se déconnecter » **tout en bas de la page de profil** (bouton rond en haut ; il était dans l'écran Tenue), hors de la zone que le profil recharge : il reste visible même si le profil ne charge pas.
 - **Mot de passe oublié** : lien « Mot de passe oublié ? » sous le formulaire de connexion (pas à la création de compte) → e-mail de réinitialisation (`resetPasswordForEmail`, réponse toujours neutre pour ne pas révéler quelles adresses ont un compte). Le lien reçu ramène sur le site avec `type=recovery` : `api.js` le détecte (`isRecoveryLink`) et `main.js` affiche « Nouveau mot de passe » (6 caractères minimum, saisie en double, `updatePassword`) **avant** de lancer le jeu ; lien expiré → message + renvoi vers « Mot de passe oublié ? ». **À régler dans Supabase** (Authentication → URL Configuration) : Site URL `https://huntgrail.eu` et Redirect URLs `https://huntgrail.eu/**` et `https://www.huntgrail.eu/**` (l'ancienne adresse `https://joueur01.github.io/Grail/**` peut rester pendant la transition), sinon les liens (confirmation et réinitialisation) pointent vers localhost.
@@ -636,9 +645,17 @@ Le développeur n'est pas juriste ; ces règles sont prudentes en attendant un a
 - **Vérifiée** sur PostgreSQL local (faux schéma, 0010 puis 0037 lancée 2 fois) : historique reconstruit (sessions, écran des anciens pings déduit), 2e passage sans doublon, flux en direct en rôle `authenticated` (session, temps par écran, ping sans écran, événement inconnu ignoré, session d'un autre joueur non modifiée), kit de départ, résumé, entonnoir, purge (totaux gardés), droits refusés. **pg_cron et les vraies tables ne sont pas testés.**
 - **Pas d'interface d'administration** pour l'instant : lecture dans le SQL Editor (ou par les fonctions `admin_*` de la section 15 bis).
 
-## 15 bis. Panel admin en lecture seule (migration 0038, serveur seulement : pas encore de page)
+## 15 bis. Panel admin en lecture seule (migrations 0038 et 0039, page `admin.html`)
 
-- **But** : préparer un futur panel pour lire les statistiques depuis le site, **sans rien pouvoir modifier**. Aucune page n'est codée ; les wrappers sont dans `js/api.js` (`isAdmin`, `adminOverview`…).
+- **But** : lire les statistiques depuis le site, **sans rien pouvoir modifier**. Wrappers dans `js/api.js` (`isAdmin`, `adminOverview`, `adminPlayers`…).
+- **Page (première partie, 30 octobre 2026)** : `admin.html` + `admin.css` + `js/admin/*.js`, **à part du jeu** (rien n'est chargé côté joueurs). Même connexion Supabase que le jeu (`js/api.js`, même session du navigateur : se connecter d'abord dans le jeu). Si `is_admin()` ne répond pas oui (ou pas de session), la page n'affiche que « **Accès réservé** ». Aucun lien visible dans le jeu, **sauf** « Panel admin › » en bas du profil, affiché seulement si `is_admin()` répond oui (`#admin-link`, `main.js`). `noindex` pour les moteurs de recherche.
+  - **Style** : mêmes couleurs et police (Archivo) que le jeu ; la page défile normalement (pas comme le jeu) ; pensé d'abord pour l'**iPad** (zones de 44 px, infobulles au toucher), lisible sur ordinateur et téléphone.
+  - **Onglets par l'ancre** (bouton retour du navigateur compris) : `#overview` « Vue d'ensemble » (**à venir**), `#players` « Joueurs », `#player/<id>` « Fiche ».
+  - **Joueurs** : tableau triable sur chaque colonne (tri fait par le serveur : pseudo, statut, inscription, dernière visite, jours actifs, sessions, temps total, temps moyen par session, boosters, niveau du Videur, cartes différentes, Légendaires, pièces, amis, partages, plateforme), recherche par pseudo, filtres statut et plateforme, 50 par page, **export CSV** de la vue (filtres et tri en cours, toutes les pages et toutes les colonnes ; point-virgule + BOM pour Excel / Numbers). Écran étroit (téléphone, **iPad en portrait**, iPad Pro portrait compris) : 6 colonnes principales, bouton « Toutes les colonnes » ; le **tableau** défile de côté (pseudo collé à gauche), jamais la page. La liste garde sa recherche, ses filtres, son tri et sa page quand on revient d'une fiche.
+  - **Fiche** : en-tête (pseudo, statut, ancienneté, dernière visite, plateforme, écran favori), 14 tuiles de chiffres clés, minutes par jour (colonnes, depuis le 1er jour actif, 90 jours au plus), calendrier d'activité (13 semaines), première session détaillée, temps par écran (barres), collection par rareté (barres empilées : exemplaires / différentes) et par marque, sessions, transactions, essais au Videur (10 lignes puis « Tout afficher »).
+  - **Graphiques** (`js/admin/charts.js`, SVG fait main, aucune bibliothèque) : `columnChart`, `lineChart`, `barChart`, `stackedBars`, `calendar` ; redessinés à la largeur du conteneur (rotation de l'iPad), infobulle au toucher ou au survol.
+  - **Filtre plateforme** : migration **0039** (`admin_players` reçoit `p_platform` ; l'ancienne version à 6 paramètres est supprimée). Sans elle, le filtre affiche « Le filtre par plateforme demande la migration 0039 sur le serveur. », le reste marche.
+  - **Vérifiée** contre un faux serveur (module supabase-js remplacé, réponses au format exact des fonctions `admin_*`, 123 joueurs) à 375, 768, 1024 (portrait et paysage) et 1366 px : aucun débordement de page, tri ↑ / ↓, pages, filtres, recherche, CSV, fiche, infobulle au toucher, bouton retour, refus sans admin et sans session. **Pas testée avec le vrai serveur.**
 - **Qui est admin** : table `public.admins (user_id, added_at)`, illisible directement (RLS, aucun droit pour `anon` / `authenticated`). **Aucun identifiant dans le dépôt** : le développeur s'ajoute à la main dans le SQL Editor :
   `insert into public.admins (user_id) select id from auth.users where email = '<e-mail>' on conflict do nothing;`
   (retirer : `delete from public.admins where user_id = …;`). Supprimer son compte retire aussi la ligne (`delete_my_account` nettoie les colonnes `user_id`).

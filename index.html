@@ -36,7 +36,7 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=103">
+  <link rel="stylesheet" href="style.css?v=104">
 </head>
 <body>
   <header class="topbar">
@@ -400,6 +400,8 @@
       <a class="rules-open" href="#rules">Règles et taux du jeu ›</a>
       <!-- Politique de confidentialité (privacy.js) : panneau ouvert par tout élément « data-privacy » -->
       <a class="rules-open" href="#privacy" data-privacy>Politique de confidentialité ›</a>
+      <!-- Panel admin (admin.html) : affiché seulement si le serveur répond is_admin() = oui (main.js) -->
+      <a class="rules-open" href="admin.html" id="admin-link" hidden>Panel admin ›</a>
       <!-- Se déconnecter (main.js) : hors de #profile-body, que le profil recharge ; reste visible même si le profil ne charge pas -->
       <button class="signout" id="btn-signout">Se déconnecter</button>
       <!-- Supprimer mon compte (account.js) : demande une confirmation, puis le serveur efface tout -->
@@ -541,6 +543,6 @@
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=103"></script>
+  <script type="module" src="js/main.js?v=104"></script>
 </body>
 </html>

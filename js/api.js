@@ -6,7 +6,7 @@
 // amélioration. Ne remettre AUCUNE logique de jeu ici ni ailleurs côté client.
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase-config.js?v=103";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase-config.js?v=104";
 
 // Le lien « mot de passe oublié » reçu par e-mail ramène sur le site avec « type=recovery » dans
 // l'adresse. On le note AVANT que supabase-js ne traite (et n'efface) l'adresse.
@@ -276,9 +276,13 @@ export const adminOverview = (from = null, to = null) => rpc("admin_overview", {
 export const adminRetention = () => rpc("admin_retention");
 /** Entonnoir d'activation : [{ step, players, pct_of_signups }] */
 export const adminFunnel = () => rpc("admin_funnel");
-/** Liste paginée : { total, items: [résumé + pseudo] } ; tri = une colonne d'analytics_player_summary ou « pseudo ». */
-export const adminPlayers = ({ search = null, sort = null, dir = "desc", status = null, limit = 50, offset = 0 } = {}) =>
-  rpc("admin_players", { p_search: search, p_sort: sort, p_dir: dir, p_status: status, p_limit: limit, p_offset: offset });
+/** Liste paginée : { total, items: [résumé + pseudo] } ; tri = une colonne d'analytics_player_summary ou « pseudo ».
+ *  platform (ios / android / desktop) : migration 0039 ; le paramètre n'est envoyé que s'il est choisi. */
+export const adminPlayers = ({ search = null, sort = null, dir = "desc", status = null, platform = null, limit = 50, offset = 0 } = {}) =>
+  rpc("admin_players", {
+    p_search: search, p_sort: sort, p_dir: dir, p_status: status, p_limit: limit, p_offset: offset,
+    ...(platform ? { p_platform: platform } : {}),
+  });
 /** Tout sur un joueur (résumé, jours, sessions, écrans, collection, transactions, Videur, ventes, amis, partages). */
 export const adminPlayer = (id) => rpc("admin_player", { p_id: id });
 /** Pièces : circulation, sources / puits par type, créées / détruites, taxe, Boutique. */
