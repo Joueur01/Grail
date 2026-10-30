@@ -314,3 +314,30 @@ th[aria-sort="descending"] .sort::after { content: "▼"; font-size: 9px; }
 .chart-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 8px; color: var(--muted); font-size: 12px; font-weight: 700; }
 .chart-legend span { display: inline-flex; align-items: center; gap: 5px; }
 .chart-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; }
+
+/* --- Graphiques globaux (onglets à période) --------------------------------- */
+/* Sélecteur de période : 7 j / 30 j / Tout / dates au choix (period.js) */
+.period-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 14px; }
+.period-custom { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.field-date { padding: 0 10px; min-width: 0; max-width: 160px; color-scheme: dark; }
+.chip-on { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.chip-small { min-height: 34px; padding: 0 12px; font-size: 13px; }
+.period-label { flex-basis: 100%; }
+
+/* Variation par rapport à la période précédente (tuiles) */
+.delta { font-weight: 800; }
+.delta.up { color: var(--ok); }
+.delta.down { color: var(--bad); }
+
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.card-head .card-title { margin: 0; }
+.card-note { margin: 10px 0 0; }
+.card .tiles { margin-bottom: 10px; }
+
+/* Tableau triable (ui.dataTable) : ligne d'outils (nombre de lignes, CSV) au-dessus */
+.table-wrap { min-width: 0; }
+.table-wrap + .table-wrap, .chart + .table-wrap { margin-top: 12px; }
+.table-tools { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.data-table td .wrap { display: inline-block; min-width: 200px; max-width: 520px; white-space: normal; overflow-wrap: anywhere; }
+.data-table td a { font-weight: 700; }
+.two-cols > .card { min-width: 0; }
