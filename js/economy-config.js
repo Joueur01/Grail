@@ -58,10 +58,10 @@ export const VIDEUR_INFO = {
   levelBonusBoosters: 1,
   // Paliers : à partir du niveau « from », essais par porte et ce que montre le videur.
   tiers: [
-    { from: 1, to: 5, tries: 3, view: "Règles écrites en clair, aperçu gratuit de ta tenue" },
-    { from: 6, to: 15, tries: 4, view: "Règles cachées : « X critères sur N » et un indice clair" },
-    { from: 16, to: 30, tries: 5, view: "Règles cachées : « X critères sur N » et un indice du videur, plus vague" },
-    { from: 31, to: null, tries: 5, view: "Comme avant, mais au VIP le videur ne donne plus qu'un indice" },
+    { from: 1, to: 3, tries: 3, view: "Règles écrites en clair, aperçu gratuit de ta tenue" },
+    { from: 4, to: 25, tries: 4, view: "Règles cachées : « X critères sur N » et un indice clair" },
+    { from: 26, to: 75, tries: 5, view: "Règles cachées : « X critères sur N » et un indice du videur, plus imagé" },
+    { from: 76, to: null, tries: 5, view: "Difficulté maximale : plus de critères, mêmes indices" },
   ],
 };
 
