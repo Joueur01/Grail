@@ -7,29 +7,30 @@
 // ?v=… sur les imports : même numéro que dans index.html, et le même partout
 // (un module importé sous deux adresses différentes serait chargé deux fois).
 
-import { loadCatalogue } from "./data.js?v=97";
-import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=97";
-import { initAvatar, setupOutfit } from "./avatar.js?v=97";
-import { setupBooster } from "./booster.js?v=97";
-import { setupShare } from "./share.js?v=97";
-import { setupUpgrade } from "./upgrade.js?v=97";
-import { setupAtelier, setupViewSwitch } from "./atelier.js?v=97";
-import { setupAlbum } from "./album.js?v=97";
-import { setupBadges } from "./badges.js?v=97";
-import { setupPrivacy } from "./privacy.js?v=97";
-import { setupAccountDeletion, DELETED_FLAG } from "./account.js?v=97";
-import { setupWallet, reportError, showToast } from "./wallet.js?v=97";
-import { setupReputation } from "./reputation.js?v=97";
-import { setupDiscard, createSelection } from "./discard.js?v=97";
-import { setupMarket } from "./market.js?v=97";
-import { setupFriends } from "./friends.js?v=97";
-import { setupVideur } from "./videur.js?v=97";
-import { setupProfile } from "./profile.js?v=97";
-import { setupRules } from "./rules.js?v=97";
-import { setupStarterKit } from "./starter.js?v=97";
-import { startAnalytics, track } from "./analytics.js?v=97";
-import { showSharedOutfit } from "./shared-outfit.js?v=97";
-import { getSession, signIn, signUp, signOut, supabase, requestPasswordReset, updatePassword, isRecoveryLink, endRecovery, sharedOutfitToken } from "./api.js?v=97";
+import { loadCatalogue } from "./data.js?v=98";
+import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=98";
+import { initAvatar, setupOutfit } from "./avatar.js?v=98";
+import { setupSavedOutfits } from "./outfits.js?v=98";
+import { setupBooster } from "./booster.js?v=98";
+import { setupShare } from "./share.js?v=98";
+import { setupUpgrade } from "./upgrade.js?v=98";
+import { setupAtelier, setupViewSwitch } from "./atelier.js?v=98";
+import { setupAlbum } from "./album.js?v=98";
+import { setupBadges } from "./badges.js?v=98";
+import { setupPrivacy } from "./privacy.js?v=98";
+import { setupAccountDeletion, DELETED_FLAG } from "./account.js?v=98";
+import { setupWallet, reportError, showToast } from "./wallet.js?v=98";
+import { setupReputation } from "./reputation.js?v=98";
+import { setupDiscard, createSelection } from "./discard.js?v=98";
+import { setupMarket } from "./market.js?v=98";
+import { setupFriends } from "./friends.js?v=98";
+import { setupVideur } from "./videur.js?v=98";
+import { setupProfile } from "./profile.js?v=98";
+import { setupRules } from "./rules.js?v=98";
+import { setupStarterKit } from "./starter.js?v=98";
+import { startAnalytics, track } from "./analytics.js?v=98";
+import { showSharedOutfit } from "./shared-outfit.js?v=98";
+import { getSession, signIn, signUp, signOut, supabase, requestPasswordReset, updatePassword, isRecoveryLink, endRecovery, sharedOutfitToken } from "./api.js?v=98";
 
 // « profile » et « friends » n'ont pas d'onglet : on y va par les boutons ronds en haut (#profile, #friends). « rules » non plus : par le profil ou un lien « ? » (#rules, #rules/market…).
 const SCREENS = ["booster", "collection", "market", "videur", "friends", "avatar", "profile", "rules"];
@@ -226,12 +227,16 @@ async function boot() {
     // La tenue prévient le partage à chaque changement (image préparée à l'avance).
     const updateShare = setupShare();
     let lastOutfit = null; // l'événement « tenue changée » ne part que quand la tenue change vraiment
+    let refreshSaved = null; // tenues enregistrées : la mention « Portée » suit la tenue portée
     const refreshOutfit = setupOutfit({ catalogue, onChange: (outfit) => {
       updateShare(outfit);
+      refreshSaved?.();
       const key = Object.entries(outfit).map(([slot, o]) => `${slot}:${o.colorway.id}|${o.rarity}`).sort().join(",");
       if (lastOutfit !== null && key !== lastOutfit) track("outfit_change", { pieces: Object.keys(outfit).length });
       lastOutfit = key;
     } });
+    // Tenues enregistrées (migration 0036) : en remettre une (ici ou au Videur) redessine l'écran Tenue.
+    refreshSaved = setupSavedOutfits({ catalogue, container: document.getElementById("saved-outfits"), onWorn: () => refreshOutfit() });
     // Après une action (roue, défausse, vente…), collection, Atelier, Market et tenue sont redessinés.
     const onChange = () => { refreshCards(); refreshOutfit(); };
     // Défausse (plusieurs cartes contre des pièces) : ouverte depuis la fiche ou l'Atelier.

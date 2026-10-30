@@ -6,7 +6,7 @@
 // amélioration. Ne remettre AUCUNE logique de jeu ici ni ailleurs côté client.
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase-config.js?v=97";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase-config.js?v=98";
 
 // Le lien « mot de passe oublié » reçu par e-mail ramène sur le site avec « type=recovery » dans
 // l'adresse. On le note AVANT que supabase-js ne traite (et n'efface) l'adresse.
@@ -242,6 +242,17 @@ export const videurTowerPreview = () => rpc("videur_tower_preview");
 /** Se présenter à la porte en cours : { passed, line, hint, tries_left, boosters_gained, level_bonus, level_cleared,
  *  level, today_cleared, max_per_day, blocked, matched? total? (visible, count), rules? (visible), reveal? } */
 export const videurTowerEnter = () => rpc("videur_tower_enter");
+
+// --- Tenues enregistrées (migration 0036) --------------------------------------------
+
+/** { max, outfits: [{ slot, empty: true } | { slot, saved_at, pieces: [{ slot, card: "coloris|rareté", owned }] }] } */
+export const getSavedOutfits = () => rpc("get_saved_outfits");
+/** Enregistre la tenue portée dans l'emplacement 1 à 3 (remplace l'ancienne) → même format que getSavedOutfits. */
+export const saveOutfit = (slot) => rpc("save_outfit", { p_slot: slot });
+/** Remet une tenue enregistrée (cartes encore possédées) → { equipped, worn, missing } */
+export const wearSavedOutfit = (slot) => rpc("wear_saved_outfit", { p_slot: slot });
+/** Vide un emplacement → même format que getSavedOutfits. */
+export const deleteSavedOutfit = (slot) => rpc("delete_saved_outfit", { p_slot: slot });
 
 // --- Compte (migration 0025) ---------------------------------------------------------
 

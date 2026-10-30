@@ -5,7 +5,7 @@
 // Le texte décrit ce que fait réellement le jeu (voir CLAUDE.md, sections 13, 15 et 17) : si le jeu change
 // (nouvelle donnée collectée, nouveau prestataire…), mettre ce fichier à jour.
 
-import { PRIVACY } from "./privacy-config.js?v=97";
+import { PRIVACY } from "./privacy-config.js?v=98";
 
 function el(tag, className, text) {
   const e = document.createElement(tag);
@@ -39,7 +39,7 @@ function sections() {
       items: [
         "Ton compte : adresse e-mail et mot de passe. Le mot de passe est transformé par notre prestataire de connexion : nous ne pouvons pas le lire.",
         "Ton pseudo, si tu en choisis un (3 à 16 caractères, il doit respecter les règles du jeu).",
-        "Ta progression : cartes, album, pièces, boosters, tenue, vitrine, avatar choisi (Garçon / Fille), réputation, résultats au Videur, ventes et achats au Market.",
+        "Ta progression : cartes, album, pièces, boosters, tenue et tenues enregistrées, vitrine, avatar choisi (Garçon / Fille), réputation, résultats au Videur, ventes et achats au Market.",
         "Tes amis : les demandes envoyées et reçues, et la liste de tes amis.",
         "Les tenues que tu partages par lien : une copie de ta tenue, ton avatar, ton pseudo et la date du partage.",
         "Des statistiques d'usage, sans contenu personnel : type d'appareil (iPhone, Android, ordinateur), taille d'écran arrondie, langue, fuseau horaire, site d'où tu viens, écrans visités, temps passé dans le jeu, actions comme changer de tenue ou partager, erreurs techniques. Elles sont rattachées à un identifiant de joueur, jamais à ton e-mail ni à ton pseudo. Aucune adresse IP n'est enregistrée par le jeu.",

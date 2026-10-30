@@ -6,11 +6,11 @@
 // Si le serveur change une valeur, la mettre à jour dans ce fichier-là, pas ici.
 // Le Videur : seulement le principe et les paliers (les règles sont tirées pour chaque joueur par le serveur).
 
-import { RARITIES } from "./data.js?v=97";
+import { RARITIES } from "./data.js?v=98";
 import {
   DROP_RATES, BOOSTER, PITY, UPGRADE, DISCARD_VALUES, MARKET, SHOP, FRIENDS, saleTax, saleNet,
   DAILY_BONUS, SHOWCASE, VIDEUR_INFO, STARTER_KIT,
-} from "./economy-config.js?v=97";
+} from "./economy-config.js?v=98";
 
 function el(tag, className, text) {
   const e = document.createElement(tag);
@@ -164,8 +164,8 @@ function buildSections(catalogue) {
     sub("Difficulté selon ton niveau"),
     table(V.tiers.map((tr) => [tr.to ? `Niveaux ${tr.from} à ${tr.to}` : `Niveau ${tr.from} et +`, `${tr.view} · ${plural(tr.tries, "essai")} par porte`])),
     sub("Récompenses"),
-    table(V.doors.map((d) => [d.name, `+${plural(d.boosters, "booster")}, une fois par jour`])),
     bullets([
+      `Chaque niveau validé (Bar, Club puis VIP) : +${plural(V.levelBoosters, "booster")}, une seule fois par niveau. Passer une seule porte ne donne rien.`,
       `Tous les ${V.levelBonusEvery} niveaux validés (${V.levelBonusEvery}, ${V.levelBonusEvery * 2}, ${V.levelBonusEvery * 3}…) : +${plural(V.levelBonusBoosters, "booster")} en plus, une seule fois par niveau.`,
       "Les boosters offerts s'ajoutent à ton stock sans la limite de " + BOOSTER.maxStock + " et s'ouvrent après tes boosters gratuits : rien n'est perdu.",
       "Le Videur ne donne jamais de pièces.",
@@ -205,6 +205,7 @@ function buildSections(catalogue) {
     bullets([
       `Vitrine : tu choisis jusqu'à ${SHOWCASE.max} cartes à montrer à tes amis. Une carte vendue, défaussée ou misée en disparaît toute seule.`,
       "Tenue : une pièce par emplacement. Une carte dont le dernier exemplaire part de ta collection est retirée de ta tenue.",
+      "Tenues enregistrées : 3 emplacements pour garder une tenue et la remettre en un toucher (écran Tenue, ou au Videur). Une tenue enregistrée ne bloque pas les cartes : si une carte n'est plus dans ta collection, elle est simplement sautée.",
       "Avatar : Garçon ou Fille, avec la même silhouette pour tous ; tes amis voient celui que tu as choisi.",
       `Pseudo : 3 à 16 caractères (lettres, chiffres ou _). Un seul changement tous les ${FRIENDS.pseudoChangeDays} jours.`,
       "Ton pseudo est visible par tes amis et sur les tenues que tu partages ; il n'apparaît dans aucune liste publique.",
