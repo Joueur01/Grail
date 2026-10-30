@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <!-- Panel admin (lecture seule) : page à part pour ne rien alourdir côté joueurs. Zoom autorisé (tableaux). -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#0f0f11">
+  <title>Grail · Admin</title>
+  <link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="icon" href="assets/brand/icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap" rel="stylesheet">
+  <!-- ?v=… : même numéro que le jeu, à augmenter à chaque mise en ligne (CLAUDE.md, section 10). -->
+  <link rel="stylesheet" href="admin.css?v=104">
+</head>
+<body data-state="loading">
+  <header class="admin-top">
+    <a class="admin-brand" href="./">GRAIL <span>Admin</span></a>
+    <!-- Onglets : l'ancre de l'URL choisit la vue (js/admin/main.js) ; « Fiche » n'apparaît que sur une fiche. -->
+    <nav class="admin-nav" id="admin-nav" hidden>
+      <a href="#overview" data-tab="overview">Vue d'ensemble</a>
+      <a href="#players" data-tab="players">Joueurs</a>
+      <a href="#players" data-tab="player" id="tab-player" hidden>Fiche</a>
+    </nav>
+  </header>
+  <main class="admin-main" id="admin-view">
+    <p class="muted">Chargement…</p>
+  </main>
+  <script type="module" src="js/admin/main.js?v=104"></script>
+</body>
+</html>

@@ -15,14 +15,14 @@
 // Effets de révélation, du plus discret au plus fort : Rare (reflet + particules),
 // Épique (éclair violet, gerbe de particules, titre), Légendaire (plein écran).
 
-import { RARITIES, getRarity } from "./data.js?v=103";
-import { BOOSTER, DROP_RATES, PITY, VIDEUR_INFO } from "./economy-config.js?v=103";
-import { getPity, getPityEpic, isTutorialDone, markTutorialDone, getBoosterState, refreshState } from "./inventory.js?v=103";
-import { openBooster } from "./api.js?v=103";
-import { reportError } from "./wallet.js?v=103";
-import { createCardFace, createCardShell } from "./cards.js?v=103";
-import { playSound, vibrate, burst } from "./effects.js?v=103";
-import { attachGesture } from "./gestures.js?v=103";
+import { RARITIES, getRarity } from "./data.js?v=104";
+import { BOOSTER, DROP_RATES, PITY, VIDEUR_INFO } from "./economy-config.js?v=104";
+import { getPity, getPityEpic, isTutorialDone, markTutorialDone, getBoosterState, refreshState } from "./inventory.js?v=104";
+import { openBooster } from "./api.js?v=104";
+import { reportError } from "./wallet.js?v=104";
+import { createCardFace, createCardShell } from "./cards.js?v=104";
+import { playSound, vibrate, burst } from "./effects.js?v=104";
+import { attachGesture } from "./gestures.js?v=104";
 
 // Durées (en millisecondes), faciles à ajuster.
 const TEAR_TIME = 550;    // la bande s'envole, le paquet descend
