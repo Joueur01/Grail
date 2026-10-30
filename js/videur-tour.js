@@ -3,21 +3,22 @@
 // ⚠️ Tout est décidé par le SERVEUR : la règle de chaque porte (propre à chaque joueur), le seuil de rareté,
 // les essais, le blocage jusqu'au lendemain, la limite de niveaux par jour, les boosters. Ce fichier affiche ce
 // que renvoie get_videur_tower et envoie deux actions :
-//  - videur_tower_preview : aperçu GRATUIT de la tenue (seulement en mode « visible », niveaux 1 à 5) ;
+//  - videur_tower_preview : aperçu GRATUIT de la tenue (seulement en mode « visible » : tous les niveaux depuis la 0034) ;
 //  - videur_tower_enter   : se présenter à la porte en cours (consomme un essai).
-// Modes (envoyés par le serveur pour la porte en cours) :
+// Modes (envoyés par le serveur pour la porte en cours ; depuis la migration 0034, toujours « visible »,
+// les modes cachés restent gérés au cas où ils seraient remis dans economy_config) :
 //  - « visible » : règles en clair, coches ✔/✖ de l'aperçu ;
 //  - « count »   : règles CACHÉES ; après chaque essai, « X critères sur N » + un indice ;
 //  - « hint »    : règles CACHÉES ; après chaque essai, l'indice seulement.
 // En mode caché, le serveur n'envoie jamais les règles ni les seuils : il n'y a ici aucune règle, aucun seuil.
 
-import { getVideurTower, videurTowerPreview, videurTowerEnter } from "./api.js?v=95";
-import { updateVideurBadge } from "./badges.js?v=95";
-import { SLOTS, readBodyChoice } from "./avatar.js?v=95";
-import { createAvatar3D } from "./avatar3d.js?v=95";
-import { refreshState, getEquipped } from "./inventory.js?v=95";
-import { showToast, reportError } from "./wallet.js?v=95";
-import { playSound, vibrate } from "./effects.js?v=95";
+import { getVideurTower, videurTowerPreview, videurTowerEnter } from "./api.js?v=96";
+import { updateVideurBadge } from "./badges.js?v=96";
+import { SLOTS, readBodyChoice } from "./avatar.js?v=96";
+import { createAvatar3D } from "./avatar3d.js?v=96";
+import { refreshState, getEquipped } from "./inventory.js?v=96";
+import { showToast, reportError } from "./wallet.js?v=96";
+import { playSound, vibrate } from "./effects.js?v=96";
 
 /** Couleur d'enseigne de chaque porte (comme les raretés : bleu, violet, or). */
 const DOOR_COLOR = { bar: "var(--rarity-rare)", club: "var(--rarity-epique)", vip: "var(--rarity-legendaire)" };
