@@ -6,7 +6,7 @@
 // amélioration. Ne remettre AUCUNE logique de jeu ici ni ailleurs côté client.
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase-config.js?v=102";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase-config.js?v=103";
 
 // Le lien « mot de passe oublié » reçu par e-mail ramène sur le site avec « type=recovery » dans
 // l'adresse. On le note AVANT que supabase-js ne traite (et n'efface) l'adresse.
@@ -263,6 +263,40 @@ export const deleteAccount = (confirm) => rpc("delete_my_account", { p_confirm: 
 
 /** Envoie un lot d'événements anonymes [{ name, props }] (liste blanche côté serveur). */
 export const trackEvents = (session, events) => rpc("track_events", { p_session: session, p_events: events });
+
+// --- Panel admin, lecture seule (migration 0038) ----------------------------------
+// Toutes refusent (« Accès refusé ») un compte qui n'est pas dans la table admins. Dates : "AAAA-MM-JJ"
+// (jours de Paris inclus) ; null = les 30 derniers jours. Jamais d'e-mail, seulement le pseudo.
+
+/** true si le compte connecté est administrateur. */
+export const isAdmin = () => rpc("is_admin");
+/** Chiffres clés + séries par jour (inscrits, actifs, minutes, sessions, boosters, pièces, Market, Videur). */
+export const adminOverview = (from = null, to = null) => rpc("admin_overview", { p_from: from, p_to: to });
+/** { curve, cohorts } : rétention J+N et par jour d'inscription. */
+export const adminRetention = () => rpc("admin_retention");
+/** Entonnoir d'activation : [{ step, players, pct_of_signups }] */
+export const adminFunnel = () => rpc("admin_funnel");
+/** Liste paginée : { total, items: [résumé + pseudo] } ; tri = une colonne d'analytics_player_summary ou « pseudo ». */
+export const adminPlayers = ({ search = null, sort = null, dir = "desc", status = null, limit = 50, offset = 0 } = {}) =>
+  rpc("admin_players", { p_search: search, p_sort: sort, p_dir: dir, p_status: status, p_limit: limit, p_offset: offset });
+/** Tout sur un joueur (résumé, jours, sessions, écrans, collection, transactions, Videur, ventes, amis, partages). */
+export const adminPlayer = (id) => rpc("admin_player", { p_id: id });
+/** Pièces : circulation, sources / puits par type, créées / détruites, taxe, Boutique. */
+export const adminEconomy = (from = null, to = null) => rpc("admin_economy", { p_from: from, p_to: to });
+/** Market : ventes, prix par rareté, cartes les plus vendues, offres actives, Boutique Grail. */
+export const adminMarket = (from = null, to = null) => rpc("admin_market", { p_from: from, p_to: to });
+/** Videur : réussite par niveau et par porte, niveaux des joueurs, niveaux validés par jour. */
+export const adminVideur = (from = null, to = null) => rpc("admin_videur", { p_from: from, p_to: to });
+/** Collection : cartes par rareté et par marque, coloris / modèles les plus possédés et portés, album, kits. */
+export const adminCollection = () => rpc("admin_collection");
+/** Temps par écran, vues, dernier écran avant de partir. */
+export const adminScreens = (from = null, to = null) => rpc("admin_screens", { p_from: from, p_to: to });
+/** Plateformes et détail des appareils. */
+export const adminDevices = () => rpc("admin_devices");
+/** Sessions par heure (Paris) et par jour de la semaine. */
+export const adminHours = () => rpc("admin_hours");
+/** Erreurs affichées aux joueurs : par message + les 50 plus récentes. */
+export const adminErrors = (from = null, to = null) => rpc("admin_errors", { p_from: from, p_to: to });
 
 // --- Tenue partagée par lien (migration 0008) --------------------------------------
 
