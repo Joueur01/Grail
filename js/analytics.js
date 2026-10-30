@@ -7,7 +7,7 @@
 // Règles : jamais de bruit pour le joueur (toute erreur est ignorée), aucun contenu personnel (pas d'e-mail,
 // pas de pseudo), rien n'est envoyé si le navigateur a activé « Do Not Track ».
 
-import { trackEvents } from "./api.js?v=101";
+import { trackEvents } from "./api.js?v=102";
 
 const PING_SECONDS = 30;        // un « ping » toutes les 30 s tant que le jeu est affiché → temps actif
 const IDLE_NEW_SESSION_MS = 30 * 60 * 1000; // plus de 30 min d'absence = nouvelle session
@@ -21,6 +21,7 @@ let queue = [];
 let lastActivity = Date.now();
 let started = false;
 let stopped = false; // compte supprimé : on n'envoie plus rien
+let currentScreen = ""; // écran affiché (donné par main.js) : le ping le porte → temps passé par écran
 
 /** Famille d'appareil : ios, android ou ordinateur (pas d'identifiant précis). */
 function platform() {
@@ -66,6 +67,11 @@ function sessionStart() {
   });
 }
 
+/** Note l'écran affiché (« market », « rules »… : partie de l'ancre avant « / »). N'envoie rien. */
+export function setScreen(name) {
+  currentScreen = String(name || "").slice(0, 24);
+}
+
 /** Arrête définitivement la mesure (appelé juste avant la suppression du compte). */
 export function stopAnalytics() {
   stopped = true;
@@ -78,8 +84,11 @@ export function startAnalytics() {
   started = true;
   sessionStart();
 
-  // Temps actif : un ping toutes les 30 s, seulement si le jeu est affiché.
-  setInterval(() => { if (!document.hidden) track("ping", { s: PING_SECONDS }); }, PING_SECONDS * 1000);
+  // Temps actif : un ping toutes les 30 s, seulement si le jeu est affiché. Il porte l'écran affiché :
+  // le serveur en tire le temps passé sur chaque écran (aucun événement de plus).
+  setInterval(() => {
+    if (!document.hidden) track("ping", { s: PING_SECONDS, screen: currentScreen || undefined });
+  }, PING_SECONDS * 1000);
   setInterval(flush, FLUSH_MS);
 
   document.addEventListener("visibilitychange", () => {

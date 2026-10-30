@@ -7,31 +7,31 @@
 // ?v=… sur les imports : même numéro que dans index.html, et le même partout
 // (un module importé sous deux adresses différentes serait chargé deux fois).
 
-import { loadCatalogue } from "./data.js?v=101";
-import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=101";
-import { initAvatar, setupOutfit } from "./avatar.js?v=101";
-import { setupSavedOutfits } from "./outfits.js?v=101";
-import { setupBooster } from "./booster.js?v=101";
-import { setupShare } from "./share.js?v=101";
-import { setupUpgrade } from "./upgrade.js?v=101";
-import { setupAtelier, setupViewSwitch } from "./atelier.js?v=101";
-import { setupAlbum } from "./album.js?v=101";
-import { setupBadges } from "./badges.js?v=101";
-import { setupPrivacy } from "./privacy.js?v=101";
-import { setupSheetBack } from "./sheet-back.js?v=101";
-import { setupAccountDeletion, DELETED_FLAG } from "./account.js?v=101";
-import { setupWallet, reportError, showToast } from "./wallet.js?v=101";
-import { setupReputation } from "./reputation.js?v=101";
-import { setupDiscard, createSelection } from "./discard.js?v=101";
-import { setupMarket } from "./market.js?v=101";
-import { setupFriends } from "./friends.js?v=101";
-import { setupVideur } from "./videur.js?v=101";
-import { setupProfile } from "./profile.js?v=101";
-import { setupRules } from "./rules.js?v=101";
-import { setupStarterKit } from "./starter.js?v=101";
-import { startAnalytics, track } from "./analytics.js?v=101";
-import { showSharedOutfit } from "./shared-outfit.js?v=101";
-import { getSession, signIn, signUp, signOut, supabase, requestPasswordReset, updatePassword, isRecoveryLink, endRecovery, sharedOutfitToken } from "./api.js?v=101";
+import { loadCatalogue } from "./data.js?v=102";
+import { setupCollection, refreshState, clearLocalSave } from "./inventory.js?v=102";
+import { initAvatar, setupOutfit } from "./avatar.js?v=102";
+import { setupSavedOutfits } from "./outfits.js?v=102";
+import { setupBooster } from "./booster.js?v=102";
+import { setupShare } from "./share.js?v=102";
+import { setupUpgrade } from "./upgrade.js?v=102";
+import { setupAtelier, setupViewSwitch } from "./atelier.js?v=102";
+import { setupAlbum } from "./album.js?v=102";
+import { setupBadges } from "./badges.js?v=102";
+import { setupPrivacy } from "./privacy.js?v=102";
+import { setupSheetBack } from "./sheet-back.js?v=102";
+import { setupAccountDeletion, DELETED_FLAG } from "./account.js?v=102";
+import { setupWallet, reportError, showToast } from "./wallet.js?v=102";
+import { setupReputation } from "./reputation.js?v=102";
+import { setupDiscard, createSelection } from "./discard.js?v=102";
+import { setupMarket } from "./market.js?v=102";
+import { setupFriends } from "./friends.js?v=102";
+import { setupVideur } from "./videur.js?v=102";
+import { setupProfile } from "./profile.js?v=102";
+import { setupRules } from "./rules.js?v=102";
+import { setupStarterKit } from "./starter.js?v=102";
+import { startAnalytics, track, setScreen } from "./analytics.js?v=102";
+import { showSharedOutfit } from "./shared-outfit.js?v=102";
+import { getSession, signIn, signUp, signOut, supabase, requestPasswordReset, updatePassword, isRecoveryLink, endRecovery, sharedOutfitToken } from "./api.js?v=102";
 
 // « profile » et « friends » n'ont pas d'onglet : on y va par les boutons ronds en haut (#profile, #friends). « rules » non plus : par le profil ou un lien « ? » (#rules, #rules/market…).
 const SCREENS = ["booster", "collection", "market", "videur", "friends", "avatar", "profile", "rules"];
@@ -40,6 +40,7 @@ const SCREENS = ["booster", "collection", "market", "videur", "friends", "avatar
 function showScreen(name) {
   if (!SCREENS.includes(name)) name = SCREENS[0];
   track("screen_view", { screen: name }); // statistiques d'usage (ignoré tant que le joueur n'est pas connecté)
+  setScreen(name); // le « ping » de 30 s portera cet écran (temps passé par écran)
   for (const section of document.querySelectorAll(".screen")) {
     section.hidden = section.dataset.screen !== name;
   }

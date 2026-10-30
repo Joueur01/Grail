@@ -5,7 +5,7 @@
 // Le texte décrit ce que fait réellement le jeu (voir CLAUDE.md, sections 13, 15 et 17) : si le jeu change
 // (nouvelle donnée collectée, nouveau prestataire…), mettre ce fichier à jour.
 
-import { PRIVACY } from "./privacy-config.js?v=101";
+import { PRIVACY } from "./privacy-config.js?v=102";
 
 function el(tag, className, text) {
   const e = document.createElement(tag);
@@ -24,6 +24,7 @@ function sections() {
         "Grail est un jeu gratuit. Il n'y a ni publicité, ni vente de tes données, ni argent réel.",
         "On garde ton e-mail et ton mot de passe (chiffré) pour te connecter, et ce que tu fais dans le jeu : tes cartes, tes pièces, ta tenue, tes amis.",
         "Seul ton pseudo est visible par d'autres : par tes amis, et sur la page d'une tenue que tu choisis de partager.",
+        "On mesure comment tu utilises le jeu, compte par compte (temps de jeu, écrans vus, actions), pour l'améliorer. Rien n'est envoyé si ton navigateur demande « Ne pas me suivre ».",
         "Tu peux supprimer ton compte à tout moment depuis ton profil : tout est effacé immédiatement et définitivement.",
       ],
     },
@@ -42,14 +43,14 @@ function sections() {
         "Ta progression : cartes, album, pièces, boosters, tenue et tenues enregistrées, vitrine, avatar choisi (Garçon / Fille), réputation, résultats au Videur, ventes et achats au Market.",
         "Tes amis : les demandes envoyées et reçues, et la liste de tes amis.",
         "Les tenues que tu partages par lien : une copie de ta tenue, ton avatar, ton pseudo et la date du partage.",
-        "Des statistiques d'usage, sans contenu personnel : type d'appareil (iPhone, Android, ordinateur), taille d'écran arrondie, langue, fuseau horaire, site d'où tu viens, écrans visités, temps passé dans le jeu, actions comme changer de tenue ou partager, erreurs techniques. Elles sont rattachées à un identifiant de joueur, jamais à ton e-mail ni à ton pseudo. Aucune adresse IP n'est enregistrée par le jeu.",
+        "Des statistiques d'usage, mesurées pour TON compte : quand tu ouvres le jeu, combien de temps tu y restes (sessions, temps de jeu par jour), les écrans que tu regardes et combien de temps sur chacun, tes actions (ouvrir un booster, changer de tenue, passer le Videur, aller au Market, partager…), ainsi que le type d'appareil (iPhone, Android, ordinateur), la taille d'écran arrondie, la langue, le fuseau horaire, le site d'où tu viens et les erreurs techniques. Aucune adresse IP n'est enregistrée par le jeu.",
       ],
     },
     {
       title: "Pourquoi et sur quelle base",
       items: [
         "Faire fonctionner ton compte et le jeu (connexion, cartes, Market, amis, Videur, partage) : c'est nécessaire pour te fournir le service.",
-        "Mesurer si le jeu est utilisé et le corriger (statistiques d'usage) : c'est notre intérêt légitime à améliorer un jeu gratuit. Rien n'est envoyé si ton navigateur demande « Ne pas me suivre » (Do Not Track).",
+        "Mesurer comment le jeu est utilisé, compte par compte, pour le corriger et l'améliorer (statistiques d'usage) : c'est notre intérêt légitime à améliorer un jeu gratuit. Tu peux t'y opposer : rien n'est envoyé si ton navigateur demande « Ne pas me suivre » (Do Not Track).",
         "Assurer la sécurité et éviter les abus (règles appliquées par le serveur, limites, pseudos filtrés).",
       ],
     },
@@ -59,6 +60,7 @@ function sections() {
         "Tes amis acceptés voient ton profil : pseudo, avatar et tenue, vitrine, progression, réputation. Ils ne voient jamais ton solde de pièces ni ton e-mail.",
         "Une personne qui reçoit le lien d'une tenue que tu partages voit cette tenue, ton avatar, ton pseudo et la date du partage, sans avoir de compte. Le lien est secret : ne le partage qu'avec qui tu veux.",
         "Au Market, les autres joueurs ne voient jamais qui vend ou qui achète.",
+        `Les statistiques d'usage ne sont jamais montrées aux autres joueurs. ${editor} peut les consulter joueur par joueur, avec ton pseudo, dans un outil qui lui est réservé, pour comprendre comment le jeu est utilisé (par exemple : où les joueurs s'arrêtent, ce qui leur plaît).`,
         "Nous ne vendons, ne louons et ne cédons tes données à personne.",
       ],
     },
@@ -78,7 +80,8 @@ function sections() {
       title: "Combien de temps",
       items: [
         "Tes données sont conservées tant que ton compte existe.",
-        "Quand tu supprimes ton compte, tes données sont effacées tout de suite : compte, progression, amis, ventes, liens de tenue partagés (ils cessent de fonctionner) et statistiques liées à toi.",
+        "Statistiques d'usage : le détail (chaque écran, chaque action) est gardé 90 jours, puis effacé. Il ne reste ensuite que des résumés : temps de jeu par jour et par écran, sessions (début, durée, écrans vus).",
+        "Quand tu supprimes ton compte, tes données sont effacées tout de suite : compte, progression, amis, ventes, liens de tenue partagés (ils cessent de fonctionner) et toutes les statistiques liées à toi, détail et résumés compris.",
         "Les sauvegardes techniques de notre prestataire peuvent garder une trace pendant un court délai avant d'être renouvelées.",
       ],
     },

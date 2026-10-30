@@ -5,5 +5,5 @@
 export const PRIVACY = {
   editor: "",                   // nom de l'éditeur (ex. « Prénom Nom ») ; vide = « l'éditeur de Grail »
   contact: "dariomallejac@gmail.com", // adresse e-mail de contact pour exercer ses droits (choix du développeur) ; vide = non affichée
-  updated: "29 octobre 2026",   // date de la dernière mise à jour du texte
+  updated: "30 octobre 2026",   // date de la dernière mise à jour du texte
 };
