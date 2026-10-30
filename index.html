@@ -36,7 +36,7 @@
   <!-- ?v=… : numéro de version à augmenter à chaque mise en ligne,
        pour forcer les navigateurs (Safari surtout) à recharger les fichiers
        au lieu de garder l'ancienne version en cache. -->
-  <link rel="stylesheet" href="style.css?v=99">
+  <link rel="stylesheet" href="style.css?v=100">
 </head>
 <body>
   <header class="topbar">
@@ -293,18 +293,20 @@
     <section class="screen" data-screen="videur" id="screen-videur" hidden>
       <h2 class="screen-title">Videur</h2>
       <p class="muted" id="videur-summary">—</p>
-      <a class="rules-link" href="#rules/videur">Règles du Videur ›</a>
       <p class="friends-error" id="videur-error" role="status" hidden></p>
       <div class="door-tabs" role="tablist" aria-label="Portes" id="door-tabs"></div>
       <div id="videur-door"></div>
+      <a class="rules-link" href="#rules/videur">Règles du Videur ›</a>
     </section>
 
     <!-- Market entre joueurs : prix fixes, une seule offre (la moins chère) par carte (market.js).
          Géré par le serveur. -->
     <section class="screen" data-screen="market" id="screen-market" hidden>
       <h2 class="screen-title">Market</h2>
-      <p class="muted" id="market-summary">—</p>
-      <a class="rules-link" href="#rules/market">Règles du Market et taxe de vente ›</a>
+      <div class="screen-sub">
+        <p class="muted" id="market-summary">—</p>
+        <a class="rules-link" href="#rules/market">Règles et taxe ›</a>
+      </div>
       <div class="view-switch" role="tablist" aria-label="Market">
         <button class="view-tab" role="tab" data-view="market-buy" aria-selected="true">Acheter</button>
         <button class="view-tab" role="tab" data-view="market-sell" aria-selected="false">Vendre</button>
@@ -515,9 +517,9 @@
         <select id="picker-brand" aria-label="Filtrer par marque"><option value="">Marque</option></select>
         <select id="picker-rarity" aria-label="Filtrer par rareté"><option value="">Rareté</option></select>
         <select id="picker-sort" aria-label="Trier les pièces : rareté, nom ou marque">
-          <option value="rarity">Rareté</option>
-          <option value="name">Nom</option>
-          <option value="catalogue">Marque</option>
+          <option value="rarity">⇅ Rareté</option>
+          <option value="name">⇅ Nom</option>
+          <option value="catalogue">⇅ Marque</option>
         </select>
       </div>
       <p class="muted picker-count" id="picker-count"></p>
@@ -539,6 +541,6 @@
     <a class="tab" href="#avatar" data-tab="avatar">Tenue</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=99"></script>
+  <script type="module" src="js/main.js?v=100"></script>
 </body>
 </html>

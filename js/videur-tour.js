@@ -12,14 +12,14 @@
 //  - « hint »    : règles CACHÉES ; après chaque essai, l'indice seulement.
 // En mode caché, le serveur n'envoie jamais les règles ni les seuils : il n'y a ici aucune règle, aucun seuil.
 
-import { getVideurTower, videurTowerPreview, videurTowerEnter } from "./api.js?v=99";
-import { updateVideurBadge } from "./badges.js?v=99";
-import { SLOTS, readBodyChoice } from "./avatar.js?v=99";
-import { createAvatar3D } from "./avatar3d.js?v=99";
-import { refreshState, getEquipped } from "./inventory.js?v=99";
-import { showToast, reportError } from "./wallet.js?v=99";
-import { playSound, vibrate } from "./effects.js?v=99";
-import { quickOutfits } from "./outfits.js?v=99";
+import { getVideurTower, videurTowerPreview, videurTowerEnter } from "./api.js?v=100";
+import { updateVideurBadge } from "./badges.js?v=100";
+import { SLOTS, readBodyChoice } from "./avatar.js?v=100";
+import { createAvatar3D } from "./avatar3d.js?v=100";
+import { refreshState, getEquipped } from "./inventory.js?v=100";
+import { showToast, reportError } from "./wallet.js?v=100";
+import { playSound, vibrate } from "./effects.js?v=100";
+import { quickOutfits } from "./outfits.js?v=100";
 
 /** Couleur d'enseigne de chaque porte (comme les raretés : bleu, violet, or). */
 const DOOR_COLOR = { bar: "var(--rarity-rare)", club: "var(--rarity-epique)", vip: "var(--rarity-legendaire)" };

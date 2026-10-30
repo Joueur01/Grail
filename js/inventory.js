@@ -6,9 +6,9 @@
 //   - relayer les actions simples (verrou, tenue) vers le serveur, puis relire l'état.
 // Il ne calcule rien d'important : pas de tirage, de gain ni de règle de jeu.
 
-import { RARITIES, matchesSearch, getRarity } from "./data.js?v=99";
-import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=99";
-import * as api from "./api.js?v=99";
+import { RARITIES, matchesSearch, getRarity } from "./data.js?v=100";
+import { createCardFace, createCardShell, createLockBadge } from "./cards.js?v=100";
+import * as api from "./api.js?v=100";
 
 // --- État en mémoire (rempli par refreshState) ---
 
