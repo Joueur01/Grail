@@ -6,13 +6,13 @@
 // que chaque carte est possédée. Ce fichier ne calcule rien : il met en page ce que le serveur
 // renvoie. Un ami ne reçoit pas le solde de pièces (le serveur renvoie null).
 
-import { RARITIES, ALL_RARITIES, getRarity, matchesSearch, catalogueOrderMap } from "./data.js?v=98";
-import { getPlayerProfile, setShowcase } from "./api.js?v=98";
-import { getOwnedCards, getOwnedUltimates } from "./inventory.js?v=98";
-import { showToast, reportError } from "./wallet.js?v=98";
-import { SLOTS } from "./avatar.js?v=98";
-import { createAvatar3D } from "./avatar3d.js?v=98";
-import { createCardFace, createCardShell } from "./cards.js?v=98";
+import { RARITIES, ALL_RARITIES, getRarity, matchesSearch, catalogueOrderMap } from "./data.js?v=99";
+import { getPlayerProfile, setShowcase } from "./api.js?v=99";
+import { getOwnedCards, getOwnedUltimates } from "./inventory.js?v=99";
+import { showToast, reportError } from "./wallet.js?v=99";
+import { SLOTS } from "./avatar.js?v=99";
+import { createAvatar3D } from "./avatar3d.js?v=99";
+import { createCardFace, createCardShell } from "./cards.js?v=99";
 
 function el(tag, className, text) {
   const e = document.createElement(tag);
