@@ -1374,6 +1374,12 @@ main {
 .friend-showcase-empty { color: var(--muted); font-size: 13px; font-weight: 600; }
 .friend-state { color: var(--muted); font-size: 13px; }
 .friend-actions { display: flex; gap: 6px; }
+/* Petit écran : les boutons Accepter / Refuser passent sous le pseudo (sinon il est coupé à 4 lettres) */
+@media (max-width: 400px) {
+  .friend-row:has(> .friend-actions) { flex-wrap: wrap; }
+  .friend-row:has(> .friend-actions) .friend-name { flex-basis: 100%; }
+  .friend-row:has(> .friend-actions) .friend-actions { margin-left: auto; }
+}
 .friend-actions .btn { width: auto; min-height: 40px; padding: 0 14px; font-size: 13px; }
 .friend-canvas { align-self: center; width: 128px; height: 192px; /* ×2 : facteur entier */ }
 
@@ -2362,12 +2368,12 @@ body[data-auth="public"] .public {
 /* Enseigne lumineuse (CSS seulement, pas d'illustration) */
 .door-sign {
   display: flex; flex-direction: column; align-items: center; gap: 2px;
-  padding: 18px 12px; margin-bottom: 8px;
+  padding: 10px 12px; margin-bottom: 4px;
   border: 2px solid var(--door-color); border-radius: 20px;
   background: radial-gradient(ellipse at center, color-mix(in srgb, var(--door-color) 16%, transparent), transparent 70%);
   box-shadow: 0 0 22px -6px var(--door-color), inset 0 0 18px -10px var(--door-color);
 }
-.door-sign-door { font-weight: 900; font-size: 30px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--door-color); text-shadow: 0 0 10px var(--door-color); }
+.door-sign-door { font-weight: 900; font-size: 26px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--door-color); text-shadow: 0 0 10px var(--door-color); }
 .door-sign-venue { font-weight: 700; font-size: 15px; }
 .door-intro { text-align: center; margin: 4px 0 8px; }
 .videur-h { margin: 16px 0 8px; font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
@@ -2402,7 +2408,14 @@ body[data-auth="public"] .public {
 .gauge-fill.ok { background: #7fd99a; }
 .gauge-mark { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--text); transform: translateX(-1px); }
 .videur-change { display: grid; place-items: center; text-decoration: none; margin-bottom: 10px; }
-.videur-enter { margin-top: 4px; }
+/* « Se présenter » reste collé en bas de l'écran pendant qu'on lit le dress code (petits téléphones) */
+.videur-enter {
+  position: sticky;
+  bottom: 8px;
+  z-index: 3;
+  margin-top: 4px;
+  box-shadow: 0 0 0 6px var(--bg), 0 -10px 24px 4px var(--bg);
+}
 .videur-note { text-align: center; font-size: 12px; margin: 10px 0 0; }
 
 .verdict { text-align: center; padding: 18px 12px; border-radius: 20px; margin-bottom: 14px; animation: verdict-flash 0.8s ease-out; }
@@ -2832,7 +2845,7 @@ ul.rules-list { margin: 0; padding-left: 18px; display: flex; flex-direction: co
 .level-door.passed { border-color: var(--rarity-legendaire); color: var(--rarity-legendaire); background: rgba(242, 194, 48, 0.1); }
 
 /* --- Tenues enregistrées (outfits.js, migration 0036) --- */
-.saved-outfits { margin-top: 28px; display: grid; gap: 10px; }
+.saved-outfits { margin-top: 12px; display: grid; gap: 10px; }
 .saved-outfits-title { margin: 0; font-size: 18px; font-weight: 800; }
 .saved-outfits-intro { font-size: 14px; }
 .saved-outfit {
@@ -2875,3 +2888,26 @@ ul.rules-list { margin: 0; padding-left: 18px; display: flex; flex-direction: co
 .quick-outfit.is-worn { border-color: #7fd99a; color: #7fd99a; }
 .quick-outfit:disabled { cursor: default; }
 .quick-outfit:disabled:not(.is-worn) { opacity: 0.35; }
+
+/* ===== Petits écrans (audit V1, 30 octobre 2026) ===== */
+/* Compteur + lien « Règles » sur une seule ligne (Market) */
+.screen-sub { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; }
+.screen-sub .rules-link { min-height: 32px; }
+
+/* Filtres sur un téléphone étroit : « Marque », « Progrès »… ne sont plus coupés */
+@media (max-width: 360px) {
+  .filters select { padding: 0 20px 0 10px; font-size: 13px; background-position: right 8px center; }
+}
+
+/* Téléphone peu haut (iPhone SE, Android compacts) : moins de place perdue en haut,
+   le paquet, la carte révélée et la roue rapetissent pour que l'action reste visible. */
+@media (max-height: 700px) {
+  .screen-title { font-size: 28px; }
+  .screen { gap: 12px; }
+  .reveal-stage { --card-w: min(200px, 60vw); padding: 6px 0 12px; }
+  .wheel-wrap { width: 170px; height: 170px; }
+  .sheet-card { width: min(190px, 56vw); }
+}
+@media (max-height: 700px) and (min-height: 521px) {
+  .booster-pack { --pack-scale: 5; } /* ×5 (160 × 240 px) ; sous 520 px, le ×4 plus haut s'applique */
+}
