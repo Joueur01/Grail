@@ -47,12 +47,14 @@ export const SHOWCASE = { max: 3 };
 // que le joueur voit selon son niveau. Depuis la migration 0034, les règles sont visibles à tous les niveaux,
 // mais elles restent tirées par le serveur pour chaque joueur : aucune règle ni formule dans le site.
 export const VIDEUR_INFO = {
-  // Boosters offerts par porte, une fois par jour et par porte.
+  // Les 3 portes d'un niveau. Depuis la migration 0035, passer une porte ne donne plus de booster :
+  // c'est VALIDER LE NIVEAU (les 3 portes) qui donne levelBoosters booster(s), une seule fois par niveau.
   doors: [
-    { id: "bar", name: "Bar", boosters: 1 },
-    { id: "club", name: "Club", boosters: 1 },
-    { id: "vip", name: "VIP", boosters: 2 },
+    { id: "bar", name: "Bar" },
+    { id: "club", name: "Club" },
+    { id: "vip", name: "VIP" },
   ],
+  levelBoosters: 1,       // booster(s) par niveau validé
   maxLevelsPerDay: 5,     // niveaux validés par jour au maximum
   levelBonusEvery: 5,     // + levelBonusBoosters booster(s) tous les 5 niveaux validés
   levelBonusBoosters: 1,

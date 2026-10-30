@@ -12,13 +12,14 @@
 //  - « hint »    : règles CACHÉES ; après chaque essai, l'indice seulement.
 // En mode caché, le serveur n'envoie jamais les règles ni les seuils : il n'y a ici aucune règle, aucun seuil.
 
-import { getVideurTower, videurTowerPreview, videurTowerEnter } from "./api.js?v=96";
-import { updateVideurBadge } from "./badges.js?v=96";
-import { SLOTS, readBodyChoice } from "./avatar.js?v=96";
-import { createAvatar3D } from "./avatar3d.js?v=96";
-import { refreshState, getEquipped } from "./inventory.js?v=96";
-import { showToast, reportError } from "./wallet.js?v=96";
-import { playSound, vibrate } from "./effects.js?v=96";
+import { getVideurTower, videurTowerPreview, videurTowerEnter } from "./api.js?v=97";
+import { updateVideurBadge } from "./badges.js?v=97";
+import { SLOTS, readBodyChoice } from "./avatar.js?v=97";
+import { createAvatar3D } from "./avatar3d.js?v=97";
+import { refreshState, getEquipped } from "./inventory.js?v=97";
+import { showToast, reportError } from "./wallet.js?v=97";
+import { playSound, vibrate } from "./effects.js?v=97";
+import { quickOutfits } from "./outfits.js?v=97";
 
 /** Couleur d'enseigne de chaque porte (comme les raretés : bleu, violet, or). */
 const DOOR_COLOR = { bar: "var(--rarity-rare)", club: "var(--rarity-epique)", vip: "var(--rarity-legendaire)" };
@@ -60,6 +61,8 @@ export function setupTower({ catalogue, first }) {
   let preview = null;   // dernier aperçu (mode visible)
   let busy = false;
   let version = 0;      // ignore un aperçu arrivé après une nouvelle lecture
+  // Tenues enregistrées (migration 0036) : en remettre une relit la tour et l'aperçu.
+  const savedOutfits = quickOutfits({ onWorn: () => load({ silent: true }) });
 
   function showError(err) {
     errorBox.textContent = err.message || String(err);
@@ -161,7 +164,8 @@ export function setupTower({ catalogue, first }) {
     return list;
   }
 
-  /** Récompense annoncée sur le bouton : boosters encore à gagner à cette porte aujourd'hui (selon le serveur). */
+  /** Récompense annoncée sur le bouton : boosters gagnés en passant cette porte (selon le serveur : depuis la
+   *  migration 0035, le booster du niveau, annoncé au VIP seulement). */
   function rewardText(door) {
     return door.boosters ? ` · +${plural(door.boosters, "booster")}` : "";
   }
@@ -198,6 +202,8 @@ export function setupTower({ catalogue, first }) {
     const change = el("a", "btn videur-change", "Changer ma tenue");
     change.href = "#avatar";
     nodes.push(change);
+    savedOutfits.refresh(); // « ✓ Tenue N » si la tenue portée est une tenue enregistrée
+    nodes.push(savedOutfits);
 
     // Ce que le videur t'a dit aujourd'hui à cette porte (mode caché).
     if (door.mode !== "visible" && door.attempts.length) {
@@ -230,8 +236,15 @@ export function setupTower({ catalogue, first }) {
     enter.addEventListener("click", enterDoor);
     nodes.push(enter);
 
-    // Prochain booster de palier (tous les 5 niveaux).
-    if (tower.level_bonus_boosters > 0) {
+    // Booster du niveau (migration 0035) et booster de palier (tous les 5 niveaux), en une phrase quand les deux
+    // tombent sur ce niveau. Le bouton du VIP affiche déjà le booster du niveau.
+    const bonusHere = tower.level_bonus_boosters > 0 && tower.next_bonus_level === tower.level;
+    if (tower.level_boosters > 0 && !door.boosters && tower.status === "play") {
+      const bonus = bonusHere ? ` et +${plural(tower.level_bonus_boosters, "booster")} bonus` : "";
+      nodes.push(el("p", "muted videur-note", `Valide le niveau (Bar, Club puis VIP) pour gagner +${plural(tower.level_boosters, "booster")}${bonus}.`));
+    }
+    // Prochain booster de palier (tous les 5 niveaux), s'il n'est pas déjà annoncé au-dessus.
+    if (tower.level_bonus_boosters > 0 && !(bonusHere && tower.level_boosters > 0 && !door.boosters && tower.status === "play")) {
       const left = tower.next_bonus_level - tower.level;
       nodes.push(el("p", "muted videur-note", left === 0
         ? `Valide ce niveau pour gagner +${plural(tower.level_bonus_boosters, "booster")} bonus.`

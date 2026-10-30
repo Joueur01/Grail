@@ -15,14 +15,14 @@
 // Effets de révélation, du plus discret au plus fort : Rare (reflet + particules),
 // Épique (éclair violet, gerbe de particules, titre), Légendaire (plein écran).
 
-import { RARITIES, getRarity } from "./data.js?v=96";
-import { BOOSTER, DROP_RATES, PITY, VIDEUR_INFO } from "./economy-config.js?v=96";
-import { getPity, getPityEpic, isTutorialDone, markTutorialDone, getBoosterState, refreshState } from "./inventory.js?v=96";
-import { openBooster } from "./api.js?v=96";
-import { reportError } from "./wallet.js?v=96";
-import { createCardFace, createCardShell } from "./cards.js?v=96";
-import { playSound, vibrate, burst } from "./effects.js?v=96";
-import { attachGesture } from "./gestures.js?v=96";
+import { RARITIES, getRarity } from "./data.js?v=97";
+import { BOOSTER, DROP_RATES, PITY, VIDEUR_INFO } from "./economy-config.js?v=97";
+import { getPity, getPityEpic, isTutorialDone, markTutorialDone, getBoosterState, refreshState } from "./inventory.js?v=97";
+import { openBooster } from "./api.js?v=97";
+import { reportError } from "./wallet.js?v=97";
+import { createCardFace, createCardShell } from "./cards.js?v=97";
+import { playSound, vibrate, burst } from "./effects.js?v=97";
+import { attachGesture } from "./gestures.js?v=97";
 
 // Durées (en millisecondes), faciles à ajuster.
 const TEAR_TIME = 550;    // la bande s'envole, le paquet descend
@@ -126,10 +126,10 @@ export function setupBooster({ catalogue, onOpened }) {
     if (text) container.append(swipeHint(text));
   }
 
-  // Boosters offerts par le Videur : une fois par jour et par porte (copie d'affichage, le serveur décide).
-  const videurBoosters = VIDEUR_INFO.doors.reduce((sum, d) => sum + (d.boosters || 0), 0);
+  // Boosters offerts par le Videur : 1 par niveau validé, 5 niveaux par jour au plus (copie d'affichage, le serveur décide).
+  const videurBoosters = VIDEUR_INFO.levelBoosters * VIDEUR_INFO.maxLevelsPerDay;
   nextVideurSub.textContent = videurBoosters > 0
-    ? `Bar, Club, VIP : jusqu'à +${videurBoosters} booster${videurBoosters > 1 ? "s" : ""} offert${videurBoosters > 1 ? "s" : ""} par jour`
+    ? `+${VIDEUR_INFO.levelBoosters} booster par niveau validé, jusqu'à ${videurBoosters} par jour`
     : "Un défi chaque jour";
 
   let packCanOpen = null; // le paquet affiché est-il ouvrable ? (pour savoir quand le redessiner)

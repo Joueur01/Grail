@@ -2794,3 +2794,48 @@ ul.rules-list { margin: 0; padding-left: 18px; display: flex; flex-direction: co
   color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .level-door.passed { border-color: var(--rarity-legendaire); color: var(--rarity-legendaire); background: rgba(242, 194, 48, 0.1); }
+
+/* --- Tenues enregistrées (outfits.js, migration 0036) --- */
+.saved-outfits { margin-top: 28px; display: grid; gap: 10px; }
+.saved-outfits-title { margin: 0; font-size: 18px; font-weight: 800; }
+.saved-outfits-intro { font-size: 14px; }
+.saved-outfit {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.saved-outfit-head { display: flex; align-items: center; gap: 8px; min-height: 36px; }
+.saved-outfit-name { font-weight: 800; margin-right: auto; }
+.saved-outfit-state { font-size: 13px; font-weight: 700; }
+.saved-outfit-state.is-worn { color: #7fd99a; }
+.saved-outfit-sprites { display: flex; flex-wrap: wrap; gap: 6px; }
+.friend-card.is-missing { opacity: 0.35; }
+.saved-outfit-missing { font-size: 13px; }
+/* Boutons en ligne : .btn a width: 100% (voir CLAUDE.md, section 10) */
+.saved-outfit-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.saved-outfit-btn { width: auto; flex: 1 1 auto; min-height: 44px; padding: 10px 16px; font-size: 15px; }
+.saved-outfit-btn.saved-outfit-remove { flex: 0 0 auto; min-height: 36px; padding: 6px 14px; font-size: 14px; }
+
+/* Rangée « Remettre une tenue enregistrée » de l'écran Videur */
+.quick-outfits { margin: 4px 0 12px; }
+.quick-outfits-title { margin: 0 0 8px; font-size: 13px; font-weight: 700; color: var(--muted); }
+.quick-outfits-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.quick-outfit {
+  flex: 1 1 0;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1.5px solid var(--text);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.quick-outfit.is-worn { border-color: #7fd99a; color: #7fd99a; }
+.quick-outfit:disabled { cursor: default; }
+.quick-outfit:disabled:not(.is-worn) { opacity: 0.35; }
