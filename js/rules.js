@@ -6,11 +6,11 @@
 // Si le serveur change une valeur, la mettre à jour dans ce fichier-là, pas ici.
 // Les règles cachées du Videur (Club, VIP) ne sont volontairement PAS décrites.
 
-import { RARITIES } from "./data.js?v=94";
+import { RARITIES } from "./data.js?v=95";
 import {
   DROP_RATES, BOOSTER, PITY, UPGRADE, DISCARD_VALUES, MARKET, SHOP, FRIENDS, saleTax, saleNet,
   DAILY_BONUS, SHOWCASE, VIDEUR_INFO, STARTER_KIT,
-} from "./economy-config.js?v=94";
+} from "./economy-config.js?v=95";
 
 function el(tag, className, text) {
   const e = document.createElement(tag);
@@ -155,7 +155,8 @@ function buildSections(catalogue) {
     bullets([
       `Tu peux valider jusqu'à ${plural(V.maxLevelsPerDay, "niveau")} par jour (jour de Paris). Ta progression est gardée d'un jour à l'autre.`,
       "Chaque porte a sa propre règle, tirée pour toi : elle est différente pour chaque joueur et ne change pas dans la journée.",
-      "Jusqu'au niveau 10, la règle peut toujours être respectée avec les cartes que tu possèdes. Plus haut, certaines portes demandent un peu plus que ta collection.",
+      "La règle peut toujours être respectée avec les cartes que tu possèdes au moment où elle est tirée : pas besoin d'acheter pour passer.",
+      "Après un refus, le videur te parle en priorité d'un critère dont il ne t'a pas encore parlé.",
       "Si tu rates tous tes essais à une porte, le niveau est bloqué jusqu'au lendemain. La règle est alors révélée, et une nouvelle règle est tirée le lendemain.",
       "Les essais sont comptés par le serveur : recharger la page ne rend rien.",
     ]),
@@ -175,7 +176,7 @@ function buildSections(catalogue) {
     para("Ton niveau est celui que tu joues dans la tour du Videur. Tu commences au niveau 1. Il est affiché autour de ton bouton profil (l'anneau doré se remplit à chaque porte passée), sur ta page de profil et dans l'écran Videur."),
     bullets([
       "Le niveau monte quand tu passes la 3e porte (le VIP) du niveau en cours.",
-      "Il n'y a pas de niveau maximum : les portes deviennent plus difficiles à mesure que tu montes.",
+      "Il n'y a pas de niveau maximum. Les portes deviennent plus difficiles jusqu'au niveau 76, puis la difficulté reste au maximum.",
       "Le niveau ne s'achète pas, ne s'échange pas et ne donne aucun avantage de jeu.",
       "L'ancien Flow (et la réputation qui en dépendait) n'est plus utilisé.",
     ]),
