@@ -15,14 +15,14 @@
 // Effets de révélation, du plus discret au plus fort : Rare (reflet + particules),
 // Épique (éclair violet, gerbe de particules, titre), Légendaire (plein écran).
 
-import { RARITIES, getRarity } from "./data.js?v=97";
-import { BOOSTER, DROP_RATES, PITY, VIDEUR_INFO } from "./economy-config.js?v=97";
-import { getPity, getPityEpic, isTutorialDone, markTutorialDone, getBoosterState, refreshState } from "./inventory.js?v=97";
-import { openBooster } from "./api.js?v=97";
-import { reportError } from "./wallet.js?v=97";
-import { createCardFace, createCardShell } from "./cards.js?v=97";
-import { playSound, vibrate, burst } from "./effects.js?v=97";
-import { attachGesture } from "./gestures.js?v=97";
+import { RARITIES, getRarity } from "./data.js?v=98";
+import { BOOSTER, DROP_RATES, PITY, VIDEUR_INFO } from "./economy-config.js?v=98";
+import { getPity, getPityEpic, isTutorialDone, markTutorialDone, getBoosterState, refreshState } from "./inventory.js?v=98";
+import { openBooster } from "./api.js?v=98";
+import { reportError } from "./wallet.js?v=98";
+import { createCardFace, createCardShell } from "./cards.js?v=98";
+import { playSound, vibrate, burst } from "./effects.js?v=98";
+import { attachGesture } from "./gestures.js?v=98";
 
 // Durées (en millisecondes), faciles à ajuster.
 const TEAR_TIME = 550;    // la bande s'envole, le paquet descend
@@ -142,7 +142,7 @@ export function setupBooster({ catalogue, onOpened }) {
     pack.disabled = !available;
     nextSteps.hidden = available; // plus de booster : on propose quoi faire ensuite
     pack.dataset.locked = "0";
-    pack.classList.remove("nudge", "torn", "dragging");
+    pack.classList.remove("nudge", "refuse", "torn", "dragging");
     pack.classList.toggle("signature", state.signature);
     packTop.style.transform = "";
     eyebrow.textContent = state.signature ? "Booster Signature" : "Booster";
@@ -224,20 +224,34 @@ export function setupBooster({ catalogue, onOpened }) {
 
   // --- 1. Déchirer le paquet (uniquement en glissant) ------------------------
 
+  // Plus de booster : le paquet éteint ne se déchire pas (sinon la bande bougeait sans rien ouvrir,
+  // ce qui laissait croire à un bug). Il fait « non » et on dit quand arrive le prochain.
+  function refuseEmpty() {
+    pack.classList.remove("refuse");
+    void pack.offsetWidth; // rejoue l'animation
+    pack.classList.add("refuse");
+    const state = getBoosterState();
+    status.textContent = state.nextInMs === null
+      ? "Plus de booster pour l'instant."
+      : `Plus de booster pour l'instant : le prochain arrive dans ${formatDuration(state.nextInMs)}.`;
+  }
+
   attachGesture(pack, {
     threshold: SWIPE_TO_TEAR,
     onDrag: (dx, progress) => {
+      if (pack.disabled) return; // paquet vide : la bande ne bouge pas
       pack.classList.add("dragging");
       // La bande pivote depuis son coin gauche, de plus en plus.
       packTop.style.transform = `rotate(${-12 * progress}deg) translateY(${-6 * progress}px)`;
     },
-    onSwipe: () => open(),
+    onSwipe: () => (pack.disabled ? refuseEmpty() : open()),
     onRelease: () => {
       // Pas assez glissé : la bande retombe.
       pack.classList.remove("dragging");
       packTop.style.transform = "";
     },
     onTap: () => {
+      if (pack.disabled) { refuseEmpty(); return; }
       // Un toucher n'ouvre PAS : le paquet sursaute pour rappeler qu'il faut glisser.
       pack.classList.remove("nudge");
       void pack.offsetWidth; // rejoue l'animation

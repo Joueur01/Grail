@@ -6,11 +6,11 @@
 // Si le serveur change une valeur, la mettre à jour dans ce fichier-là, pas ici.
 // Le Videur : seulement le principe et les paliers (les règles sont tirées pour chaque joueur par le serveur).
 
-import { RARITIES } from "./data.js?v=97";
+import { RARITIES } from "./data.js?v=98";
 import {
   DROP_RATES, BOOSTER, PITY, UPGRADE, DISCARD_VALUES, MARKET, SHOP, FRIENDS, saleTax, saleNet,
   DAILY_BONUS, SHOWCASE, VIDEUR_INFO, STARTER_KIT,
-} from "./economy-config.js?v=97";
+} from "./economy-config.js?v=98";
 
 function el(tag, className, text) {
   const e = document.createElement(tag);
