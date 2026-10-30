@@ -5,9 +5,9 @@
 // l'ancienne réputation (Flow, migration 0021) ; sans la 0021, c'est un bouton simple.
 // Tout vient du SERVEUR (profil relu par inventory.js) : ce fichier affiche seulement, il ne calcule aucun niveau.
 
-import { getReputation, getVideurLevel, onStateChange } from "./inventory.js?v=104";
-import { showToast } from "./wallet.js?v=104";
-import { playSound, vibrate } from "./effects.js?v=104";
+import { getReputation, getVideurLevel, onStateChange } from "./inventory.js?v=105";
+import { showToast } from "./wallet.js?v=105";
+import { playSound, vibrate } from "./effects.js?v=105";
 
 const DOORS_PER_LEVEL = 3; // Bar, Club, VIP : affichage de l'anneau seulement
 

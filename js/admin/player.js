@@ -1,18 +1,19 @@
 // player.js — fiche d'un joueur dans le panel admin (#player/<identifiant>).
 // Lecture seule : tout vient de admin_player(id) ; aucune action possible sur le joueur.
 
-import { adminPlayer } from "../api.js?v=104";
-import { columnChart, barChart, stackedBars, calendar } from "./charts.js?v=104";
+import { adminPlayer } from "../api.js?v=105";
+import { columnChart, barChart, stackedBars, calendar } from "./charts.js?v=105";
+import { dataTable } from "./ui.js?v=105";
 import {
   el, fmtDate, fmtDateTime, fmtShortDate, fmtDaysAgo, fmtInt, fmtMinutes, fmtSeconds, fmtNum,
   statusPill, fmtPlatform, fmtScreen, RARITIES, fmtTxKind, DOORS,
-} from "./format.js?v=104";
+} from "./format.js?v=105";
 
 let brandNames = null; // noms des marques lus dans le catalogue du jeu (data/pieces.json)
 async function loadBrands() {
   if (brandNames) return brandNames;
   try {
-    const cat = await (await fetch("data/pieces.json?v=104")).json();
+    const cat = await (await fetch("data/pieces.json?v=105")).json();
     brandNames = Object.fromEntries(cat.brands.map((b) => [b.id, b.name]));
   } catch {
     brandNames = {};
@@ -156,7 +157,7 @@ function minutesChart(box, days) {
   }));
   const wrap = el("div");
   box.append(wrap);
-  columnChart(wrap, pts, { format: (v) => `${Math.round(v)}`, color: "var(--accent)" });
+  columnChart(wrap, pts, { format: (v) => `${Math.round(v)}`, color: "var(--accent)", legend: "Minutes de jeu par jour" });
   box.append(el("p", "muted small", "Minutes de jeu (jeu affiché à l'écran). Touche une colonne pour le détail."));
 }
 
@@ -179,7 +180,7 @@ function screensChart(box, screens) {
   barChart(wrap, screens.map((x) => ({
     label: fmtScreen(x.screen), value: Number(x.minutes),
     tip: `${fmtScreen(x.screen)} : ${fmtMinutes(x.minutes)} sur ${x.days} jour${x.days > 1 ? "s" : ""}`,
-  })), { format: (v) => fmtMinutes(v), labelWidth: 92 });
+  })), { format: (v) => fmtMinutes(v), labelWidth: 92, legend: "Minutes passées sur l'écran" });
 }
 
 function rarityChart(box, byRarity, d) {
@@ -203,7 +204,7 @@ function brandChart(box, byBrand) {
     label: brandNames[b.brand] || b.brand, value: Number(b.copies),
     color: `var(--brand-${b.brand}, var(--accent))`,
     tip: `${brandNames[b.brand] || b.brand} : ${fmtInt(b.copies)} exemplaires, ${fmtInt(b.distinct)} cartes différentes`,
-  })), { format: (v) => fmtInt(v), labelWidth: 140 });
+  })), { format: (v) => fmtInt(v), labelWidth: 140, legend: "Exemplaires (couleur de la marque)" });
 }
 
 // --- Première session ------------------------------------------------------------------------
@@ -234,56 +235,27 @@ function chips(screens) {
   return c;
 }
 
-// --- Tableaux ----------------------------------------------------------------------------------
-function table(box, headers, rows) {
-  const scroller = el("div", "table-scroll");
-  const t = el("table", "data-table");
-  const tr = el("tr");
-  for (const h of headers) tr.append(el("th", h.num ? "num" : "", h.label));
-  const thead = el("thead");
-  thead.append(tr);
-  const tbody = el("tbody");
-  for (const r of rows) {
-    const line = el("tr");
-    r.forEach((v, i) => {
-      const td = el("td", headers[i].num ? "num" : "");
-      if (v instanceof Node) td.append(v); else td.textContent = v;
-      line.append(td);
-    });
-    tbody.append(line);
-  }
-  t.append(thead, tbody);
-  scroller.append(t);
-  box.append(scroller);
-  // Au-delà de 10 lignes : les autres sont repliées derrière « Tout afficher » (fiche moins longue sur iPad).
-  if (rows.length > SHOWN) {
-    const extra = [...tbody.children].slice(SHOWN);
-    extra.forEach((r) => { r.hidden = true; });
-    const more = el("button", "chip more", `Tout afficher (${rows.length})`);
-    more.type = "button";
-    more.addEventListener("click", () => { extra.forEach((r) => { r.hidden = false; }); more.remove(); });
-    box.append(more);
-  }
-}
-const SHOWN = 10;
-
+// --- Tableaux (triables, export CSV : ui.dataTable) ------------------------------------------
 function sessionsTable(box, sessions) {
   if (!sessions.length) return empty(box, "Aucune session enregistrée.");
-  table(box, [
-    { label: "Début" }, { label: "Durée", num: true }, { label: "Active", num: true }, { label: "Écrans" }, { label: "Dernier écran" },
-  ], sessions.map((x) => {
-    const lengthMin = (Date.parse(x.ended_at) - Date.parse(x.started_at)) / 60000;
-    const start = el("span", "", fmtDateTime(x.started_at));
-    if (x.is_first_session) start.append(el("span", "pill tiny", "1re"));
-    return [start, fmtMinutes(lengthMin), fmtSeconds(x.active_seconds), chips(x.screens || []), fmtScreen(x.last_screen)];
-  }));
+  const length = (x) => (Date.parse(x.ended_at) - Date.parse(x.started_at)) / 60000;
+  dataTable(box, { csvName: "sessions", sort: "started_at", limit: 10, rows: sessions, columns: [
+    { key: "started_at", label: "Début", render: (x) => {
+      const start = el("span", "", fmtDateTime(x.started_at));
+      if (x.is_first_session) start.append(el("span", "pill tiny", "1re"));
+      return start;
+    } },
+    { key: "length", label: "Durée", num: true, value: length, render: (x) => fmtMinutes(length(x)), csv: (x) => Math.round(length(x) * 10) / 10 },
+    { key: "active_seconds", label: "Active", num: true, value: (x) => Number(x.active_seconds), render: (x) => fmtSeconds(x.active_seconds) },
+    { key: "screens_viewed", label: "Écrans", num: true, value: (x) => (x.screens || []).length, render: (x) => chips(x.screens || []),
+      csv: (x) => (x.screens || []).map(fmtScreen).join(", ") },
+    { key: "last_screen", label: "Dernier écran", value: (x) => fmtScreen(x.last_screen) },
+  ] });
 }
 
 function transactionsTable(box, txs) {
   if (!txs.length) return empty(box, "Aucune transaction.");
-  table(box, [{ label: "Date" }, { label: "Type" }, { label: "Pièces", num: true }, { label: "Détail" }], txs.map((t) => {
-    const delta = Number(t.coins_delta || 0);
-    const coins = el("span", delta > 0 ? "pos" : delta < 0 ? "neg" : "muted", delta ? `${delta > 0 ? "+" : "−"}${fmtInt(Math.abs(delta))}` : "0");
+  const detail = (t) => {
     const det = t.details || {};
     const parts = [];
     if (det.colorway_id) parts.push(`${det.colorway_id}${det.rarity ? ` · ${det.rarity}` : ""}`);
@@ -293,20 +265,29 @@ function transactionsTable(box, txs) {
     if (det.signup) parts.push("bonus d'inscription");
     if (det.price !== undefined) parts.push(`prix ${fmtInt(det.price)}`);
     if (det.tax) parts.push(`taxe ${fmtInt(det.tax)}`);
-    return [fmtDateTime(t.created_at), fmtTxKind(t.kind), coins, parts.join(" · ") || "—"];
-  }));
+    return parts.join(" · ") || "—";
+  };
+  dataTable(box, { csvName: "transactions", sort: "created_at", limit: 10, rows: txs, columns: [
+    { key: "created_at", label: "Date", render: (t) => fmtDateTime(t.created_at) },
+    { key: "kind", label: "Type", value: (t) => fmtTxKind(t.kind) },
+    { key: "coins_delta", label: "Pièces", num: true, value: (t) => Number(t.coins_delta || 0), render: (t) => {
+      const delta = Number(t.coins_delta || 0);
+      return el("span", delta > 0 ? "pos" : delta < 0 ? "neg" : "muted", delta ? `${delta > 0 ? "+" : "−"}${fmtInt(Math.abs(delta))}` : "0");
+    } },
+    { key: "detail", label: "Détail", value: detail },
+  ] });
 }
 
 function videurTable(box, attempts) {
   if (!attempts.length) return empty(box, "Aucun essai au Videur.");
-  table(box, [
-    { label: "Date" }, { label: "Niveau", num: true }, { label: "Porte" }, { label: "Résultat" }, { label: "Critères", num: true }, { label: "Boosters", num: true },
-  ], attempts.map((a) => [
-    fmtDateTime(a.created_at),
-    a.level ? fmtInt(a.level) : "ancien",
-    DOORS[a.door] || a.door,
-    el("span", a.passed ? "pos" : "neg", a.passed ? "✔ Entré" : "✖ Refusé"),
-    a.total ? `${fmtNum(a.matched)} / ${fmtNum(a.total)}` : "—",
-    a.boosters_gained ? `+${a.boosters_gained}` : "—",
-  ]));
+  dataTable(box, { csvName: "essais-videur", sort: "created_at", limit: 10, rows: attempts, columns: [
+    { key: "created_at", label: "Date", render: (a) => fmtDateTime(a.created_at) },
+    { key: "level", label: "Niveau", num: true, value: (a) => (a.level ? Number(a.level) : null), render: (a) => (a.level ? fmtInt(a.level) : "ancien") },
+    { key: "door", label: "Porte", value: (a) => ["bar", "club", "vip"].indexOf(a.door), render: (a) => DOORS[a.door] || a.door, csv: (a) => DOORS[a.door] || a.door },
+    { key: "passed", label: "Résultat", value: (a) => (a.passed ? 1 : 0), render: (a) => el("span", a.passed ? "pos" : "neg", a.passed ? "✔ Entré" : "✖ Refusé"),
+      csv: (a) => (a.passed ? "entré" : "refusé") },
+    { key: "criteria", label: "Critères", num: true, value: (a) => (a.total ? Number(a.matched) / Number(a.total) : null),
+      render: (a) => (a.total ? `${fmtNum(a.matched)} / ${fmtNum(a.total)}` : "—"), csv: (a) => (a.total ? `${a.matched}/${a.total}` : "") },
+    { key: "boosters_gained", label: "Boosters", num: true, value: (a) => Number(a.boosters_gained || 0), render: (a) => (a.boosters_gained ? `+${a.boosters_gained}` : "—") },
+  ] });
 }

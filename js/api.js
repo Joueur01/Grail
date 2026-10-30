@@ -6,7 +6,7 @@
 // amélioration. Ne remettre AUCUNE logique de jeu ici ni ailleurs côté client.
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase-config.js?v=104";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase-config.js?v=105";
 
 // Le lien « mot de passe oublié » reçu par e-mail ramène sur le site avec « type=recovery » dans
 // l'adresse. On le note AVANT que supabase-js ne traite (et n'efface) l'adresse.
@@ -301,6 +301,17 @@ export const adminDevices = () => rpc("admin_devices");
 export const adminHours = () => rpc("admin_hours");
 /** Erreurs affichées aux joueurs : par message + les 50 plus récentes. */
 export const adminErrors = (from = null, to = null) => rpc("admin_errors", { p_from: from, p_to: to });
+// Graphiques globaux (migration 0040)
+/** Premier jour du jeu (1re inscription) "AAAA-MM-JJ" : période « Tout ». */
+export const adminFirstDay = () => rpc("admin_first_day");
+/** { daily: [{ day, bonus, discard, sales, other_in, created, tax, shop, other_out, destroyed, circulation }], balances, circulation_now } */
+export const adminEconomyFlows = (from = null, to = null) => rpc("admin_economy_flows", { p_from: from, p_to: to });
+/** { rows: [{ day, rarity, sales, shop_sales, volume, shop_volume }] } */
+export const adminMarketDaily = (from = null, to = null) => rpc("admin_market_daily", { p_from: from, p_to: to });
+/** Premières sessions de la période : { players, median_minutes, durations, last_screens, came_back_pct } */
+export const adminFirstSessions = (from = null, to = null) => rpc("admin_first_sessions", { p_from: from, p_to: to });
+/** Cartes sorties des boosters : { boosters, signature_boosters, cards: [{ draw, rarity, cards, forced }] } */
+export const adminBoosterDrops = (from = null, to = null) => rpc("admin_booster_drops", { p_from: from, p_to: to });
 
 // --- Tenue partagée par lien (migration 0008) --------------------------------------
 

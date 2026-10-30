@@ -4,8 +4,8 @@
 // Sur un écran étroit (iPad en portrait, téléphone) seules les colonnes principales sont visibles
 // (bouton « Toutes les colonnes ») et c'est le TABLEAU qui défile de côté, jamais la page.
 
-import { adminPlayers } from "../api.js?v=104";
-import { el, fmtDate, fmtDaysAgo, fmtInt, fmtMinutes, fmtNum, statusPill, STATUS, PLATFORMS, fmtPlatform } from "./format.js?v=104";
+import { adminPlayers } from "../api.js?v=105";
+import { el, fmtDate, fmtDaysAgo, fmtInt, fmtMinutes, fmtNum, statusPill, STATUS, PLATFORMS, fmtPlatform } from "./format.js?v=105";
 
 const PAGE = 50;
 

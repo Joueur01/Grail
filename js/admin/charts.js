@@ -6,6 +6,10 @@
 //   barChart(conteneur, [{ label, value, color, tip }], options) barres horizontales (ex. temps par écran)
 //   stackedBars(conteneur, [{ label, segments: [{ label, value, color }] }], options)  barres empilées + légende
 //   calendar(conteneur, { "AAAA-MM-JJ": valeur }, options)       calendrier d'activité (une case par jour)
+//   multiLineChart(conteneur, étiquettes, [{ label, color, values }], options)   plusieurs courbes
+//   stackedColumns(conteneur, étiquettes, [{ label, color, values }], options)   colonnes empilées par jour
+// Chaque graphique a une légende : automatique pour les graphiques à plusieurs séries, `legend` sinon
+// (un texte ou [{ label, color }]).
 //
 // Le dessin suit la largeur réelle du conteneur et se refait quand elle change (rotation de l'iPad).
 
@@ -19,6 +23,23 @@ function svgEl(tag, attrs = {}, text) {
 }
 
 const fmtDefault = (v) => Number(v).toLocaleString("fr-FR", { maximumFractionDigits: 1 });
+
+/** Légende sous le graphique : [{ label, color }] (un texte seul = une entrée de la couleur par défaut). */
+export function legend(container, items, color = "var(--accent)") {
+  container.querySelector(".chart-legend")?.remove();
+  if (!items) return;
+  const list = typeof items === "string" ? [{ label: items, color }] : items;
+  const leg = document.createElement("div");
+  leg.className = "chart-legend";
+  for (const it of list) {
+    const item = document.createElement("span");
+    const dot = document.createElement("i");
+    dot.style.background = it.color;
+    item.append(dot, it.label);
+    leg.append(item);
+  }
+  container.append(leg);
+}
 
 /** Monte un graphique : `draw(largeur)` renvoie un <svg> ; redessiné si la largeur change. */
 function mount(container, draw) {
@@ -83,38 +104,47 @@ function hideTip(container) {
   container.querySelectorAll(".is-active").forEach((n) => n.classList.remove("is-active"));
 }
 
-/** Graduation « ronde » au-dessus du maximum (1, 2, 5, 10, 20, 50…). */
-function niceMax(max) {
+/** Pas de graduation « rond » (1, 2, 5, 10, 20, 50…) pour 3 à 5 lignes jusqu'au maximum. */
+function niceStep(max) {
   if (!(max > 0)) return 1;
-  const p = 10 ** Math.floor(Math.log10(max));
-  for (const m of [1, 2, 2.5, 5, 10]) if (m * p >= max) return m * p;
+  const raw = max / 4;
+  const p = 10 ** Math.floor(Math.log10(raw));
+  for (const m of [1, 2, 5, 10]) if (m * p >= raw) return Math.max(m * p, Number.isInteger(max) && max >= 1 ? 1 : 0);
   return 10 * p;
 }
 
 /** Axe vertical + lignes de repère ; renvoie la fonction valeur → y. */
 function yAxis(svg, { left, top, width, height, max, format }) {
-  const top2 = niceMax(max);
-  for (let i = 0; i <= 4; i++) {
-    const v = (top2 * i) / 4;
-    const y = top + height - (height * i) / 4;
+  const step = niceStep(max);
+  const n = Math.max(1, Math.ceil(max / step - 1e-9));
+  const top2 = step * n;
+  for (let i = 0; i <= n; i++) {
+    const v = step * i;
+    const y = top + height - (height * i) / n;
     svg.append(svgEl("line", { x1: left, x2: left + width, y1: y, y2: y, class: "chart-grid" }));
     svg.append(svgEl("text", { x: left - 6, y: y + 4, "text-anchor": "end", class: "chart-label" }, format(v)));
   }
   return (v) => top + height - (height * Math.max(0, v)) / top2;
 }
 
-/** Étiquettes de l'axe horizontal : au plus ~1 toutes les 60 px. */
+/** Étiquettes de l'axe horizontal : espacées selon leur longueur (~6,5 px par caractère), sans chevauchement. */
 function xLabels(svg, points, xOf, y) {
-  const every = Math.max(1, Math.ceil(points.length / Math.max(1, Math.floor((xOf(points.length - 1) - xOf(0)) / 60 + 1))));
+  const n = points.length;
+  if (!n) return;
+  const longest = Math.max(...points.map((p) => String(p.label).length));
+  const room = Math.max(40, longest * 6.5 + 10);
+  const span = n > 1 ? (xOf(n - 1) - xOf(0)) / (n - 1) : room;
+  const every = Math.max(1, Math.ceil(room / span));
   points.forEach((p, i) => {
-    if (i % every !== 0 && i !== points.length - 1) return;
-    if (i !== points.length - 1 && points.length - 1 - i < every / 2) return; // évite deux étiquettes collées
+    if (i % every !== 0 && i !== n - 1) return;
+    if (i !== n - 1 && n - 1 - i < every) return; // laisse la place à la dernière étiquette
     svg.append(svgEl("text", { x: xOf(i), y, "text-anchor": "middle", class: "chart-label" }, p.label));
   });
 }
 
 // --- Colonnes verticales ---------------------------------------------------------------
-export function columnChart(container, points, { height = 200, color = "var(--accent)", format = fmtDefault } = {}) {
+export function columnChart(container, points, { height = 200, color = "var(--accent)", format = fmtDefault, legend: leg } = {}) {
+  legend(container, leg, color);
   mount(container, (W) => {
     const left = 40, right = 8, top = 10, bottom = 24;
     const w = W - left - right, h = height - top - bottom;
@@ -139,7 +169,8 @@ export function columnChart(container, points, { height = 200, color = "var(--ac
 }
 
 // --- Courbe -------------------------------------------------------------------------------
-export function lineChart(container, points, { height = 200, color = "var(--accent)", format = fmtDefault } = {}) {
+export function lineChart(container, points, { height = 200, color = "var(--accent)", format = fmtDefault, legend: leg } = {}) {
+  legend(container, leg, color);
   mount(container, (W) => {
     const left = 40, right = 12, top = 10, bottom = 24;
     const w = W - left - right, h = height - top - bottom;
@@ -165,22 +196,24 @@ export function lineChart(container, points, { height = 200, color = "var(--acce
 }
 
 // --- Barres horizontales -----------------------------------------------------------------
-export function barChart(container, items, { color = "var(--accent)", format = fmtDefault, labelWidth = 96 } = {}) {
+export function barChart(container, items, { color = "var(--accent)", format = fmtDefault, labelWidth = 96, legend: leg } = {}) {
+  legend(container, leg, color);
   mount(container, (W) => {
     const rowH = 30, gap = 8, top = 4;
     const height = top + items.length * (rowH + gap);
     const svg = svgEl("svg", { width: W, height, viewBox: `0 0 ${W} ${height}`, role: "img" });
     const max = Math.max(0, ...items.map((it) => Number(it.value) || 0)) || 1;
     const valueW = 70;
-    const barW = Math.max(20, W - labelWidth - valueW - 8);
+    const lw = Math.min(labelWidth, Math.floor(W * 0.42)); // étiquettes plus courtes sur téléphone
+    const barW = Math.max(20, W - lw - valueW - 8);
     items.forEach((it, i) => {
       const y = top + i * (rowH + gap);
       const v = Number(it.value) || 0;
-      svg.append(svgEl("text", { x: 0, y: y + rowH / 2 + 5, class: "chart-label chart-label-strong" }, it.label));
-      svg.append(svgEl("rect", { x: labelWidth, y, width: barW, height: rowH, rx: 6, class: "chart-track" }));
-      svg.append(svgEl("rect", { x: labelWidth, y, width: Math.max(v > 0 ? 3 : 0, (barW * v) / max), height: rowH, rx: 6,
+      svg.append(svgEl("text", { x: 0, y: y + rowH / 2 + 5, class: "chart-label chart-label-strong" }, cut(it.label, lw)));
+      svg.append(svgEl("rect", { x: lw, y, width: barW, height: rowH, rx: 6, class: "chart-track" }));
+      svg.append(svgEl("rect", { x: lw, y, width: Math.max(v > 0 ? 3 : 0, (barW * v) / max), height: rowH, rx: 6,
         fill: it.color || color, class: "chart-bar" }));
-      svg.append(svgEl("text", { x: labelWidth + barW + 8, y: y + rowH / 2 + 5, class: "chart-label" }, format(v)));
+      svg.append(svgEl("text", { x: lw + barW + 8, y: y + rowH / 2 + 5, class: "chart-label" }, format(v)));
       svg.append(svgEl("rect", { x: 0, y, width: W, height: rowH, class: "chart-hit",
         "data-tip": it.tip || `${it.label} : ${format(v)}` }));
     });
@@ -191,32 +224,22 @@ export function barChart(container, items, { color = "var(--accent)", format = f
 // --- Barres empilées (une ligne par groupe) + légende ---------------------------------------
 export function stackedBars(container, rows, { format = fmtDefault, labelWidth = 96 } = {}) {
   // Légende : tous les segments rencontrés, dans l'ordre.
-  const legend = new Map();
-  rows.forEach((r) => r.segments.forEach((s) => legend.set(s.label, s.color)));
-  container.querySelector(".chart-legend")?.remove();
-  const leg = document.createElement("div");
-  leg.className = "chart-legend";
-  for (const [label, color] of legend) {
-    const item = document.createElement("span");
-    const dot = document.createElement("i");
-    dot.style.background = color;
-    item.append(dot, label);
-    leg.append(item);
-  }
-  container.append(leg);
+  const seen = new Map();
+  rows.forEach((r) => r.segments.forEach((s) => seen.set(s.label, s.color)));
+  legend(container, [...seen].map(([label, color]) => ({ label, color })));
 
   mount(container, (W) => {
     const rowH = 30, gap = 8, top = 4;
     const height = top + rows.length * (rowH + gap);
     const svg = svgEl("svg", { width: W, height, viewBox: `0 0 ${W} ${height}`, role: "img" });
     const max = Math.max(1, ...rows.map((r) => r.segments.reduce((a, s) => a + (Number(s.value) || 0), 0)));
-    const lw = rows.some((r) => r.label) ? labelWidth : 0;
+    const lw = rows.some((r) => r.label) ? Math.min(labelWidth, Math.floor(W * 0.38)) : 0;
     const valueW = 60;
     const barW = Math.max(20, W - lw - valueW - 8);
     rows.forEach((r, i) => {
       const y = top + i * (rowH + gap);
       const total = r.segments.reduce((a, s) => a + (Number(s.value) || 0), 0);
-      if (r.label) svg.append(svgEl("text", { x: 0, y: y + rowH / 2 + 5, class: "chart-label chart-label-strong" }, r.label));
+      if (r.label) svg.append(svgEl("text", { x: 0, y: y + rowH / 2 + 5, class: "chart-label chart-label-strong" }, cut(r.label, lw)));
       svg.append(svgEl("rect", { x: lw, y, width: barW, height: rowH, rx: 6, class: "chart-track" }));
       let x = lw;
       for (const s of r.segments) {
@@ -273,6 +296,69 @@ export function calendar(container, values, { weeks = 13, today, format = fmtDef
         d.setUTCDate(d.getUTCDate() + 1);
       }
     }
+    return svg;
+  });
+}
+
+/** Coupe une étiquette trop longue pour sa place (~7 px par caractère à 13 px). */
+function cut(text, width) {
+  const max = Math.max(4, Math.floor((width - 6) / 7));
+  const t = String(text ?? "");
+  return t.length > max ? `${t.slice(0, max - 1)}…` : t;
+}
+
+// --- Plusieurs courbes --------------------------------------------------------------------
+export function multiLineChart(container, labels, series, { height = 220, format = fmtDefault, tipLabels } = {}) {
+  legend(container, series.map((s) => ({ label: s.label, color: s.color })));
+  mount(container, (W) => {
+    const left = 40, right = 12, top = 10, bottom = 24;
+    const w = W - left - right, h = height - top - bottom;
+    const svg = svgEl("svg", { width: W, height, viewBox: `0 0 ${W} ${height}`, role: "img" });
+    const max = Math.max(0, ...series.flatMap((s) => s.values.map((v) => Number(v) || 0)));
+    const yOf = yAxis(svg, { left, top, width: w, height: h, max, format });
+    const n = labels.length;
+    const xOf = (i) => (n < 2 ? left + w / 2 : left + (w * i) / (n - 1));
+    for (const s of series) {
+      const pts = s.values.map((v, i) => `${xOf(i).toFixed(1)},${yOf(Number(v) || 0).toFixed(1)}`).join(" ");
+      svg.append(svgEl("polyline", { points: pts, fill: "none", stroke: s.color, "stroke-width": 2, "stroke-linejoin": "round",
+        "stroke-dasharray": s.dashed ? "5 4" : "none" }));
+      if (n <= 40) s.values.forEach((v, i) => svg.append(svgEl("circle", { cx: xOf(i), cy: yOf(Number(v) || 0), r: 2.5, fill: s.color })));
+    }
+    const step = n < 2 ? w : w / (n - 1);
+    labels.forEach((label, i) => {
+      const tip = `${(tipLabels || labels)[i]} — ${series.map((s) => `${s.label} : ${s.values[i] == null ? "—" : format(s.values[i])}`).join(" · ")}`;
+      svg.append(svgEl("rect", { x: xOf(i) - step / 2, y: top, width: step, height: h, class: "chart-hit", "data-tip": tip }));
+    });
+    xLabels(svg, labels.map((label) => ({ label })), xOf, height - 6);
+    return svg;
+  });
+}
+
+// --- Colonnes empilées -------------------------------------------------------------------
+export function stackedColumns(container, labels, series, { height = 220, format = fmtDefault, tipLabels } = {}) {
+  legend(container, series.map((s) => ({ label: s.label, color: s.color })));
+  mount(container, (W) => {
+    const left = 44, right = 8, top = 10, bottom = 24;
+    const w = W - left - right, h = height - top - bottom;
+    const svg = svgEl("svg", { width: W, height, viewBox: `0 0 ${W} ${height}`, role: "img" });
+    const totals = labels.map((_, i) => series.reduce((a, s) => a + Math.max(0, Number(s.values[i]) || 0), 0));
+    const yOf = yAxis(svg, { left, top, width: w, height: h, max: Math.max(0, ...totals), format });
+    const step = w / Math.max(1, labels.length);
+    const xOf = (i) => left + step * i + step / 2;
+    const bw = Math.max(1, step * 0.7);
+    labels.forEach((label, i) => {
+      let base = top + h;
+      for (const s of series) {
+        const v = Math.max(0, Number(s.values[i]) || 0);
+        if (!v) continue;
+        const y = yOf(v) - (top + h - base);
+        svg.append(svgEl("rect", { x: xOf(i) - bw / 2, y, width: bw, height: Math.max(0, base - y - (bw > 4 ? 1 : 0)), fill: s.color, class: "chart-bar" }));
+        base = y;
+      }
+      const tip = `${(tipLabels || labels)[i]} — ${series.map((s) => `${s.label} : ${format(Number(s.values[i]) || 0)}`).join(" · ")} · total ${format(totals[i])}`;
+      svg.append(svgEl("rect", { x: left + step * i, y: top, width: step, height: h, class: "chart-hit", "data-tip": tip }));
+    });
+    xLabels(svg, labels.map((label) => ({ label })), xOf, height - 6);
     return svg;
   });
 }
