@@ -12,14 +12,14 @@
 //  - « hint »    : règles CACHÉES ; après chaque essai, l'indice seulement.
 // En mode caché, le serveur n'envoie jamais les règles ni les seuils : il n'y a ici aucune règle, aucun seuil.
 
-import { getVideurTower, videurTowerPreview, videurTowerEnter } from "./api.js?v=98";
-import { updateVideurBadge } from "./badges.js?v=98";
-import { SLOTS, readBodyChoice } from "./avatar.js?v=98";
-import { createAvatar3D } from "./avatar3d.js?v=98";
-import { refreshState, getEquipped } from "./inventory.js?v=98";
-import { showToast, reportError } from "./wallet.js?v=98";
-import { playSound, vibrate } from "./effects.js?v=98";
-import { quickOutfits } from "./outfits.js?v=98";
+import { getVideurTower, videurTowerPreview, videurTowerEnter } from "./api.js?v=99";
+import { updateVideurBadge } from "./badges.js?v=99";
+import { SLOTS, readBodyChoice } from "./avatar.js?v=99";
+import { createAvatar3D } from "./avatar3d.js?v=99";
+import { refreshState, getEquipped } from "./inventory.js?v=99";
+import { showToast, reportError } from "./wallet.js?v=99";
+import { playSound, vibrate } from "./effects.js?v=99";
+import { quickOutfits } from "./outfits.js?v=99";
 
 /** Couleur d'enseigne de chaque porte (comme les raretés : bleu, violet, or). */
 const DOOR_COLOR = { bar: "var(--rarity-rare)", club: "var(--rarity-epique)", vip: "var(--rarity-legendaire)" };
@@ -105,9 +105,23 @@ export function setupTower({ catalogue, first }) {
     renderDoor();
   }
 
+  /** Trois tuiles bien visibles : niveau en cours, niveaux validés aujourd'hui (et restants), série. */
   function renderSummary() {
     const days = tower.streak || 0;
-    summary.textContent = `Niveau ${tower.level} · Aujourd'hui : ${tower.today_cleared} / ${tower.max_per_day} niveaux · Série : ${plural(days, "jour")}`;
+    const left = Math.max(tower.max_per_day - tower.today_cleared, 0);
+    // Une tuile : petite étiquette, grand chiffre, précision dessous (des <span> : on est dans un <p>).
+    const tile = (label, value, sub, extra = "") => {
+      const t = el("span", `videur-stat ${extra}`.trim());
+      t.append(el("span", "videur-stat-label", label), el("span", "videur-stat-value", value), el("span", "videur-stat-sub", sub));
+      return t;
+    };
+    summary.className = "videur-stats";
+    summary.replaceChildren(
+      tile("Niveau", String(tower.level), "en cours", "is-level"),
+      tile("Aujourd'hui", `${tower.today_cleared} / ${tower.max_per_day}`,
+        left > 0 ? `${left} restant${left > 1 ? "s" : ""}` : "Reviens demain", left > 0 ? "" : "is-done"),
+      tile("Série", String(days), days > 1 ? "jours d'affilée" : "jour", days > 0 ? "is-streak" : ""),
+    );
   }
 
   /** Les 3 portes du niveau en cours : passée, en cours, fermée (simple repère, pas des boutons). */

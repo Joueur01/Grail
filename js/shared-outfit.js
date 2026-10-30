@@ -6,10 +6,10 @@
 // pièces avec leur rareté. Le pseudo de la personne qui partage est affiché (décision du développeur,
 // migration 0020) ; aucune autre information du joueur n'est montrée.
 
-import { loadCatalogue, getRarity } from "./data.js?v=98";
-import { getSharedOutfit } from "./api.js?v=98";
-import { SLOTS } from "./avatar.js?v=98";
-import { createAvatar3D } from "./avatar3d.js?v=98";
+import { loadCatalogue, getRarity } from "./data.js?v=99";
+import { getSharedOutfit } from "./api.js?v=99";
+import { SLOTS } from "./avatar.js?v=99";
+import { createAvatar3D } from "./avatar3d.js?v=99";
 
 function el(tag, className, text) {
   const e = document.createElement(tag);

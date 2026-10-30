@@ -2319,6 +2319,33 @@ body[data-auth="public"] .public {
 @media (max-width: 380px) { #screen-market .view-tab { padding-inline: 4px; font-size: 12px; white-space: nowrap; } }
 
 /* --- Videur : portes, dress code, jauges, verdict --- */
+/* Résumé de la tour du Videur : niveau, niveaux du jour, série (videur-tour.js) */
+.videur-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 4px 0 12px; }
+.videur-stat {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 12px 6px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  text-align: center;
+}
+.videur-stat-label { font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.videur-stat-value { font-size: 26px; font-weight: 900; line-height: 1.1; color: var(--text); font-stretch: 125%; }
+.videur-stat-sub { font-size: 12px; font-weight: 600; color: var(--muted); }
+/* Le niveau en doré (comme l'anneau du bouton profil), la série en corail, la limite du jour atteinte en vert. */
+.videur-stat.is-level { border-color: var(--rarity-legendaire); background: rgba(242, 194, 48, 0.1); }
+.videur-stat.is-level .videur-stat-value { color: var(--rarity-legendaire); }
+.videur-stat.is-streak .videur-stat-value { color: #ff8a6b; }
+.videur-stat.is-done .videur-stat-value { color: #7fd99a; }
+@media (max-width: 340px) {
+  .videur-stat-label { font-size: 10px; letter-spacing: 0.02em; }
+  .videur-stat-value { font-size: 22px; }
+  .videur-stat-sub { font-size: 11px; }
+}
+
 .door-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0 16px; }
 .door-tab {
   display: flex; flex-direction: column; align-items: center; gap: 2px;
