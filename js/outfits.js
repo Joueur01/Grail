@@ -9,10 +9,10 @@
 //  - setupSavedOutfits : section « Mes tenues » de l'écran Tenue (enregistrer, porter, remplacer, supprimer) ;
 //  - quickOutfits      : petite rangée « Remettre une tenue » de l'écran Videur (porter seulement).
 
-import { getSavedOutfits, saveOutfit, wearSavedOutfit, deleteSavedOutfit } from "./api.js?v=101";
-import { refreshState, getEquipped } from "./inventory.js?v=101";
-import { SLOTS } from "./avatar.js?v=101";
-import { showToast, reportError } from "./wallet.js?v=101";
+import { getSavedOutfits, saveOutfit, wearSavedOutfit, deleteSavedOutfit } from "./api.js?v=102";
+import { refreshState, getEquipped } from "./inventory.js?v=102";
+import { SLOTS } from "./avatar.js?v=102";
+import { showToast, reportError } from "./wallet.js?v=102";
 
 let data = null;            // dernière réponse du serveur ({ max, outfits }), ou { disabled: true } sans la migration
 let loading = null;         // lecture en cours (une seule à la fois)

@@ -9,13 +9,13 @@
 //   - un modèle complet (tous ses coloris × toutes ses raretés) donne son ULTIME : une carte unique
 //     (rareté « Ultime »), ni vendable ni échangeable, mais qui se porte et se met en vitrine.
 
-import { RARITIES, getRarity, matchesSearch } from "./data.js?v=101";
+import { RARITIES, getRarity, matchesSearch } from "./data.js?v=102";
 import {
   getAlbumState, addToAlbum, countCard, isLocked, getShowcaseKeys, isCardEquipped, equip, cardKey,
-} from "./inventory.js?v=101";
-import { createCardFace, createCardShell } from "./cards.js?v=101";
-import { reportError, showToast } from "./wallet.js?v=101";
-import { playSound, vibrate, burst } from "./effects.js?v=101";
+} from "./inventory.js?v=102";
+import { createCardFace, createCardShell } from "./cards.js?v=102";
+import { reportError, showToast } from "./wallet.js?v=102";
+import { playSound, vibrate, burst } from "./effects.js?v=102";
 
 function el(tag, className, text) {
   const e = document.createElement(tag);
